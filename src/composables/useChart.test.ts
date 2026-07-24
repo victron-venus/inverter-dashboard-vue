@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import { addHistoryPoint, setChartUpdateCallback } from './useChart'
 
 describe('useChart', () => {
@@ -10,7 +9,6 @@ describe('useChart', () => {
 
   describe('addHistoryPoint', () => {
     it('should add grid power to history', () => {
-      const initialLength = 0
       addHistoryPoint({ gt: 1500, solar_total: 3000, battery_power: 0, setpoint: 0 })
       // Basic smoke test - verify no errors thrown
       expect(true).toBe(true)

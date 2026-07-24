@@ -13,8 +13,6 @@ on:
 
 env:
   NODE_VERSION: '22'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: inverter-dashboard-vue
 
 jobs:
   build:
@@ -41,8 +39,11 @@ jobs:
 
       - name: Build SPA
         run: npm run build
-        env:
-          BUILD_OUTPUT_DIR: build
+
+      - name: Create downloadable tarball
+        run: |
+          tar -czf vue-spa-dist.tar.gz -C dist .
+          ls -la vue-spa-dist.tar.gz
 
       - name: Upload SPA artifact
         uses: actions/upload-artifact@v4
@@ -75,11 +76,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get version
+      - name: Get version from tag
         id: get_version
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
+          TAG="${GITHUB_REF#refs/tags/}"
           echo "version=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Download SPA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vue-spa-dist
+          path: dist/
+
+      - name: Create downloadable tarball
+        run: tar -czf vue-spa-dist.tar.gz -C dist .
+
+      - name: Download library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vue-library-dist
+          path: dist-lib/
 
       - name: Create Release
         id: create_release
@@ -89,36 +105,49 @@ jobs:
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
           generate_release_notes: true
           files: |
+            vue-spa-dist.tar.gz
             dist/**/*
             dist-lib/**/*
 
-  notify-downstream:
-    name: Notify Downstream Repositories
-    needs: release
+  ci-build:
+    name: Build for CI Download
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     permissions:
-      contents: read
-   _strategy:
-      fail-fast: false
-      matrix:
-        repo: [inverter-dashboard, inverter-dashboard-go]
-        include:
-          - repo: inverter-dashboard
-            file: Python static files
-          - repo: inverter-dashboard-go
-            file: Go internal/html/dist
+      contents: write
 
     steps:
-      - name: Dispatch workflow in ${{ matrix.repo }}
-        uses: actions/dispatch-workflow@v2
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          owner: victron-venus
-          repo: ${{ matrix.repo }}
-          workflow: 'vue-ui-update.yml'
-          workflow_file: '.github/workflows/vue-ui-update.yml'
-          inputs: '{"tag": "${{ needs.release.outputs.version }}"}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.VICTRON_BOT_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build SPA
+        run: npm run build
+
+      - name: Create CI tarball
+        run: tar -czf vue-spa-dist.tar.gz -C dist .
+
+      - name: Create CI Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ci-latest
+          name: "CI Build (Development)"
+          body: |
+            Latest CI build from main branch.
+            Commit: ${{ github.sha }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          prerelease: true
+          overwrite: true
+          files: |
+            vue-spa-dist.tar.gz
 
   summary:
     name: Release Summary
@@ -131,14 +160,13 @@ jobs:
         run: |
           echo "## Vue Dashboard Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Release:** ${{ needs.release.outputs.upload_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ needs.release.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release | ${{ needs.release.outputs.upload_url }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- **SPA:** `dist/` directory" >> $GITHUB_STEP_SUMMARY
-          echo "- **Library:** `dist-lib/` UMD + ES modules" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Other repositories can download via:" >> $GITHUB_STEP_SUMMARY
+          echo "### Download in other repos:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "gh release download victron-venus/inverter-dashboard-vue@${{ needs.release.outputs.version }} --pattern '*/*'" >> $GITHUB_STEP_SUMMARY
+          echo "gh release download victron-venus/inverter-dashboard-vue@\$TAG --pattern '*.tar.gz'" >> $GITHUB_STEP_SUMMARY
+          echo "tar -xzf vue-spa-dist.tar.gz" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
