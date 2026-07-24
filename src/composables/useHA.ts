@@ -111,8 +111,12 @@ export function useHA() {
     return states
   })
 
+  // Empty hooks for HA lifecycle - intentionally empty for future use
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   function initHa() {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   function cleanupHa() {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   function setWindowHidden(_hidden: boolean) {}
 
   return {
