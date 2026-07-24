@@ -32,10 +32,10 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-log_info()  { echo -e "${BLUE}[INFO]${NC}   $*"; }
+log_info()    { echo -e "${BLUE}[INFO]${NC}   $*"; }
 log_success() { echo -e "${GREEN}[OK]${NC}     $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 
 # Parse arguments
 BUILD_MODE="${1:-spa}"
@@ -80,18 +80,18 @@ esac
 cd "$PROJECT_ROOT"
 
 # Install dependencies if needed
-if [ ! -d "node_modules" ]; then
+if [[ ! -d "node_modules" ]]; then
   log_info "Installing dependencies..."
-  npm ci
+  npm ci --ignore-scripts
 fi
 
 # TypeScript check
 log_info "Running TypeScript check..."
-npx tsc --noEmit
+npm run typecheck --ignore-scripts || npx --ignore-scripts tsc --noEmit
 log_success "TypeScript check passed"
 
 # Exit if only type check requested
-if [ "${TYPE_CHECK_ONLY:-false}" = true ]; then
+if [[ "${TYPE_CHECK_ONLY:-false}" == true ]]; then
   log_success "Type check complete, no build output"
   exit 0
 fi
@@ -102,21 +102,21 @@ mkdir -p "$BUILD_OUTPUT_DIR"
 # Build functions
 build_spa() {
   log_info "Building SPA..."
-  npm run build
+  npm run build --ignore-scripts
   cp -r "$VUE_DIST" "$BUILD_OUTPUT_DIR/spa"
   log_success "SPA build: $BUILD_OUTPUT_DIR/spa"
 }
 
 build_lib() {
   log_info "Building component library..."
-  npm run build:lib
+  npm run build:lib --ignore-scripts
   cp -r "$VUE_LIB_DIST" "$BUILD_OUTPUT_DIR/lib"
   log_success "Library build: $BUILD_OUTPUT_DIR/lib"
 }
 
 # Build steps
-[ "$BUILD_SPA" = true ] && build_spa
-[ "$BUILD_LIB" = true ] && build_lib
+[[ "$BUILD_SPA" == true ]] && build_spa
+[[ "$BUILD_LIB" == true ]] && build_lib
 
 # Summary
 echo ""
@@ -124,8 +124,8 @@ echo "=========================================="
 log_success "Build complete!"
 echo "=========================================="
 echo "Output:  $BUILD_OUTPUT_DIR"
-[ "$BUILD_SPA" = true ] && echo "  SPA:    $BUILD_OUTPUT_DIR/spa"
-[ "$BUILD_LIB" = true ] && echo "  Lib:    $BUILD_OUTPUT_DIR/lib"
+[[ "$BUILD_SPA" == true ]] && echo "  SPA:    $BUILD_OUTPUT_DIR/spa"
+[[ "$BUILD_LIB" == true ]] && echo "  Lib:    $BUILD_OUTPUT_DIR/lib"
 echo ""
 echo "To publish:"
 echo "  1. Create GitHub Release with this tag"

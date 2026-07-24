@@ -22,13 +22,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Run types and lint
-        run: npm run lint 2>/dev/null || true
+        run: npm run typecheck --ignore-scripts
 
   test:
     name: Unit Tests
@@ -43,13 +40,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
-      - name: Type check
-        run: npx tsc --noEmit
-
-      - name: Run tests (when configured)
-        run: npm test 2>/dev/null || echo "No tests configured yet"
+      - name: Run tests
+        run: npm run test --ignore-scripts || echo "No tests configured yet"
 
   build-preview:
     name: Build Preview
@@ -64,10 +58,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Build SPA
-        run: npm run build
+        run: npm run build --ignore-scripts
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4

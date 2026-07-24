@@ -9,6 +9,25 @@ import type {
 } from '../types/ha'
 import { state } from './useInverterState'
 
+// HA initialization and cleanup (stubs - implement when needed)
+// Note: Actual HA auth flow handled via dashboard server WebSocket
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function initHa(): void {
+  // Placeholder: HA state loading would go here
+  // Currently state comes via WebSocket from dashboard server
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function cleanupHa(): void {
+  // Placeholder: cleanup resources when component unmounts
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setWindowHidden(_hidden: boolean): void {
+  // Placeholder: handle visibility change for polling optimization
+}
+
 function coerceBool(v: unknown): boolean {
   if (v === true || v === 1 || v === 'true' || v === '1' || v === 'on' || v === 'online')
     return true
