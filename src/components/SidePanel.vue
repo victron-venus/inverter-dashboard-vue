@@ -389,24 +389,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import {
+  Blinds,
   Car,
   CloudSun,
   Droplets,
   Gauge,
   Home as HomeIcon,
-  Blinds,
+  Lightbulb,
+  type LucideIcon,
   Play,
+  PlugZap,
   Sliders,
   Sparkles,
-  Lightbulb,
   WashingMachine,
-  PlugZap,
-  type LucideIcon,
 } from '@lucide/vue'
-import { formatDuration } from '../utils'
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type {
   HaCoverDisplay,
   HaMediaPlayerDisplay,
@@ -415,6 +414,7 @@ import type {
   HaSensorDisplay,
   HaWeatherDisplay,
 } from '../types/ha'
+import { formatDuration } from '../utils'
 
 defineProps<{
   features?: Record<string, boolean>

@@ -1,10 +1,6 @@
 import { markRaw } from 'vue'
 import { logger } from '../logger'
-import {
-  mqttConnected,
-  type InverterState,
-  state,
-} from './useInverterState'
+import { type InverterState, mqttConnected, state } from './useInverterState'
 
 export function useConnection() {
   let ws: WebSocket | null = null

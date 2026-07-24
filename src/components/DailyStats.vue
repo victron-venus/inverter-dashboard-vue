@@ -55,8 +55,8 @@
 </template>
 
 <script setup lang="ts">
+import { Battery as BatteryIcon, Zap } from '@lucide/vue'
 import { computed } from 'vue'
-import { Zap, Battery as BatteryIcon } from '@lucide/vue'
 import { state } from '../composables/useInverterState'
 
 const GRID_COST_PER_KWH = 0.31

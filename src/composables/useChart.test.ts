@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { addHistoryPoint, setChartUpdateCallback } from './useChart'
 
 describe('useChart', () => {
@@ -27,11 +27,15 @@ describe('useChart', () => {
     })
 
     it('should handle negative values (export mode)', () => {
-      expect(() => addHistoryPoint({ gt: -500, solar_total: 0, battery_power: -1000 })).not.toThrow()
+      expect(() =>
+        addHistoryPoint({ gt: -500, solar_total: 0, battery_power: -1000 })
+      ).not.toThrow()
     })
 
     it('should handle large values', () => {
-      expect(() => addHistoryPoint({ gt: 50000, solar_total: 100000, battery_power: 20000 })).not.toThrow()
+      expect(() =>
+        addHistoryPoint({ gt: 50000, solar_total: 100000, battery_power: 20000 })
+      ).not.toThrow()
     })
   })
 })

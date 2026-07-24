@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onErrorCaptured, onMounted } from 'vue'
+import { onErrorCaptured, onMounted, ref } from 'vue'
 import { logger } from '../logger'
 
 const hasError = ref(false)

@@ -5,15 +5,15 @@
 </template>
 
 <script setup lang="ts">
-import { use } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
 import {
-  TitleComponent,
-  TooltipComponent,
   GridComponent,
   LegendComponent,
+  TitleComponent,
+  TooltipComponent,
 } from 'echarts/components'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 
 // Register ECharts components

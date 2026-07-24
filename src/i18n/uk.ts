@@ -53,9 +53,9 @@ export default {
     mqttBroker: 'MQTT Брокер',
     haSettings: 'Home Assistant',
     uiControls: 'Керування UI',
-    connectionTest: 'Тест з\'єднання',
-    connectionSuccess: 'З\'єднання успішне',
-    connectionFailed: 'З\'єднання не вдалося',
+    connectionTest: "Тест з'єднання",
+    connectionSuccess: "З'єднання успішне",
+    connectionFailed: "З'єднання не вдалося",
     fetchEntities: 'Отримати сутності',
   },
   notifications: {

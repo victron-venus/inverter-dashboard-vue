@@ -26,11 +26,14 @@ export { default as StatusBar } from './components/StatusBar.vue'
 export { useChart } from './composables/useChart'
 export { useConnection } from './composables/useConnection'
 export { useHA } from './composables/useHA'
-export { state as inverterState, mqttConnected, haMqttConnected } from './composables/useInverterState'
-export { useTheme } from './composables/useTheme'
-
 // Types - re-export for consumers
 export type { InverterState } from './composables/useInverterState'
+export {
+  haMqttConnected,
+  mqttConnected,
+  state as inverterState,
+} from './composables/useInverterState'
+export { useTheme } from './composables/useTheme'
 
 // Library version
 export const VERSION = '2.1.1'

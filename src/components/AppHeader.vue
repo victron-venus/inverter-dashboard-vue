@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { FlaskConical, Zap, Sun, Moon } from '@lucide/vue'
+import { FlaskConical, Moon, Sun, Zap } from '@lucide/vue'
 
 defineProps<{
   dryRun: boolean

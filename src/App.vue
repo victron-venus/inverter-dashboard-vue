@@ -113,21 +113,21 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
-import { formatPower } from './utils'
+import AppHeader from './components/AppHeader.vue'
+import BatterySolarPanel from './components/BatterySolarPanel.vue'
+import ChartPanel from './components/ChartPanel.vue'
+import ConsoleLog from './components/ConsoleLog.vue'
+import DailyStats from './components/DailyStats.vue'
+import ErrorBoundary from './components/ErrorBoundary.vue'
+import LoadsTable from './components/LoadsTable.vue'
+import SidePanel from './components/SidePanel.vue'
+import StatCards from './components/StatCards.vue'
+import StatusBar from './components/StatusBar.vue'
+import { addHistoryPoint, useChart } from './composables/useChart'
 import { useConnection } from './composables/useConnection'
 import { useHA } from './composables/useHA'
 import { useTheme } from './composables/useTheme'
-import { useChart, addHistoryPoint } from './composables/useChart'
-import AppHeader from './components/AppHeader.vue'
-import StatCards from './components/StatCards.vue'
-import ChartPanel from './components/ChartPanel.vue'
-import SidePanel from './components/SidePanel.vue'
-import BatterySolarPanel from './components/BatterySolarPanel.vue'
-import LoadsTable from './components/LoadsTable.vue'
-import StatusBar from './components/StatusBar.vue'
-import DailyStats from './components/DailyStats.vue'
-import ConsoleLog from './components/ConsoleLog.vue'
-import ErrorBoundary from './components/ErrorBoundary.vue'
+import { formatPower } from './utils'
 
 const {
   state,
