@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
-import { resolve } from 'path'
+import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite'
 
 // Common build configuration shared by both SPA and library builds
 const commonBuildConfig = {
@@ -39,28 +39,20 @@ const libConfig = defineConfig({
   plugins: [vue(), tailwindcss()],
   base: './',
   build: {
-    ...commonBuildConfig,
     outDir: 'dist-lib',
     lib: {
       entry: resolve(__dirname, 'src/lib.ts'),
       name: 'VictronDashboard',
-      formats: ['es', 'umd'],
+      formats: ['es'],
       fileName: (format) => `victron-dashboard.${format}.js`,
     },
     rollupOptions: {
       // Vue is a peer dependency - don't bundle it
       external: ['vue', 'vue-i18n', 'echarts', 'vue-echarts'],
       output: {
-        // Provide global Vue in UMD build
-        globals: {
-          vue: 'Vue',
-          'vue-i18n': 'VueI18n',
-          echarts: 'echarts',
-          'vue-echarts': 'VueECharts',
-        },
         // Emit chunk assets for dynamic imports in library mode
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name && assetInfo.name.includes('style')) {
+          if (assetInfo.name?.includes('style')) {
             return 'victron-dashboard.css'
           }
           return 'assets/[name]-[hash][extname]'
