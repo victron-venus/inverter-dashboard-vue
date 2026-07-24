@@ -50,6 +50,7 @@ const libConfig = defineConfig({
       // Vue is a peer dependency - don't bundle it
       external: ['vue', 'vue-i18n', 'echarts', 'vue-echarts'],
       output: {
+        format: 'es',
         // Emit chunk assets for dynamic imports in library mode
         assetFileNames: (assetInfo) => {
           if (assetInfo.name?.includes('style')) {
