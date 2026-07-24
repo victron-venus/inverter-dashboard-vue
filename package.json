@@ -1,0 +1,35 @@
+{
+  "name": "inverter-dashboard-vue",
+  "private": true,
+  "version": "2.1.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:spa": "tsc && vite build",
+    "build:lib": "tsc && vite build --mode lib",
+    "build:all": "npm run build:spa && npm run build:lib",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lucide/vue": "^1.23.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "echarts": "^6.1.0",
+    "vue": "^3.5.35",
+    "vue-echarts": "^8.0.1",
+    "vue-i18n": "^11"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.1",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.10"
+  }
+}
