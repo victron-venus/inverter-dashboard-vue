@@ -1,5 +1,13 @@
 # inverter-dashboard-vue
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml)
+[![Vue.js](https://img.shields.io/badge/vue-3.x-green.svg)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-6-blue.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/vite-8.x-646cff.svg)](https://vitejs.dev/)
+[![GitHub stars](https://img.shields.io/github/stars/victron-venus/inverter-dashboard-vue)](https://github.com/victron-venus/inverter-dashboard-vue/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/victron-venus/inverter-dashboard-vue)](https://github.com/victron-venus/inverter-dashboard-vue/network/members)
+
 Shared Vue 3 frontend SPA and reusable UI component library for Victron Venus ecosystem dashboards.
 
 ## Overview
