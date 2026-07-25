@@ -14,6 +14,9 @@ on:
 env:
   NODE_VERSION: '22'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Package
@@ -22,11 +25,16 @@ jobs:
       contents: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -46,7 +54,7 @@ jobs:
           ls -la vue-spa-dist.tar.gz
 
       - name: Upload SPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: vue-spa-dist
           path: dist/
@@ -56,7 +64,7 @@ jobs:
         run: npm run build:lib --ignore-scripts
 
       - name: Upload library artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: vue-library-dist
           path: dist-lib/
@@ -73,8 +81,13 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Get version from tag
         id: get_version
@@ -83,7 +96,7 @@ jobs:
           echo "version=${TAG}" >> $GITHUB_OUTPUT
 
       - name: Download SPA artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: vue-spa-dist
           path: dist/
@@ -92,14 +105,14 @@ jobs:
         run: tar -czf vue-spa-dist.tar.gz -C dist .
 
       - name: Download library artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: vue-library-dist
           path: dist-lib/
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
@@ -117,11 +130,16 @@ jobs:
       contents: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -136,7 +154,7 @@ jobs:
         run: tar -czf vue-spa-dist.tar.gz -C dist .
 
       - name: Create CI Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ci-latest
           name: "CI Build (Development)"
@@ -156,6 +174,11 @@ jobs:
     if: always()
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
       - name: Summary
         run: |
           echo "## Vue Dashboard Release Summary" >> $GITHUB_STEP_SUMMARY
