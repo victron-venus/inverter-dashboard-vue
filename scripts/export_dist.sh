@@ -21,7 +21,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 VUE_DIST="$PROJECT_ROOT/dist"
 VUE_LIB_DIST="$PROJECT_ROOT/dist-lib"
 GO_DIST="$PROJECT_ROOT/../inverter-dashboard-go/internal/html/dist"
-PY_DIST="$PROJECT_ROOT/../inverter-dashboard/src/inverter_dashboard/static"
+GO_VUE_UI="$PROJECT_ROOT/../inverter-dashboard-go/internal/html/vue-ui"
+PY_STATIC="$PROJECT_ROOT/../inverter-dashboard/src/inverter_dashboard/static"
+PY_DIST="$PY_STATIC/dist"
 
 # Color output
 RED='\033[0;31m'
@@ -109,7 +111,8 @@ if [ "$BUILD_SPA" = true ]; then
   build_spa
 
   # Deploy to both dashboards
-  copy_assets "$VUE_DIST" "$GO_DIST" "inverter-dashboard-go"
+  copy_assets "$VUE_DIST" "$GO_DIST" "inverter-dashboard-go/dist"
+  copy_assets "$VUE_DIST" "$GO_VUE_UI" "inverter-dashboard-go/vue-ui"
   copy_assets "$VUE_DIST" "$PY_DIST" "inverter-dashboard"
 fi
 
@@ -126,6 +129,7 @@ log_success "Export complete!"
 echo "=========================================="
 echo "SPA:       $VUE_DIST"
 [ "$BUILD_LIB" = true ] && echo "Library:   $VUE_LIB_DIST"
-echo "Go deploy: $GO_DIST"
+echo "Go dist:   $GO_DIST"
+echo "Go vue-ui: $GO_VUE_UI"
 echo "Py deploy: $PY_DIST"
 echo "=========================================="
