@@ -132,6 +132,14 @@ Test files use Vitest + @vue/test-utils + Happy DOM.
 - **Build**: `npm run build:all`
 - **Release**: Tags trigger GitHub Actions to build and publish assets
 
+## Completed Features
+
+- ✅ **Dual Build Targets**: Vite config supports both SPA build (`dist/`) and library mode (`build.lib/`) for reusable Vue components
+- ✅ **Automated Asset Export**: `scripts/export_dist.sh` compiles Vue assets and copies to `inverter-dashboard-go/internal/html/vue-ui` and `inverter-dashboard/src/inverter_dashboard/static`
+- ✅ **Vitest Unit Test Suite**: Tests for composables (`useMqtt`, `useChart`, `useConnection`, `useHA`) and components (`BatterySolarPanel`, `SidePanel`)
+- ✅ **i18n Localization Expansion**: Complete translations for English, German, Dutch, French, Ukrainian
+- ✅ **CI & Package Publishing**: GitHub Actions workflow `.github/workflows/release.yml` builds and publishes to GitHub Releases on tag
+
 ## Related Projects
 
 - [inverter-control](https://github.com/victron-venus/inverter-control) - Victron ESS Grid-Zero Controller
