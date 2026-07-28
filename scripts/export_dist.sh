@@ -6,6 +6,7 @@ set -euo pipefail
 # =============================================================================
 # Builds the Vue SPA and copies assets to:
 #   - inverter-dashboard-go/internal/html/dist
+#   - inverter-dashboard-go/internal/html/vue-ui
 #   - inverter-dashboard/src/inverter_dashboard/static
 #
 # Usage:
