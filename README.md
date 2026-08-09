@@ -21,6 +21,19 @@ This project provides a modern, reactive web UI that can be embedded into multip
 
 The Vue SPA (`dist/`) can be served by any backend that provides MQTT data via WebSocket.
 
+---
+
+## Project Role
+
+**Shared Vue 3 component library used by inverter-desktop and available for custom dashboard builds.** Includes ECharts widgets, MQTT hooks, Tailwind UI components.
+
+| Use Case | Recommended |
+|----------|-------------|
+| Cerbo GX / embedded | [inverter-dashboard-go](https://github.com/victron-venus/inverter-dashboard-go) — single binary, minimal footprint |
+| Docker / NAS | [inverter-dashboard](https://github.com/victron-venus/inverter-dashboard) — Python/FastAPI (`alvit/inverter-dashboard`) |
+| Native desktop/mobile | [inverter-desktop](https://github.com/victron-venus/inverter-desktop) — Rust/Tauri app with offline support |
+| Building custom dashboards | **inverter-dashboard-vue** (this) — shared Vue 3 component library |
+
 ## Features
 
 - **Real-time dashboard** with live MQTT data via WebSocket
