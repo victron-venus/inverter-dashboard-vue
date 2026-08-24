@@ -1,4 +1,12 @@
 import { ref, shallowRef } from 'vue'
+import type {
+  HaCoverDisplay,
+  HaMediaPlayerDisplay,
+  HaNumberDisplay,
+  HaSceneDisplay,
+  HaSensorDisplay,
+  HaWeatherDisplay,
+} from '../types/ha'
 
 export interface InverterState {
   gt?: number
@@ -56,6 +64,15 @@ export interface InverterState {
     source?: string
     ts?: string
   }>
+  // Rich HA entity displays pushed by the backend (matches HaFilteredData)
+  ha_filtered?: {
+    sensors?: HaSensorDisplay[]
+    numbers?: HaNumberDisplay[]
+    covers?: HaCoverDisplay[]
+    media_players?: HaMediaPlayerDisplay[]
+    scenes?: HaSceneDisplay[]
+    weather?: HaWeatherDisplay | null
+  }
   daily_stats?: {
     produced_today?: number
     produced_dollars?: number
