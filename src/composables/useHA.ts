@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, type Ref, ref, watch } from 'vue'
 import type {
   HaCoverDisplay,
   HaMediaPlayerDisplay,
@@ -9,11 +9,33 @@ import type {
 } from '../types/ha'
 import { state } from './useInverterState'
 
-// HA initialization and cleanup (stubs - implement when needed)
+// HA initialization and cleanup
 function coerceBool(v: unknown): boolean {
   if (v === true || v === 1 || v === 'true' || v === '1' || v === 'on' || v === 'online')
     return true
   return false
+}
+
+// Rich HA entity displays pushed by the backend in state.ha_filtered
+// ({sensors[], numbers[], covers[], media_players[], scenes[], weather}).
+function populateFiltered(
+  target: {
+    sensors: Ref<HaSensorDisplay[]>
+    numbers: Ref<HaNumberDisplay[]>
+    covers: Ref<HaCoverDisplay[]>
+    mediaPlayers: Ref<HaMediaPlayerDisplay[]>
+    scenes: Ref<HaSceneDisplay[]>
+    weather: Ref<HaWeatherDisplay | null>
+  },
+  filtered: Record<string, unknown> | null | undefined
+) {
+  const f = filtered ?? {}
+  target.sensors.value = (f.sensors as HaSensorDisplay[]) ?? []
+  target.numbers.value = (f.numbers as HaNumberDisplay[]) ?? []
+  target.covers.value = (f.covers as HaCoverDisplay[]) ?? []
+  target.mediaPlayers.value = (f.media_players as HaMediaPlayerDisplay[]) ?? []
+  target.scenes.value = (f.scenes as HaSceneDisplay[]) ?? []
+  target.weather.value = (f.weather as HaWeatherDisplay) ?? null
 }
 
 export function useHA() {
@@ -111,11 +133,29 @@ export function useHA() {
     return states
   })
 
-  // Empty hooks for HA lifecycle - intentionally empty for future use
+  // HA lifecycle: rich entity cards follow state.ha_filtered pushed by the backend.
+  const stopFilteredWatch = watch(
+    () => state.value.ha_filtered,
+    (filtered) =>
+      populateFiltered(
+        {
+          sensors: haSensors,
+          numbers: haNumbers,
+          covers: haCovers,
+          mediaPlayers: haMediaPlayers,
+          scenes: haScenes,
+          weather: haWeather,
+        },
+        filtered
+      ),
+    { immediate: true, deep: true }
+  )
+
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   function initHa() {}
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  function cleanupHa() {}
+  function cleanupHa() {
+    stopFilteredWatch()
+  }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   function setWindowHidden(_hidden: boolean) {}
 
