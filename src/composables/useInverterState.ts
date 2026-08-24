@@ -42,6 +42,20 @@ export interface InverterState {
     home_buttons?: Array<{ id: string; label: string; entity: string; state_key?: string }>
     header_toggles?: Array<{ id: string; label: string; entity: string }>
   }
+  solar_forecast?: {
+    date?: string
+    generated_at?: string
+    today_kwh?: number
+    tomorrow_kwh?: number
+  }
+  notifications?: Array<{
+    id: string
+    level: string
+    title: string
+    body?: string
+    source?: string
+    ts?: string
+  }>
   daily_stats?: {
     produced_today?: number
     produced_dollars?: number
