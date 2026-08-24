@@ -60,6 +60,7 @@ export default {
   },
   notifications: {
     title: 'Notifications',
+    dismiss: 'Dismiss',
     noNotifications: 'No notifications',
     markAllRead: 'Mark all read',
     clear: 'Clear',

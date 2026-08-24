@@ -17,6 +17,7 @@
 
       <!-- Dashboard Content -->
       <div class="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1 scrollbar-hide">
+        <NotificationBanner />
         <DailyStats />
 
         <StatCards
@@ -114,6 +115,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
+import NotificationBanner from './components/NotificationBanner.vue'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
 import ChartPanel from './components/ChartPanel.vue'
 import ConsoleLog from './components/ConsoleLog.vue'
