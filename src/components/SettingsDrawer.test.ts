@@ -10,7 +10,12 @@ describe('SettingsDrawer', () => {
       ...state.value,
       ui_config: {
         ...state.value.ui_config,
-        settings: { show_ev: false, camera_topic: 'frigate/+/events' },
+        settings: {
+          show_ev: false,
+          camera_topic: 'frigate/+/events',
+          mqtt_host: 'Cerbo',
+          ha_token: '***',
+        },
       },
     }
     const w = mount(SettingsDrawer, { props: { open: true }, global: { plugins: [i18n] } })
@@ -27,7 +32,9 @@ describe('SettingsDrawer', () => {
     expect(ev?.[0]?.[0]).toEqual({ show_washer: false })
 
     await w.find('button.bg-blue-600').trigger('click')
-    const saveEv = w.emitted('save')?.[1]?.[0]
-    expect(saveEv).toEqual({ camera_topic: 'frigate/+/events' })
+    const saveEv = w.emitted('save')?.[1]?.[0] as Record<string, unknown>
+    expect(saveEv.camera_topic).toBe('frigate/+/events')
+    expect(saveEv.mqtt_host).toBe('Cerbo') // seeded from server state
+    expect(saveEv.ha_token).toBeUndefined() // masked '***' never sent back
   })
 })
