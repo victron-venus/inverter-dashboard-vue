@@ -15,6 +15,19 @@
         />
       </label>
 
+      <div class="mt-3 border-t border-slate-800 pt-2 space-y-1">
+        <span class="text-[10px] uppercase text-slate-400">Connection</span>
+        <label v-for="f in CONNECTION" :key="f.key" class="block">
+          <span class="text-[10px] uppercase text-slate-400">{{ f.label }}</span>
+          <input
+            v-model="conn[f.key]"
+            :type="'secret' in f && f.secret ? 'password' : 'text'"
+            :placeholder="'placeholder' in f ? f.placeholder : ''"
+            class="mt-0.5 w-full bg-slate-800 rounded px-2 py-1 text-xs text-slate-200"
+          />
+        </label>
+      </div>
+
       <div class="space-y-1">
         <label
           v-for="opt in VISIBILITY"
@@ -73,12 +86,32 @@ const visibility = computed<Record<string, boolean | undefined>>(() => {
 
 const { t } = useI18n()
 
+// Connection fields written back at save; secrets masked server-side as
+// "***" — sending that literal back is skipped so stored values survive.
+const CONNECTION = [
+  { key: 'mqtt_host', label: 'MQTT host' },
+  { key: 'mqtt_port', label: 'MQTT port' },
+  { key: 'mqtt_username', label: 'MQTT user' },
+  { key: 'mqtt_password', label: 'MQTT pass', secret: true },
+  { key: 'ha_url', label: 'HA URL', placeholder: 'http://homeassistant:8123' },
+  { key: 'ha_token', label: 'HA token', secret: true },
+] as const
+
+const conn = ref<Record<string, string>>({})
+
 // Local edit buffers, seeded from the server state when the drawer opens.
 const cameraTopic = ref('')
 watch(
   () => props.open,
   (o) => {
-    if (o) cameraTopic.value = settings.value.camera_topic ?? ''
+    if (!o) return
+    cameraTopic.value = settings.value.camera_topic ?? ''
+    const next: Record<string, string> = {}
+    for (const f of CONNECTION) {
+      const v = settings.value[f.key]
+      next[f.key] = v == null ? '' : String(v)
+    }
+    conn.value = next
   },
   { immediate: true }
 )
@@ -89,6 +122,11 @@ function toggle(key: string, val: boolean) {
 
 function save() {
   const patch: Record<string, unknown> = { camera_topic: cameraTopic.value.trim() }
+  for (const f of CONNECTION) {
+    const raw = (conn.value[f.key] ?? '').trim()
+    if (raw === '' || raw === '***') continue // empty/masked → keep stored value
+    patch[f.key] = f.key === 'mqtt_port' ? Number(raw) : raw
+  }
   emit('save', patch)
 }
 </script>

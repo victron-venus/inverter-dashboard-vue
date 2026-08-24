@@ -52,6 +52,13 @@ export interface InverterState {
     // Runtime-editable settings persisted via /api/settings or WS set_settings
     settings?: {
       camera_topic?: string
+      // Connection overrides (secrets masked as "***" in payloads)
+      mqtt_host?: string
+      mqtt_port?: number
+      mqtt_username?: string
+      mqtt_password?: string
+      ha_url?: string
+      ha_token?: string
       show_ev?: boolean
       show_washer?: boolean
       show_dryer?: boolean
