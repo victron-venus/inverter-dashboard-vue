@@ -39,11 +39,13 @@
       <Sun v-if="isDark" :size="8" />
       <Moon v-else :size="8" />
     </button>
+    <NotificationHistory />
   </div>
 </template>
 
 <script setup lang="ts">
 import { FlaskConical, Moon, Sun, Zap } from '@lucide/vue'
+import NotificationHistory from './NotificationHistory.vue'
 
 defineProps<{
   dryRun: boolean
