@@ -116,6 +116,7 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import NotificationBanner from './components/NotificationBanner.vue'
+import { initSystemNotifications } from './composables/useSystemNotifications'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
 import ChartPanel from './components/ChartPanel.vue'
 import ConsoleLog from './components/ConsoleLog.vue'
@@ -261,6 +262,7 @@ const solarSources = computed(() => {
 onMounted(async () => {
   await connectMqtt()
   initHa()
+  void initSystemNotifications()
 })
 
 onUnmounted(() => {
