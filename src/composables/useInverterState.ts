@@ -64,6 +64,12 @@ export interface InverterState {
     source?: string
     ts?: string
   }>
+  // Latest camera event from the optional Frigate topic: {camera, url, ts}
+  camera_event?: {
+    camera?: string
+    url?: string
+    ts?: string
+  }
   // Rich HA entity displays pushed by the backend (matches HaFilteredData)
   ha_filtered?: {
     sensors?: HaSensorDisplay[]

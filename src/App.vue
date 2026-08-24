@@ -18,6 +18,8 @@
       <!-- Dashboard Content -->
       <div class="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1 scrollbar-hide">
         <NotificationBanner />
+
+        <CameraPopup />
         <DailyStats />
 
         <StatCards
@@ -115,20 +117,21 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
-import NotificationBanner from './components/NotificationBanner.vue'
-import { initSystemNotifications } from './composables/useSystemNotifications'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
+import CameraPopup from './components/CameraPopup.vue'
 import ChartPanel from './components/ChartPanel.vue'
 import ConsoleLog from './components/ConsoleLog.vue'
 import DailyStats from './components/DailyStats.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import LoadsTable from './components/LoadsTable.vue'
+import NotificationBanner from './components/NotificationBanner.vue'
 import SidePanel from './components/SidePanel.vue'
 import StatCards from './components/StatCards.vue'
 import StatusBar from './components/StatusBar.vue'
 import { addHistoryPoint, useChart } from './composables/useChart'
 import { useConnection } from './composables/useConnection'
 import { useHA } from './composables/useHA'
+import { initSystemNotifications } from './composables/useSystemNotifications'
 import { useTheme } from './composables/useTheme'
 import { formatPower } from './utils'
 
