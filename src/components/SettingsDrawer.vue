@@ -93,7 +93,7 @@ const CONNECTION = [
   { key: 'mqtt_port', label: 'MQTT port' },
   { key: 'mqtt_username', label: 'MQTT user' },
   { key: 'mqtt_password', label: 'MQTT pass', secret: true },
-  { key: 'ha_url', label: 'HA URL', placeholder: 'http://homeassistant:8123' },
+  { key: 'ha_url', label: 'HA URL', placeholder: 'https://homeassistant.local:8123' },
   { key: 'ha_token', label: 'HA token', secret: true },
 ] as const
 
