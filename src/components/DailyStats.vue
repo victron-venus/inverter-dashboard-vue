@@ -4,6 +4,16 @@
   >
     <div v-if="hasSolar" class="flex items-center gap-1.5 mr-1">
       <span class="text-solar font-bold flex items-center gap-1">☀️ {{ prod }}kWh</span>
+      <span
+        v-if="fcToday"
+        class="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-tighter"
+        >[{{ fcToday }}]</span
+      >
+      <span
+        v-if="fcTomorrow"
+        class="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-tighter"
+        >[{{ fcTomorrow }}]</span
+      >
       <span class="text-slate-600 dark:text-slate-400 font-medium text-[11px] tracking-tighter">{{
         solarStr
       }}</span>
@@ -62,6 +72,13 @@ import { state } from '../composables/useInverterState'
 const GRID_COST_PER_KWH = 0.31
 
 const ds = computed(() => state.value.daily_stats || {})
+
+// solar_forecast is a top-level state key from inverter-control, not inside daily_stats
+const fc = computed(() => state.value.solar_forecast || {})
+const fcToday = computed(() => (fc.value.today_kwh != null ? fc.value.today_kwh.toFixed(1) : ''))
+const fcTomorrow = computed(() =>
+  fc.value.tomorrow_kwh != null ? fc.value.tomorrow_kwh.toFixed(1) : ''
+)
 
 const prod = computed(() => (ds.value.produced_today || 0).toFixed(2))
 const dollars = computed(() => (ds.value.produced_dollars || 0).toFixed(2))
