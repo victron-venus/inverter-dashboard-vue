@@ -35,6 +35,14 @@
       </template>
     </div>
 
+    <button
+      type="button"
+      class="classic-btn min-w-[20px]"
+      aria-label="Settings"
+      @click="$emit('open-settings')"
+    >
+      <Settings :size="8" />
+    </button>
     <button type="button" class="classic-btn min-w-[20px]" @click="$emit('toggle-theme')">
       <Sun v-if="isDark" :size="8" />
       <Moon v-else :size="8" />
@@ -44,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { FlaskConical, Moon, Sun, Zap } from '@lucide/vue'
+import { FlaskConical, Moon, Settings, Sun, Zap } from '@lucide/vue'
 import NotificationHistory from './NotificationHistory.vue'
 
 defineProps<{
@@ -60,5 +68,6 @@ defineProps<{
 defineEmits<{
   send: [action: string, payload?: Record<string, unknown>]
   'toggle-theme': []
+  'open-settings': []
 }>()
 </script>

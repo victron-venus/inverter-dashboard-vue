@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { HaWeatherDisplay } from '../types/ha'
-import { state } from './useInverterState'
 import { useHA } from './useHA'
+import { state } from './useInverterState'
 
 describe('useHA rich entity population', () => {
   it('starts with empty sections', () => {
@@ -24,9 +24,7 @@ describe('useHA rich entity population', () => {
         covers: [{ entity_id: 'cover.b', name: 'B', position: 40 }],
         scenes: [{ entity_id: 'scene.m', name: 'M' }],
         numbers: [],
-        media_players: [
-          { entity_id: 'media_player.s', name: 'S', state: 'playing' },
-        ],
+        media_players: [{ entity_id: 'media_player.s', name: 'S', state: 'playing' }],
         weather: {
           entity_id: 'weather.h',
           name: 'H',
