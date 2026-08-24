@@ -16,7 +16,7 @@ describe('CameraPopup', () => {
     expect(w.find('.fixed').exists()).toBe(true)
     expect(w.text()).toContain('Front Door')
 
-    await w.vm.close()
+    await (w.vm as unknown as { close: () => void }).close()
     expect(w.find('.fixed').exists()).toBe(false)
   })
 })
