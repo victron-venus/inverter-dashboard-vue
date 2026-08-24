@@ -49,6 +49,19 @@ export interface InverterState {
     loads?: { hidden?: string[]; min_watts?: number }
     home_buttons?: Array<{ id: string; label: string; entity: string; state_key?: string }>
     header_toggles?: Array<{ id: string; label: string; entity: string }>
+    // Runtime-editable settings persisted via /api/settings or WS set_settings
+    settings?: {
+      camera_topic?: string
+      show_ev?: boolean
+      show_washer?: boolean
+      show_dryer?: boolean
+      show_dishwasher?: boolean
+      show_home_section?: boolean
+      show_ha_covers?: boolean
+      show_ha_media?: boolean
+      show_ha_scenes?: boolean
+      show_ha_weather?: boolean
+    }
   }
   solar_forecast?: {
     date?: string

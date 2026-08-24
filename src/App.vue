@@ -12,6 +12,7 @@
           :isDark="isDark"
           @send="send"
           @toggle-theme="toggleTheme"
+          @open-settings="settingsOpen = true"
         />
       </div>
 
@@ -20,6 +21,12 @@
         <NotificationBanner />
 
         <CameraPopup />
+
+        <SettingsDrawer
+          :open="settingsOpen"
+          @close="settingsOpen = false"
+          @save="onSaveSettings"
+        />
         <DailyStats />
 
         <StatCards
@@ -74,11 +81,11 @@
               :haMediaPlayers="haMediaPlayers"
               :haScenes="haScenes"
               :haWeather="haWeather"
-              :showEv="true"
-              :showWasher="true"
-              :showDryer="true"
-              :showDishwasher="true"
-              :showHomeSection="true"
+              :showEv="uiSettings.show_ev !== false"
+              :showWasher="uiSettings.show_washer !== false"
+              :showDryer="uiSettings.show_dryer !== false"
+              :showDishwasher="uiSettings.show_dishwasher !== false"
+              :showHomeSection="uiSettings.show_home_section !== false"
               @send="send"
               @number-set="onNumberSet"
               @cover-position="onCoverPosition"
@@ -115,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
 import CameraPopup from './components/CameraPopup.vue'
@@ -125,6 +132,7 @@ import DailyStats from './components/DailyStats.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import LoadsTable from './components/LoadsTable.vue'
 import NotificationBanner from './components/NotificationBanner.vue'
+import SettingsDrawer from './components/SettingsDrawer.vue'
 import SidePanel from './components/SidePanel.vue'
 import StatCards from './components/StatCards.vue'
 import StatusBar from './components/StatusBar.vue'
@@ -167,6 +175,11 @@ const {
   cleanupHa,
 } = useHA()
 const { isDark, toggleTheme } = useTheme()
+const settingsOpen = ref(false)
+const uiSettings = computed(() => state.value.ui_config?.settings ?? {})
+function onSaveSettings(patch: Record<string, unknown>) {
+  send('set_settings', patch)
+}
 const { chartOption, forceUpdateChart } = useChart(isDark)
 
 async function send(action: string, payload: Record<string, unknown> = {}) {
