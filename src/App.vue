@@ -217,12 +217,9 @@ const essText = computed(() => {
 })
 
 const mpptTotal = computed(() => state.value.mppt_total || 0)
-// Legacy tasmota_total aggregate is only used when no per-device list exists
-const pvInvertersTotal = computed(() => {
-  const invs = state.value.pv_inverters
-  if (invs?.length) return invs.reduce((sum, p) => sum + (p.power || 0), 0)
-  return state.value.tasmota_total || 0
-})
+const pvInvertersTotal = computed(() =>
+  (state.value.pv_inverters || []).reduce((sum, p) => sum + (p.power || 0), 0)
+)
 
 const evCharging = computed(() => {
   const kw = parseFloat(String(state.value.ev_charging_kw)) || 0
@@ -306,11 +303,6 @@ const solarSources = computed(() => {
         current: p.current,
         power: p.power || 0,
       })
-    })
-  } else {
-    // Legacy daemon payload: power-only aggregates, no V/I
-    ;(state.value.tasmota_individual || []).forEach((power, i) => {
-      sources.push({ name: 'PV Inverter ' + (i + 1), power: power || 0 })
     })
   }
   return sources

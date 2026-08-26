@@ -95,7 +95,7 @@ const batDeltaY = computed(() =>
   (Number.parseFloat(batInY.value) - Number.parseFloat(batOutY.value)).toFixed(1)
 )
 
-const pvDaily = computed(() => ds.value.tasmota_daily || [])
+const pvDaily = computed(() => ds.value.pv_inverter_daily || [])
 const mpptDaily = computed(() => ds.value.mppt_daily || [])
 const pvTotalDaily = computed(() => ds.value.pv_total_daily || 0)
 
