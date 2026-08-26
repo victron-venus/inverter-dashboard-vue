@@ -95,13 +95,13 @@ const batDeltaY = computed(() =>
   (Number.parseFloat(batInY.value) - Number.parseFloat(batOutY.value)).toFixed(1)
 )
 
-const tasmotaDaily = computed(() => ds.value.tasmota_daily || [])
+const pvDaily = computed(() => ds.value.tasmota_daily || [])
 const mpptDaily = computed(() => ds.value.mppt_daily || [])
 const pvTotalDaily = computed(() => ds.value.pv_total_daily || 0)
 
 const solarStr = computed(() => {
   const parts: string[] = []
-  tasmotaDaily.value.forEach((v) => {
+  pvDaily.value.forEach((v) => {
     if (v > 0) parts.push(v.toFixed(2))
   })
   const mpptPart =
