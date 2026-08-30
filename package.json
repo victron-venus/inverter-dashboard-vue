@@ -26,6 +26,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.4.11",
+    "biome": "^0.3.3",
     "happy-dom": "^20.11.6",
     "tailwindcss": "^4.3.0",
     "typescript": "~7.0.2",
