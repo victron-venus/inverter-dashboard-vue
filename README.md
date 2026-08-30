@@ -32,6 +32,20 @@ The Vue SPA (`dist/`) can be served by any backend that provides MQTT data via W
 | Native desktop/mobile | [inverter-desktop](https://github.com/victron-venus/inverter-desktop) — Rust/Tauri app with offline support |
 | Building custom dashboards | **inverter-dashboard-vue** (this) — shared Vue 3 component library |
 
+## Consumers
+
+This repository is the shared SPA / component library consumed by:
+
+- **[inverter-desktop](https://github.com/victron-venus/inverter-desktop)** — Tauri desktop/mobile app bundles the built SPA (`dist/`) via Tauri's webview and uses exported Vue components from `build.lib/`.
+- **[inverter-dashboard](https://github.com/victron-venus/inverter-dashboard)** — Python/FastAPI dashboard mounts `dist/` as static files.
+- **[inverter-dashboard-go](https://github.com/victron-venus/inverter-dashboard-go)** — Go/MQTT binary embeds `dist/` via `//go:embed` and serves the SPA.
+
+Build artifacts consumed by downstream projects:
+- `dist/` — production SPA bundle (HTML/JS/CSS)
+- `build.lib/` — Vue component library for embedding in custom dashboards
+
+Updates flow: changes here → PR → CI builds `dist/` + `build.lib/` → consumers pull updated artifacts via release tags or submodule sync.
+
 ## Features
 
 - **Real-time dashboard** with live MQTT data via WebSocket
@@ -68,6 +82,10 @@ npm run test:coverage # With coverage
 
 # Type checking
 npm run typecheck    # TypeScript check
+
+# Linting (Biome)
+npm run lint         # Lint all source files
+npm run lint:fix     # Lint and auto-fix
 ```
 
 ## Architecture
@@ -138,6 +156,7 @@ Test files use Vitest + @vue/test-utils + Happy DOM.
 
 ## CI/CD
 
+- **Lint**: `npm run lint` (Biome)
 - **TypeScript check**: `npm run typecheck`
 - **Tests**: `npm run test`
 - **Build**: `npm run build:all`

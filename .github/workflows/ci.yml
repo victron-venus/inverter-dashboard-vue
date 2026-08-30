@@ -35,6 +35,9 @@ jobs:
       - name: TypeScript check
         run: npm run typecheck --ignore-scripts
 
+      - name: Lint
+        run: npm run lint --ignore-scripts
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
