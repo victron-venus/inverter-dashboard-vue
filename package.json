@@ -18,7 +18,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@lucide/vue": "^1.35.0",
+    "@lucide/vue": "^1.37.0",
     "@tailwindcss/vite": "^4.3.0",
     "echarts": "^6.1.0",
     "vue": "^3.5.42",
