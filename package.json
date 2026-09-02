@@ -22,7 +22,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "echarts": "^6.1.0",
     "vue": "^3.5.42",
-    "vue-echarts": "^8.1.0",
+    "vue-echarts": "^8.2.0",
     "vue-i18n": "^11"
   },
   "devDependencies": {
