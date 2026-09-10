@@ -28,7 +28,11 @@
           :key="toggle.id"
           class="classic-btn min-w-[55px]"
           :class="{ 'classic-btn-on': toggleStates?.[toggle.id] === 'on' }"
-          @click="$emit('send', 'toggle', { entity: toggle.entity })"
+          @click="
+            $emit('send', 'toggle', {
+              entity: inverterControlFlagKey(toggle.entity) || toggle.entity,
+            })
+          "
         >
           {{ toggle.label.toUpperCase() }}
         </button>
@@ -53,6 +57,7 @@
 
 <script setup lang="ts">
 import { FlaskConical, Moon, Settings, Sun, Zap } from '@lucide/vue'
+import { inverterControlFlagKey } from '../utils'
 import NotificationHistory from './NotificationHistory.vue'
 
 defineProps<{

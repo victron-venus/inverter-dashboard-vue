@@ -7,6 +7,7 @@ import type {
   HaSensorDisplay,
   HaWeatherDisplay,
 } from '../types/ha'
+import { resolveHeaderToggleState } from '../utils'
 import { state } from './useInverterState'
 
 // HA initialization and cleanup
@@ -119,16 +120,11 @@ export function useHA() {
 
   const headerToggleStates = computed(() => {
     const states: Record<string, string> = {}
+    const mqttBooleans = (state.value.booleans || {}) as Record<string, unknown>
+    // Same as inverter-desktop: 7 control flags always read Cerbo MQTT booleans,
+    // never HA binary_sensor / input_boolean mirrors.
     headerToggles.value.forEach((toggle: { id: string; label: string; entity: string }) => {
-      const entityKey = toggle.entity.split('.').pop() || toggle.id
-      const rawVal =
-        state.value.booleans?.[toggle.id] ??
-        state.value.booleans?.[entityKey] ??
-        state.value.booleans?.[toggle.entity]
-      let val = rawVal
-      if (typeof val === 'string') val = val === 'true' || val === '1'
-      else if (typeof val === 'number') val = val !== 0
-      states[toggle.id] = val ? 'on' : 'off'
+      states[toggle.id] = resolveHeaderToggleState(toggle, mqttBooleans)
     })
     return states
   })

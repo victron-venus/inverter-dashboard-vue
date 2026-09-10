@@ -114,7 +114,9 @@ if [ "$BUILD_SPA" = true ]; then
   # Deploy to both dashboards
   copy_assets "$VUE_DIST" "$GO_DIST" "inverter-dashboard-go/dist"
   copy_assets "$VUE_DIST" "$GO_VUE_UI" "inverter-dashboard-go/vue-ui"
-  copy_assets "$VUE_DIST" "$PY_DIST" "inverter-dashboard"
+  # Flat static/ is what the Python package serves in Docker (prefer over static/dist).
+  copy_assets "$VUE_DIST" "$PY_STATIC" "inverter-dashboard/static"
+  copy_assets "$VUE_DIST" "$PY_DIST" "inverter-dashboard/static/dist"
 fi
 
 if [ "$BUILD_LIB" = true ]; then
