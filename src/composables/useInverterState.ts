@@ -125,7 +125,6 @@ export interface InverterState {
   dryer_power?: boolean
   latest_version?: string
   dashboard_version?: string
-  console?: string[]
 }
 
 export const state = shallowRef<InverterState>({

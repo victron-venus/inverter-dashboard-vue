@@ -110,7 +110,15 @@ const solarStr = computed(() => {
   return parts.join('+')
 })
 
-const hasSolar = computed(() => Number.parseFloat(prod.value) > 0)
+// Show the solar strip when today, yesterday, or forecast has data (early
+// morning today=0 must not hide yesterday/forecast like a blank dashboard).
+const hasSolar = computed(
+  () =>
+    Number.parseFloat(prod.value) > 0 ||
+    Number.parseFloat(prodY.value) > 0 ||
+    !!fcToday.value ||
+    !!fcTomorrow.value
+)
 const hasGrid = computed(() => Number.parseFloat(grid.value) > 0)
 const hasBattery = computed(
   () => Number.parseFloat(batIn.value) > 0 || Number.parseFloat(batOut.value) > 0

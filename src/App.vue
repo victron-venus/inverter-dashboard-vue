@@ -116,7 +116,6 @@
         :stateVersion="state.version"
       />
 
-      <ConsoleLog :lines="state.console || []" />
     </div>
   </ErrorBoundary>
 </template>
@@ -127,7 +126,6 @@ import AppHeader from './components/AppHeader.vue'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
 import CameraPopup from './components/CameraPopup.vue'
 import ChartPanel from './components/ChartPanel.vue'
-import ConsoleLog from './components/ConsoleLog.vue'
 import DailyStats from './components/DailyStats.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import LoadsTable from './components/LoadsTable.vue'
@@ -141,7 +139,7 @@ import { useConnection } from './composables/useConnection'
 import { useHA } from './composables/useHA'
 import { initSystemNotifications } from './composables/useSystemNotifications'
 import { useTheme } from './composables/useTheme'
-import { formatPower } from './utils'
+import { formatPower, inverterControlFlagKey } from './utils'
 
 const {
   state,
@@ -183,6 +181,11 @@ function onSaveSettings(patch: Record<string, unknown>) {
 const { chartOption, forceUpdateChart } = useChart(isDark)
 
 async function send(action: string, payload: Record<string, unknown> = {}) {
+  // Control flags: publish bare key on Cerbo MQTT (desktop parity).
+  if (action === 'toggle' && typeof payload.entity === 'string') {
+    const flag = inverterControlFlagKey(payload.entity)
+    if (flag) payload = { ...payload, entity: flag }
+  }
   wsSend(action, payload)
 }
 
