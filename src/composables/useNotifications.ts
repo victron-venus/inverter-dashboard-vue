@@ -1,4 +1,5 @@
 import { ref, watch } from 'vue'
+import { isPublicMode } from '../config/publicMode'
 import { state } from './useInverterState'
 
 // Banner + history notifications fed from the notifications[] array that
@@ -75,6 +76,12 @@ function saveDismissedIds() {
  */
 export function dismissBanner(id: string) {
   clearBanner(id)
+  // Public / here.now: local dismiss only — never ack Cerbo.
+  if (isPublicMode()) {
+    dismissedIds.add(id)
+    saveDismissedIds()
+    return
+  }
   // Match inverter-desktop / go WS handlers: platform → AcknowledgeAll,
   // other Victron alarms → SilenceAlarm. Do not send dismiss_notification
   // (unknown to go/IGW). Non-Victron banners stay local-only.

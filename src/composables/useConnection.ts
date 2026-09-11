@@ -1,6 +1,7 @@
 import { markRaw } from 'vue'
 import { apiUrl, gatewaySnapshotPath, isPublicMode } from '../config/publicMode'
 import { logger } from '../logger'
+import { addHistoryPoint } from './useChart'
 import { type InverterState, mqttConnected, state } from './useInverterState'
 import { type GatewaySnapshot, snapshotToState } from './publicGateway'
 
@@ -14,6 +15,12 @@ export function useConnection() {
 
   function processState(newState: InverterState) {
     state.value = markRaw(newState)
+    addHistoryPoint({
+      gt: newState.gt,
+      solar_total: newState.solar_total,
+      battery_power: newState.battery_power,
+      setpoint: newState.setpoint,
+    })
   }
 
   async function pollPublicGateway() {

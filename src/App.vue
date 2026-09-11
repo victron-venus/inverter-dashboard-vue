@@ -10,6 +10,7 @@
           :headerToggles="headerToggles"
           :toggleStates="headerToggleStates"
           :isDark="isDark"
+          :readOnly="readOnly"
           @send="send"
           @toggle-theme="toggleTheme"
           @open-settings="settingsOpen = true"
@@ -23,6 +24,7 @@
         <CameraPopup />
 
         <SettingsDrawer
+          v-if="!readOnly"
           :open="settingsOpen"
           @close="settingsOpen = false"
           @save="onSaveSettings"
@@ -86,6 +88,7 @@
               :showDryer="uiSettings.show_dryer !== false"
               :showDishwasher="uiSettings.show_dishwasher !== false"
               :showHomeSection="uiSettings.show_home_section !== false"
+              :readOnly="readOnly"
               @send="send"
               @number-set="onNumberSet"
               @cover-position="onCoverPosition"
@@ -134,13 +137,16 @@ import SettingsDrawer from './components/SettingsDrawer.vue'
 import SidePanel from './components/SidePanel.vue'
 import StatCards from './components/StatCards.vue'
 import StatusBar from './components/StatusBar.vue'
-import { addHistoryPoint, useChart } from './composables/useChart'
+import { useChart } from './composables/useChart'
 import { useConnection } from './composables/useConnection'
 import { setNotificationCommandSender } from './composables/useNotifications'
 import { useHA } from './composables/useHA'
 import { initSystemNotifications } from './composables/useSystemNotifications'
 import { useTheme } from './composables/useTheme'
+import { isPublicMode } from './config/publicMode'
 import { formatPower, inverterControlFlagKey } from './utils'
+
+const readOnly = isPublicMode()
 
 const {
   state,
@@ -150,7 +156,7 @@ const {
   cleanup: cleanupConnection,
 } = useConnection()
 
-setNotificationCommandSender(wsSend)
+if (!readOnly) setNotificationCommandSender(wsSend)
 
 const {
   haEnabled,
@@ -185,6 +191,7 @@ function onSaveSettings(patch: Record<string, unknown>) {
 const { chartOption, forceUpdateChart } = useChart(isDark)
 
 async function send(action: string, payload: Record<string, unknown> = {}) {
+  if (readOnly) return
   // Control flags: publish bare key on Cerbo MQTT (desktop parity).
   if (action === 'toggle' && typeof payload.entity === 'string') {
     const flag = inverterControlFlagKey(payload.entity)
@@ -316,10 +323,13 @@ const solarSources = computed(() => {
 })
 
 onMounted(async () => {
-  setNotificationCommandSender(wsSend)
+  if (!readOnly) setNotificationCommandSender(wsSend)
+  forceUpdateChart()
   await connectMqtt()
-  initHa()
-  void initSystemNotifications()
+  if (!readOnly) {
+    initHa()
+    void initSystemNotifications()
+  }
 })
 
 onUnmounted(() => {

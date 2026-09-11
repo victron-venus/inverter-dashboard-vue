@@ -51,29 +51,39 @@
           {{ waterLevel || 0 }} cm
         </div>
         <div class="flex gap-1">
-          <button
-            type="button"
-            class="classic-btn"
-            :class="{ 'classic-btn-on': pumpSwitch }"
-            @click="$emit('send', 'toggle', { entity: pumpSwitchEntity })"
-          >
-            {{ $t('sections.pump') }}
-          </button>
-          <button
-            type="button"
-            class="classic-btn"
-            :class="{ 'classic-btn-on': waterValve }"
-            @click="$emit('send', 'toggle', { entity: waterValveEntity })"
-          >
-            {{ $t('sections.valve') }}
-          </button>
+          <template v-if="readOnly">
+            <span class="classic-status" :class="{ 'classic-status-on': pumpSwitch }"
+              >{{ $t('sections.pump') }}</span
+            >
+            <span class="classic-status" :class="{ 'classic-status-on': waterValve }"
+              >{{ $t('sections.valve') }}</span
+            >
+          </template>
+          <template v-else>
+            <button
+              type="button"
+              class="classic-btn"
+              :class="{ 'classic-btn-on': pumpSwitch }"
+              @click="$emit('send', 'toggle', { entity: pumpSwitchEntity })"
+            >
+              {{ $t('sections.pump') }}
+            </button>
+            <button
+              type="button"
+              class="classic-btn"
+              :class="{ 'classic-btn-on': waterValve }"
+              @click="$emit('send', 'toggle', { entity: waterValveEntity })"
+            >
+              {{ $t('sections.valve') }}
+            </button>
+          </template>
         </div>
       </div>
     </div>
 
     <!-- Home Controls -->
     <div
-      v-if="features?.ha !== false && showHomeSection !== false && homeButtons.length > 0"
+      v-if="!readOnly && features?.ha !== false && showHomeSection !== false && homeButtons.length > 0"
       class="classic-card flex-1 min-h-0"
     >
       <div class="classic-header flex items-center gap-1.5">
@@ -158,7 +168,7 @@
     </div>
 
     <!-- HA Numbers (collapsed by default) -->
-    <div v-if="haNumbers.length > 0 && appConfig?.show_ha_numbers !== false" class="classic-card">
+    <div v-if="!readOnly && haNumbers.length > 0 && appConfig?.show_ha_numbers !== false" class="classic-card">
       <div
         class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="numbersExpanded = !numbersExpanded"
@@ -197,7 +207,7 @@
     </div>
 
     <!-- HA Covers (collapsed by default) -->
-    <div v-if="haCovers.length > 0 && appConfig?.show_ha_covers !== false" class="classic-card">
+    <div v-if="!readOnly && haCovers.length > 0 && appConfig?.show_ha_covers !== false" class="classic-card">
       <div
         class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="coversExpanded = !coversExpanded"
@@ -240,7 +250,7 @@
 
     <!-- HA Media Players (collapsed by default) -->
     <div
-      v-if="haMediaPlayers.length > 0 && appConfig?.show_ha_media !== false"
+      v-if="!readOnly && haMediaPlayers.length > 0 && appConfig?.show_ha_media !== false"
       class="classic-card"
     >
       <div
@@ -365,7 +375,7 @@
     </div>
 
     <!-- HA Scenes (collapsed by default) -->
-    <div v-if="haScenes.length > 0 && appConfig?.show_ha_scenes !== false" class="classic-card">
+    <div v-if="!readOnly && haScenes.length > 0 && appConfig?.show_ha_scenes !== false" class="classic-card">
       <div
         class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="scenesExpanded = !scenesExpanded"
@@ -458,6 +468,8 @@ defineProps<{
     show_ha_scenes?: boolean
     show_ha_weather?: boolean
   } | null
+  /** Public / here.now: status display only — no command controls. */
+  readOnly?: boolean
 }>()
 
 defineEmits<{
