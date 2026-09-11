@@ -6,10 +6,46 @@ export function useConnection() {
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+  let pollTimer: ReturnType<typeof setInterval> | null = null
   let lastMessageTime = Date.now()
 
   function processState(newState: InverterState) {
     state.value = markRaw(newState)
+  }
+
+  async function pollHttpState() {
+    // Fallback when WS is down or silent: /api/state carries live tiles (1.8.17+).
+    if (ws && ws.readyState === WebSocket.OPEN && Date.now() - lastMessageTime < 8000) {
+      return
+    }
+    try {
+      const resp = await fetch('/api/state', { cache: 'no-store' })
+      if (!resp.ok) return
+      const data = (await resp.json()) as InverterState & { ok?: boolean }
+      if (!data || data.ok === false) return
+      processState({ ...state.value, ...data })
+      if (typeof data.gt === 'number' || typeof data.battery_soc === 'number') {
+        mqttConnected.value = true
+        lastMessageTime = Date.now()
+      }
+    } catch {
+      // ignore — WS reconnect path owns hard failures
+    }
+  }
+
+  function startHttpPoll() {
+    if (pollTimer) return
+    void pollHttpState()
+    pollTimer = setInterval(() => {
+      void pollHttpState()
+    }, 3000)
+  }
+
+  function stopHttpPoll() {
+    if (pollTimer) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
   }
 
   function connectMqtt() {
@@ -19,6 +55,7 @@ export function useConnection() {
       reconnectTimer = null
     }
 
+    startHttpPoll()
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
     try {
       ws = new WebSocket(`${proto}//${location.host}/ws`)
@@ -33,6 +70,7 @@ export function useConnection() {
       logger.log('WebSocket connected')
       lastMessageTime = Date.now()
       startHeartbeat()
+      startHttpPoll()
     }
 
     ws.onclose = () => {
@@ -88,6 +126,7 @@ export function useConnection() {
       ws = null
     }
     stopHeartbeat()
+    stopHttpPoll()
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
       reconnectTimer = null
