@@ -23,29 +23,38 @@ export function setChartUpdateCallback(cb: () => void) {
   chartUpdateCallback = cb
 }
 
+export function historyLength(): number {
+  return historyData.timestamps.length
+}
+
 export function addHistoryPoint(newState: {
   gt?: number
   solar_total?: number
   battery_power?: number
   setpoint?: number
 }) {
-  if (newState.gt !== undefined) {
-    const now = Date.now() / 1000
-    historyData.timestamps.push(now)
-    historyData.grid.push(newState.gt || 0)
-    historyData.solar.push(newState.solar_total || 0)
-    historyData.battery.push(newState.battery_power || 0)
-    historyData.setpoint.push(newState.setpoint || 0)
-    if (historyData.timestamps.length > MAX_HISTORY_POINTS) {
-      historyData.timestamps.shift()
-      historyData.grid.shift()
-      historyData.solar.shift()
-      historyData.battery.shift()
-      historyData.setpoint.shift()
-    }
-    // Trigger chart update
-    if (chartUpdateCallback) chartUpdateCallback()
+  // Seed whenever any power series is present (public snapshot may omit setpoint).
+  if (
+    newState.gt === undefined &&
+    newState.solar_total === undefined &&
+    newState.battery_power === undefined
+  ) {
+    return
   }
+  const now = Date.now() / 1000
+  historyData.timestamps.push(now)
+  historyData.grid.push(newState.gt || 0)
+  historyData.solar.push(newState.solar_total || 0)
+  historyData.battery.push(newState.battery_power || 0)
+  historyData.setpoint.push(newState.setpoint || 0)
+  if (historyData.timestamps.length > MAX_HISTORY_POINTS) {
+    historyData.timestamps.shift()
+    historyData.grid.shift()
+    historyData.solar.shift()
+    historyData.battery.shift()
+    historyData.setpoint.shift()
+  }
+  if (chartUpdateCallback) chartUpdateCallback()
 }
 
 export function useChart(isDarkRef: Ref<boolean>) {
@@ -54,6 +63,8 @@ export function useChart(isDarkRef: Ref<boolean>) {
 
   // Register callback so addHistoryPoint triggers chart updates
   setChartUpdateCallback(() => updateChartOption(false))
+  // Always paint axes immediately so publicMode never shows a blank broken area
+  // before the first snapshot arrives (and when history stays empty).
 
   function updateChartOption(force: boolean) {
     const now = Date.now()
@@ -163,6 +174,9 @@ export function useChart(isDarkRef: Ref<boolean>) {
   function forceUpdateChart() {
     updateChartOption(true)
   }
+
+  // Initial empty axes (legend + grid) — not `{}` which leaves a blank pane.
+  updateChartOption(true)
 
   return { chartOption, forceUpdateChart }
 }

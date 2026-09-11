@@ -152,3 +152,47 @@
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+
+/* Read-only status chips (publicMode) — look like buttons but are not operable */
+.classic-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 2px 6px !important;
+  margin: 1px !important;
+  border-radius: 4px !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  border: 1px solid #555 !important;
+  background-color: #333 !important;
+  color: #bbb !important;
+  cursor: default !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0.85 !important;
+  text-transform: none !important;
+  height: auto !important;
+  line-height: normal !important;
+}
+.classic-status-on {
+  background-color: #2e7d32 !important;
+  border-color: #4caf50 !important;
+  color: #ffffff !important;
+}
+.dark .classic-status {
+  background-color: #333 !important;
+  color: #bbb !important;
+  border-color: #555 !important;
+}
+:not(.dark) .classic-status {
+  background-color: #ddd !important;
+  color: #333 !important;
+  border-color: #ccc !important;
+}
+:not(.dark) .classic-status-on {
+  background-color: #2e7d32 !important;
+  border-color: #4caf50 !important;
+  color: #ffffff !important;
+}

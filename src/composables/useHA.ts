@@ -7,6 +7,7 @@ import type {
   HaSensorDisplay,
   HaWeatherDisplay,
 } from '../types/ha'
+import { isPublicMode } from '../config/publicMode'
 import { resolveHeaderToggleState } from '../utils'
 import { state } from './useInverterState'
 
@@ -71,12 +72,16 @@ export function useHA() {
     return power !== undefined && (power as number) > 10
   })
 
+  const publicMode = isPublicMode()
+
   const homeButtons = computed(() => {
+    if (publicMode) return []
     const uiConfig = state.value.ui_config || {}
     return uiConfig.home_buttons || []
   })
 
   const headerToggles = computed(() => {
+    if (publicMode) return []
     const uiConfig = state.value.ui_config || {}
     if (uiConfig.header_toggles && uiConfig.header_toggles.length > 0) {
       return uiConfig.header_toggles

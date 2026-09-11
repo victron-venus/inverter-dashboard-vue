@@ -177,6 +177,22 @@ Test files use Vitest + @vue/test-utils + Happy DOM.
 - [inverter-monitoring](https://github.com/victron-venus/inverter-monitoring) - Telegraf/InfluxDB/Grafana Stack
 - [dbus-mqtt-battery](https://github.com/victron-venus/dbus-mqtt-battery) - JBD BMS to D-Bus Bridge
 
+
+
+## Public / here.now mode
+
+Read-only hosting (e.g. [here.now](https://here.now)) can drive tiles from **inverter-gateway** without the Python/Go MQTT backend and without an injected `public-adapter.js`.
+
+Enable any of:
+
+1. Build: `VITE_PUBLIC_MODE=true npm run build:spa`
+2. HTML meta: `<meta name="inverter-public-mode" content="true" />`
+3. Runtime: `window.__INVERTER_PUBLIC__ = true`
+
+Snapshot URL defaults to same-origin `/api/gateway/snapshot` (override with `VITE_GATEWAY_SNAPSHOT_PATH` or meta `inverter-gateway-snapshot`). Optional `VITE_API_BASE` prefixes API paths.
+
+Proxy that path to gateway `GET /v1/snapshot` (plus health). Writes / WebSocket MQTT are disabled in public mode; the SPA polls the snapshot every ~3s.
+
 ## License
 
 MIT
