@@ -14,6 +14,7 @@ import {
   bannerNotifications,
   clearBanner,
   dismissBanner,
+  setNotificationCommandSender,
   historyNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -78,4 +79,31 @@ describe('useNotifications', () => {
     markAllNotificationsRead()
     expect(unreadNotificationCount()).toBe(0)
   })
+
+  it('asks backend dismiss_notification for platform banners (Cerbo ack)', () => {
+    const sent: Array<{ action: string; payload?: Record<string, unknown> }> = []
+    setNotificationCommandSender((action, payload) => {
+      sent.push({ action, payload })
+    })
+    upsertBanner({ id: 'victron-platform-0-3', level: 'alarm', title: 'High cell', body: 'BMS' })
+    dismissBanner('victron-platform-0-3')
+    expect(bannerNotifications.value.find((b) => b.id === 'victron-platform-0-3')).toBeUndefined()
+    expect(sent).toEqual([{ action: 'dismiss_notification', payload: { id: 'victron-platform-0-3' } }])
+    // platform ids are not stored in local dismissed set
+    expect(lsStore.get('dismissed_banner_ids') ?? '[]').not.toContain('victron-platform-0-3')
+    setNotificationCommandSender(null)
+  })
+
+  it('dismisses control/grafana banners locally and notifies backend', () => {
+    const sent: string[] = []
+    setNotificationCommandSender((action) => {
+      sent.push(action)
+    })
+    upsertBanner({ id: 'grafana-Foo-firing', level: 'warning', title: 'Foo', body: '' })
+    dismissBanner('grafana-Foo-firing')
+    expect(sent).toEqual(['dismiss_notification'])
+    expect(lsStore.get('dismissed_banner_ids')).toContain('grafana-Foo-firing')
+    setNotificationCommandSender(null)
+  })
+
 })
