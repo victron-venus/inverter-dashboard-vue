@@ -3,10 +3,10 @@
   "files": {
     "includes": [
       "**",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!**/src-tauri/target/**",
-      "!**/src-tauri/gen/**"
+      "!**/dist",
+      "!**/node_modules",
+      "!**/src-tauri/target",
+      "!**/src-tauri/gen"
     ]
   },
   "formatter": {
@@ -27,6 +27,11 @@
       "quoteStyle": "single",
       "trailingCommas": "es5",
       "semicolons": "asNeeded"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }
