@@ -54,6 +54,10 @@ Updates flow: changes here → PR → CI builds `dist/` + `build.lib/` → consu
 - **Responsive design** with Tailwind CSS v4
 - **Mobile-friendly** viewport and touch support
 
+## Keyboard access
+
+Use Tab to reach section headers and notification entries, then Enter or Space to expand a section or mark a notification as read. Settings and camera popups keep keyboard focus inside the open dialog; press Escape or activate the labelled close button to dismiss them and return to the opener. Public mode continues to hide command controls.
+
 ## Tech Stack
 
 - Vue 3 (Composition API + `<script setup>`)
