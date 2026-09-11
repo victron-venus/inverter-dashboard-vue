@@ -25,6 +25,16 @@ const MAX_HISTORY = 100
 export const bannerNotifications = ref<BannerNotification[]>([])
 export const historyNotifications = ref<HistoryEntry[]>([])
 
+/** Optional WS/command sender injected by App (IGW / MQTT ack path). */
+let sendCommand: ((action: string, payload?: Record<string, unknown>) => void) | null = null
+
+/** Wire the dashboard connection send() so dismiss can ack on Cerbo via IGW. */
+export function setNotificationCommandSender(
+  fn: ((action: string, payload?: Record<string, unknown>) => void) | null
+) {
+  sendCommand = fn
+}
+
 // ---------------------------------------------------------------------------
 // Dismissal persistence — dismissed banners stay hidden until a new id arrives
 // ---------------------------------------------------------------------------
@@ -57,11 +67,22 @@ function saveDismissedIds() {
   }
 }
 
-/** User dismissed the banner — hidden until a new notification reuses a fresh id. */
+/**
+ * User dismissed the banner (X) — same UX as inverter-desktop.
+ * Asks the dashboard backend to drop the id and, for Victron platform
+ * banners, AcknowledgeAll on Cerbo (IGW command or LAN MQTT).
+ * Non-platform ids stay locally dismissed until a fresh id arrives.
+ */
 export function dismissBanner(id: string) {
+  clearBanner(id)
+  sendCommand?.('dismiss_notification', { id })
+  if (id.startsWith('victron-platform-')) {
+    // Cerbo ack is server-side; do not persist platform ids in localStorage —
+    // desktop uses Rust user_dismissed until Active clears.
+    return
+  }
   dismissedIds.add(id)
   saveDismissedIds()
-  clearBanner(id)
 }
 
 /** Add or replace by id (dedupe for re-published notifications). */

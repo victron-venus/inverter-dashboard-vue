@@ -136,6 +136,7 @@ import StatCards from './components/StatCards.vue'
 import StatusBar from './components/StatusBar.vue'
 import { addHistoryPoint, useChart } from './composables/useChart'
 import { useConnection } from './composables/useConnection'
+import { setNotificationCommandSender } from './composables/useNotifications'
 import { useHA } from './composables/useHA'
 import { initSystemNotifications } from './composables/useSystemNotifications'
 import { useTheme } from './composables/useTheme'
@@ -148,6 +149,9 @@ const {
   send: wsSend,
   cleanup: cleanupConnection,
 } = useConnection()
+
+setNotificationCommandSender(wsSend)
+
 const {
   haEnabled,
   haConnected,
@@ -312,12 +316,14 @@ const solarSources = computed(() => {
 })
 
 onMounted(async () => {
+  setNotificationCommandSender(wsSend)
   await connectMqtt()
   initHa()
   void initSystemNotifications()
 })
 
 onUnmounted(() => {
+  setNotificationCommandSender(null)
   cleanupConnection()
   cleanupHa()
 })
