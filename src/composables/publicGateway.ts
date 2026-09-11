@@ -34,6 +34,10 @@ export type GatewaySnapshot = {
   [key: string]: SnapSection | undefined
 }
 
+type BatteryEntry = NonNullable<InverterState['batteries']>[number]
+type MpptEntry = NonNullable<InverterState['mppt_chargers']>[number]
+type PvEntry = NonNullable<InverterState['pv_inverters']>[number]
+
 function voltageSoc(v: number): number {
   const pct = ((v - V_SOC_MIN) / (V_SOC_MAX - V_SOC_MIN)) * 100.0
   return Math.round(Math.max(0, Math.min(100, pct)))
@@ -53,7 +57,7 @@ function groupByInstance(section: SnapSection | undefined): Record<string, SnapS
     if (slash < 0) continue
     const inst = key.slice(0, slash)
     const path = key.slice(slash + 1)
-    if (!out[inst]) out[inst] = {}
+    out[inst] ??= {}
     out[inst][path] = section[key]
   }
   return out
@@ -63,6 +67,36 @@ function num(v: unknown): number | null {
   return typeof v === 'number' && !Number.isNaN(v) ? v : null
 }
 
+/** Coerce gateway leaf to string; only string/number are accepted (avoids "[object Object]"). */
+function asString(v: unknown): string | null {
+  if (typeof v === 'string') return v
+  if (typeof v === 'number' && !Number.isNaN(v)) return String(v)
+  return null
+}
+
+function deviceName(e: SnapSection, fallback: string): string {
+  return (asString(e.CustomName) || asString(e.ProductName) || fallback).trim()
+}
+
+function sortedInstanceKeys(map: Record<string, SnapSection>): string[] {
+  return Object.keys(map).sort(
+    (a, b) => (Number.parseInt(a, 10) || 0) - (Number.parseInt(b, 10) || 0),
+  )
+}
+
+function firstInstance(map: Record<string, SnapSection>): SnapSection | undefined {
+  const key = Object.keys(map)[0]
+  return key == null ? undefined : map[key]
+}
+
+function sumPresent(values: Array<number | null>): number | null {
+  let total: number | null = null
+  for (const v of values) {
+    if (v != null) total = (total ?? 0) + v
+  }
+  return total
+}
+
 function stripNulls<T extends object>(obj: T): T {
   for (const k of Object.keys(obj) as (keyof T)[]) {
     if (obj[k] === null || obj[k] === undefined) delete obj[k]
@@ -70,43 +104,19 @@ function stripNulls<T extends object>(obj: T): T {
   return obj
 }
 
-/** Map inverter-gateway /v1/snapshot → dashboard InverterState (public read-only). */
-export function snapshotToState(snap: GatewaySnapshot | null | undefined): InverterState & { ok: boolean } {
-  snap = snap || {}
-  const system = snap.system || {}
-  const sys = (path: string) => system[`0/${path}`]
+function extractBatteries(section: SnapSection | undefined): {
+  batteries: BatteryEntry[]
+  shunt: { voltage: number | null; current: number | null; power: number | null } | null
+} {
+  const batteriesMap = groupByInstance(section)
+  const batteries: BatteryEntry[] = []
+  let shunt: { voltage: number | null; current: number | null; power: number | null } | null = null
 
-  const g1 = num(sys('Ac/Grid/L1/Power'))
-  const g2 = num(sys('Ac/Grid/L2/Power'))
-  const g3 = num(sys('Ac/Grid/L3/Power'))
-  const t1 = num(sys('Ac/Consumption/L1/Power'))
-  const t2 = num(sys('Ac/Consumption/L2/Power'))
-  const t3 = num(sys('Ac/Consumption/L3/Power'))
-
-  let gt: number | null = null
-  let tt: number | null = null
-  for (const v of [g1, g2, g3]) {
-    if (v != null) gt = (gt == null ? 0 : gt) + v
-  }
-  for (const v of [t1, t2, t3]) {
-    if (v != null) tt = (tt == null ? 0 : tt) + v
-  }
-
-  const batteriesMap = groupByInstance(snap.battery)
-  const batteries: NonNullable<InverterState['batteries']> = []
-  let shunt: {
-    voltage: number | null
-    current: number | null
-    power: number | null
-  } | null = null
-
-  for (const inst of Object.keys(batteriesMap).sort(
-    (a, b) => (Number.parseInt(a, 10) || 0) - (Number.parseInt(b, 10) || 0),
-  )) {
+  for (const inst of sortedInstanceKeys(batteriesMap)) {
     const e = batteriesMap[inst]
-    const name = String(e.CustomName || e.ProductName || `Battery ${inst}`).trim()
+    const name = deviceName(e, `Battery ${inst}`)
     const current = num(e['Dc/0/Current'])
-    const entry = {
+    const entry: BatteryEntry = {
       name,
       soc: num(e.Soc) ?? undefined,
       voltage: num(e['Dc/0/Voltage']) ?? undefined,
@@ -124,69 +134,94 @@ export function snapshotToState(snap: GatewaySnapshot | null | undefined): Inver
     }
     batteries.push(entry)
   }
+  return { batteries, shunt }
+}
 
+function resolveBatteryMetrics(
+  sys: (path: string) => unknown,
+  shunt: { voltage: number | null; current: number | null; power: number | null } | null,
+): {
+  battV: number | null
+  battI: number | null
+  battP: number | null
+  battSoc: number | null
+} {
   let battV = num(sys('Dc/Battery/Voltage'))
   let battI = num(sys('Dc/Battery/Current'))
   let battP = num(sys('Dc/Battery/Power'))
   let battSoc: number | null = null
-  if (shunt && shunt.voltage != null) {
+
+  if (shunt?.voltage != null) {
     battSoc = voltageSoc(shunt.voltage)
-    if (battV == null) battV = shunt.voltage
-    if (battI == null) battI = shunt.current
-    if (battP == null) battP = shunt.power
+    battV ??= shunt.voltage
+    battI ??= shunt.current
+    battP ??= shunt.power
   } else if (battV != null) {
     battSoc = voltageSoc(battV)
   }
 
-  const chargersMap = groupByInstance(snap.solarcharger)
-  const mpptChargers: NonNullable<InverterState['mppt_chargers']> = []
-  let mpptTotal = 0
-  for (const inst of Object.keys(chargersMap).sort(
-    (a, b) => (Number.parseInt(a, 10) || 0) - (Number.parseInt(b, 10) || 0),
-  )) {
+  return { battV, battI, battP, battSoc }
+}
+
+function extractMppt(section: SnapSection | undefined): { chargers: MpptEntry[]; total: number } {
+  const chargersMap = groupByInstance(section)
+  const chargers: MpptEntry[] = []
+  let total = 0
+  for (const inst of sortedInstanceKeys(chargersMap)) {
     const e = chargersMap[inst]
     const power = num(e['Yield/Power']) || 0
-    mpptTotal += power
-    mpptChargers.push({
-      name: String(e.CustomName || e.ProductName || `MPPT ${inst}`).trim(),
+    total += power
+    chargers.push({
+      name: deviceName(e, `MPPT ${inst}`),
       power,
       pv_voltage: num(e['Pv/V']) || 0,
       current: num(e['Dc/0/Current']) || 0,
     })
   }
+  return { chargers, total }
+}
 
-  const pvMap = groupByInstance(snap.pvinverter)
-  const pvInverters: NonNullable<InverterState['pv_inverters']> = []
-  let pvTotal = 0
-  for (const inst of Object.keys(pvMap).sort(
-    (a, b) => (Number.parseInt(a, 10) || 0) - (Number.parseInt(b, 10) || 0),
-  )) {
+function extractPvInverters(section: SnapSection | undefined): { inverters: PvEntry[]; total: number } {
+  const pvMap = groupByInstance(section)
+  const inverters: PvEntry[] = []
+  let total = 0
+  for (const inst of sortedInstanceKeys(pvMap)) {
     const e = pvMap[inst]
     let power = num(e['Ac/Power'])
-    if (power == null) power = num(e['Ac/L1/Power']) || 0
-    pvTotal += power
-    pvInverters.push({
-      name: String(e.CustomName || e.ProductName || `PV Inverter ${inst}`).trim(),
+    power ??= num(e['Ac/L1/Power']) || 0
+    total += power
+    inverters.push({
+      name: deviceName(e, `PV Inverter ${inst}`),
       power,
       voltage: num(e['Ac/L1/Voltage']) ?? undefined,
       current: num(e['Ac/L1/Current']) ?? undefined,
     })
   }
+  return { inverters, total }
+}
 
+function resolveSolarTotal(
+  sys: (path: string) => unknown,
+  mpptChargers: MpptEntry[],
+  pvInverters: PvEntry[],
+  mpptTotal: number,
+  pvTotal: number,
+): number {
   let solarTotal = num(sys('Dc/Pv/Power'))
   if (mpptChargers.length || pvInverters.length) {
-    solarTotal = mpptTotal + pvTotal
-  } else if (solarTotal == null) {
-    solarTotal = 0
+    return mpptTotal + pvTotal
   }
+  return solarTotal ?? 0
+}
 
-  const loadsMap = groupByInstance(snap.acload)
+function extractLoads(section: SnapSection | undefined): Record<string, number> {
+  const loadsMap = groupByInstance(section)
   const loads: Record<string, number> = {}
   for (const inst of Object.keys(loadsMap)) {
     const e = loadsMap[inst]
-    const name = String(e.CustomName || e.ProductName || `Load ${inst}`).trim()
+    const name = deviceName(e, `Load ${inst}`)
     let power = num(e['Ac/Power'])
-    if (power == null) power = num(e['Ac/L1/Power'])
+    power ??= num(e['Ac/L1/Power'])
     if (power == null) continue
     let key = name
     let n = 2
@@ -196,43 +231,72 @@ export function snapshotToState(snap: GatewaySnapshot | null | undefined): Inver
     }
     loads[key] = power
   }
+  return loads
+}
 
-  const vebusMap = groupByInstance(snap.vebus)
+function extractVebus(section: SnapSection | undefined): {
+  inverterState: string | null
+  setpoint: number | null
+} {
+  const vebusMap = groupByInstance(section)
   let inverterState: string | null = null
   let setpoint: number | null = null
   for (const inst of Object.keys(vebusMap)) {
     const e = vebusMap[inst]
-    if (e.State != null) {
-      const code = Number.parseInt(String(e.State), 10)
+    const stateRaw = asString(e.State)
+    if (stateRaw != null) {
+      const code = Number.parseInt(stateRaw, 10)
       inverterState = INVERTER_STATES[code] || `? (${code})`
     }
     const sp = num(e['Hub4/L1/AcPowerSetpoint'])
     if (sp != null) setpoint = sp
     if (inverterState != null) break
   }
+  return { inverterState, setpoint }
+}
 
-  let waterLevel: number | null = null
-  const tankMap = groupByInstance(snap.tank)
-  for (const inst of Object.keys(tankMap)) {
-    waterLevel = num(tankMap[inst].Level)
-    if (waterLevel != null) break
+function firstNumericField(section: SnapSection | undefined, field: string): number | null {
+  const map = groupByInstance(section)
+  for (const inst of Object.keys(map)) {
+    const v = num(map[inst][field])
+    if (v != null) return v
   }
+  return null
+}
 
-  let evPower: number | null = null
-  const evMap = groupByInstance(snap.ev)
-  for (const inst of Object.keys(evMap)) {
-    evPower = num(evMap[inst]['Ac/Power'])
-    break
-  }
-  let evChargingKw: number | null = null
-  const evcMap = groupByInstance(snap.evcharger)
-  for (const inst of Object.keys(evcMap)) {
-    const w = num(evcMap[inst]['Ac/Power'])
-    if (w != null) {
-      evChargingKw = w / 1000.0
-      break
-    }
-  }
+function firstEvPower(section: SnapSection | undefined): number | null {
+  const first = firstInstance(groupByInstance(section))
+  return first == null ? null : num(first['Ac/Power'])
+}
+
+/** Map inverter-gateway /v1/snapshot → dashboard InverterState (public read-only). */
+export function snapshotToState(snap: GatewaySnapshot | null | undefined): InverterState & { ok: boolean } {
+  const data = snap ?? {}
+  const system = data.system ?? {}
+  const sys = (path: string) => system[`0/${path}`]
+
+  const g1 = num(sys('Ac/Grid/L1/Power'))
+  const g2 = num(sys('Ac/Grid/L2/Power'))
+  const g3 = num(sys('Ac/Grid/L3/Power'))
+  const t1 = num(sys('Ac/Consumption/L1/Power'))
+  const t2 = num(sys('Ac/Consumption/L2/Power'))
+  const t3 = num(sys('Ac/Consumption/L3/Power'))
+  const gt = sumPresent([g1, g2, g3])
+  const tt = sumPresent([t1, t2, t3])
+
+  const { batteries, shunt } = extractBatteries(data.battery)
+  const { battV, battI, battP, battSoc } = resolveBatteryMetrics(sys, shunt)
+
+  const { chargers: mpptChargers, total: mpptTotal } = extractMppt(data.solarcharger)
+  const { inverters: pvInverters, total: pvTotal } = extractPvInverters(data.pvinverter)
+  const solarTotal = resolveSolarTotal(sys, mpptChargers, pvInverters, mpptTotal, pvTotal)
+
+  const loads = extractLoads(data.acload)
+  const { inverterState, setpoint } = extractVebus(data.vebus)
+  const waterLevel = firstNumericField(data.tank, 'Level')
+  const evPower = firstEvPower(data.ev)
+  const evChargerW = firstNumericField(data.evcharger, 'Ac/Power')
+  const evChargingKw = evChargerW != null ? evChargerW / 1000.0 : null
 
   const state = {
     ok: true,
@@ -244,7 +308,7 @@ export function snapshotToState(snap: GatewaySnapshot | null | undefined): Inver
     tt: tt ?? undefined,
     t1: t1 ?? undefined,
     t2: t2 ?? undefined,
-    solar_total: solarTotal ?? undefined,
+    solar_total: solarTotal,
     mppt_total: mpptTotal,
     mppt_chargers: mpptChargers,
     pv_inverters: pvInverters,
