@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "build:spa": "tsc && vite build",
-    "build:lib": "tsc && vite build --mode lib",
+    "build": "vue-tsc --noEmit && vite build",
+    "build:spa": "vue-tsc --noEmit && vite build",
+    "build:lib": "vue-tsc --noEmit && vite build --mode lib",
     "build:all": "npm run build:spa && npm run build:lib",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "vue-tsc --noEmit",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --write",
     "preview": "vite preview"
@@ -26,13 +26,14 @@
     "vue-i18n": "^11"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.16",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.5.0",
-    "biome": "^0.3.3",
     "happy-dom": "^20.14.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "~7.0.2",
+    "typescript": "5.9.3",
     "vite": "^8.2.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "vue-tsc": "3.3.11"
   }
 }

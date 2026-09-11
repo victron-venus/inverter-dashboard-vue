@@ -6,17 +6,11 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - '**.json'
-      - '**.yaml'
-      - '**.yml'
   pull_request:
     branches: [main, develop]
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - '**.json'
-      - '**.yaml'
-      - '**.yml'
 
 env:
   NODE_VERSION: '22'
@@ -71,7 +65,7 @@ jobs:
       - run: npm ci --ignore-scripts
 
       - name: Run tests
-        run: npm run test --ignore-scripts || echo "No tests configured yet"
+        run: npm run test --ignore-scripts
 
   build-preview:
     name: Build Preview
