@@ -45,23 +45,24 @@
       >
         {{ $t('notifications.noNotifications') }}
       </div>
-      <div
+      <button
+        type="button"
         v-for="n in historyNotifications"
         :key="n.id + n.timestamp"
-        class="px-2 py-1 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+        class="block w-full text-left px-2 py-1 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
         :class="{ 'opacity-50': n.read }"
         @click="markNotificationRead(n.id)"
       >
-        <div class="flex items-start justify-between gap-1">
+        <span class="flex items-start justify-between gap-1">
           <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">{{
             n.title
           }}</span>
           <span class="text-[8px] text-slate-400 whitespace-nowrap ml-1">{{
             formatTime(n.timestamp)
           }}</span>
-        </div>
-        <div class="text-[9px] text-slate-500 truncate">{{ n.body }}</div>
-      </div>
+        </span>
+        <span class="block text-[9px] text-slate-500 truncate">{{ n.body }}</span>
+      </button>
     </div>
   </div>
 </template>

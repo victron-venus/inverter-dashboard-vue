@@ -144,13 +144,15 @@
 
     <!-- HA Sensors (collapsed by default) -->
     <div v-if="haSensors.length > 0 && appConfig?.show_ha_sensors !== false" class="classic-card">
-      <div
-        class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+      <button
+        type="button"
+        :aria-expanded="sensorsExpanded"
+        class="w-full text-left classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="sensorsExpanded = !sensorsExpanded"
       >
         <Gauge :size="10" /> {{ $t('sections.sensors') }} ({{ haSensors.length }})
         <span class="ml-auto text-[10px]">{{ sensorsExpanded ? '▼' : '▶' }}</span>
-      </div>
+      </button>
       <div v-if="sensorsExpanded" class="p-1 flex flex-col gap-0.5">
         <div
           v-for="sensor in haSensors"
@@ -169,13 +171,15 @@
 
     <!-- HA Numbers (collapsed by default) -->
     <div v-if="!readOnly && haNumbers.length > 0 && appConfig?.show_ha_numbers !== false" class="classic-card">
-      <div
-        class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+      <button
+        type="button"
+        :aria-expanded="numbersExpanded"
+        class="w-full text-left classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="numbersExpanded = !numbersExpanded"
       >
         <Sliders :size="10" /> {{ $t('sections.numbers') }} ({{ haNumbers.length }})
         <span class="ml-auto text-[10px]">{{ numbersExpanded ? '▼' : '▶' }}</span>
-      </div>
+      </button>
       <div v-if="numbersExpanded" class="p-1 flex flex-col gap-1">
         <div v-for="num in haNumbers" :key="num.entity_id" class="flex flex-col gap-0.5">
           <div class="flex justify-between items-center px-1">
@@ -208,13 +212,15 @@
 
     <!-- HA Covers (collapsed by default) -->
     <div v-if="!readOnly && haCovers.length > 0 && appConfig?.show_ha_covers !== false" class="classic-card">
-      <div
-        class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+      <button
+        type="button"
+        :aria-expanded="coversExpanded"
+        class="w-full text-left classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="coversExpanded = !coversExpanded"
       >
         <Blinds :size="10" /> {{ $t('sections.covers') }} ({{ haCovers.length }})
         <span class="ml-auto text-[10px]">{{ coversExpanded ? '▼' : '▶' }}</span>
-      </div>
+      </button>
       <div v-if="coversExpanded" class="p-1 flex flex-col gap-1">
         <div v-for="cover in haCovers" :key="cover.entity_id" class="flex flex-col gap-0.5">
           <div class="flex justify-between items-center px-1">
@@ -253,13 +259,15 @@
       v-if="!readOnly && haMediaPlayers.length > 0 && appConfig?.show_ha_media !== false"
       class="classic-card"
     >
-      <div
-        class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+      <button
+        type="button"
+        :aria-expanded="mediaExpanded"
+        class="w-full text-left classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="mediaExpanded = !mediaExpanded"
       >
         <Play :size="10" /> {{ $t('sections.media') }} ({{ haMediaPlayers.length }})
         <span class="ml-auto text-[10px]">{{ mediaExpanded ? '▼' : '▶' }}</span>
-      </div>
+      </button>
       <div v-if="mediaExpanded" class="p-1 flex flex-col gap-0.5">
         <div
           v-for="mp in haMediaPlayers"
@@ -376,13 +384,15 @@
 
     <!-- HA Scenes (collapsed by default) -->
     <div v-if="!readOnly && haScenes.length > 0 && appConfig?.show_ha_scenes !== false" class="classic-card">
-      <div
-        class="classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+      <button
+        type="button"
+        :aria-expanded="scenesExpanded"
+        class="w-full text-left classic-header flex items-center gap-1.5 cursor-pointer hover:opacity-80"
         @click="scenesExpanded = !scenesExpanded"
       >
         <Sparkles :size="10" /> {{ $t('sections.scenes') }} ({{ haScenes.length }})
         <span class="ml-auto text-[10px]">{{ scenesExpanded ? '▼' : '▶' }}</span>
-      </div>
+      </button>
       <div v-if="scenesExpanded" class="p-1 flex flex-wrap gap-0.5">
         <button
           type="button"
