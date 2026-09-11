@@ -1,6 +1,8 @@
 import { markRaw } from 'vue'
+import { apiUrl, gatewaySnapshotPath, isPublicMode } from '../config/publicMode'
 import { logger } from '../logger'
 import { type InverterState, mqttConnected, state } from './useInverterState'
+import { type GatewaySnapshot, snapshotToState } from './publicGateway'
 
 export function useConnection() {
   let ws: WebSocket | null = null
@@ -8,9 +10,33 @@ export function useConnection() {
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let lastMessageTime = Date.now()
+  const publicMode = isPublicMode()
 
   function processState(newState: InverterState) {
     state.value = markRaw(newState)
+  }
+
+  async function pollPublicGateway() {
+    try {
+      const resp = await fetch(apiUrl(gatewaySnapshotPath()), {
+        cache: 'no-store',
+        credentials: 'same-origin',
+      })
+      if (!resp.ok) return
+      const snap = (await resp.json()) as GatewaySnapshot
+      const data = snapshotToState(snap)
+      processState({ ...state.value, ...data })
+      if (
+        typeof data.gt === 'number' ||
+        typeof data.battery_soc === 'number' ||
+        typeof data.battery_power === 'number'
+      ) {
+        mqttConnected.value = true
+        lastMessageTime = Date.now()
+      }
+    } catch {
+      // keep polling
+    }
   }
 
   async function pollHttpState() {
@@ -19,7 +45,7 @@ export function useConnection() {
       return
     }
     try {
-      const resp = await fetch('/api/state', { cache: 'no-store' })
+      const resp = await fetch(apiUrl('/api/state'), { cache: 'no-store' })
       if (!resp.ok) return
       const data = (await resp.json()) as InverterState & { ok?: boolean }
       if (!data || data.ok === false) return
@@ -35,9 +61,10 @@ export function useConnection() {
 
   function startHttpPoll() {
     if (pollTimer) return
-    void pollHttpState()
+    const tick = publicMode ? pollPublicGateway : pollHttpState
+    void tick()
     pollTimer = setInterval(() => {
-      void pollHttpState()
+      void tick()
     }, 3000)
   }
 
@@ -48,7 +75,16 @@ export function useConnection() {
     }
   }
 
+  function connectPublic() {
+    startHttpPoll()
+  }
+
   function connectMqtt() {
+    if (publicMode) {
+      connectPublic()
+      return
+    }
+
     if (ws && ws.readyState === WebSocket.OPEN) return
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
@@ -115,6 +151,10 @@ export function useConnection() {
   }
 
   function send(action: string, payload: Record<string, unknown> = {}) {
+    if (publicMode) {
+      // Read-only public host — writes disabled
+      return
+    }
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action, ...payload }))
     }
@@ -137,6 +177,10 @@ export function useConnection() {
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        if (publicMode) {
+          void pollPublicGateway()
+          return
+        }
         if (!ws || ws.readyState !== WebSocket.OPEN) {
           connectMqtt()
         }
@@ -144,6 +188,10 @@ export function useConnection() {
     })
 
     window.addEventListener('online', () => {
+      if (publicMode) {
+        void pollPublicGateway()
+        return
+      }
       ws?.close()
       setTimeout(connectMqtt, 500)
     })
