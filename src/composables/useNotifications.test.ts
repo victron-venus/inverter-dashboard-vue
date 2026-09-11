@@ -80,7 +80,7 @@ describe('useNotifications', () => {
     expect(unreadNotificationCount()).toBe(0)
   })
 
-  it('asks backend dismiss_notification for platform banners (Cerbo ack)', () => {
+  it('acks platform banners via acknowledge_all_notifications (Cerbo / IGW)', () => {
     const sent: Array<{ action: string; payload?: Record<string, unknown> }> = []
     setNotificationCommandSender((action, payload) => {
       sent.push({ action, payload })
@@ -88,20 +88,34 @@ describe('useNotifications', () => {
     upsertBanner({ id: 'victron-platform-0-3', level: 'alarm', title: 'High cell', body: 'BMS' })
     dismissBanner('victron-platform-0-3')
     expect(bannerNotifications.value.find((b) => b.id === 'victron-platform-0-3')).toBeUndefined()
-    expect(sent).toEqual([{ action: 'dismiss_notification', payload: { id: 'victron-platform-0-3' } }])
+    expect(sent).toEqual([
+      { action: 'acknowledge_all_notifications', payload: { id: 'victron-platform-0-3' } },
+    ])
     // platform ids are not stored in local dismissed set
     expect(lsStore.get('dismissed_banner_ids') ?? '[]').not.toContain('victron-platform-0-3')
     setNotificationCommandSender(null)
   })
 
-  it('dismisses control/grafana banners locally and notifies backend', () => {
+  it('silences non-platform Victron alarms and dismisses locally', () => {
+    const sent: Array<{ action: string; payload?: Record<string, unknown> }> = []
+    setNotificationCommandSender((action, payload) => {
+      sent.push({ action, payload })
+    })
+    upsertBanner({ id: 'victron-vebus-low-battery', level: 'alarm', title: 'Low battery', body: '' })
+    dismissBanner('victron-vebus-low-battery')
+    expect(sent).toEqual([{ action: 'silence_alarm', payload: { id: 'victron-vebus-low-battery' } }])
+    expect(lsStore.get('dismissed_banner_ids')).toContain('victron-vebus-low-battery')
+    setNotificationCommandSender(null)
+  })
+
+  it('dismisses control/grafana banners locally without WS command', () => {
     const sent: string[] = []
     setNotificationCommandSender((action) => {
       sent.push(action)
     })
     upsertBanner({ id: 'grafana-Foo-firing', level: 'warning', title: 'Foo', body: '' })
     dismissBanner('grafana-Foo-firing')
-    expect(sent).toEqual(['dismiss_notification'])
+    expect(sent).toEqual([])
     expect(lsStore.get('dismissed_banner_ids')).toContain('grafana-Foo-firing')
     setNotificationCommandSender(null)
   })

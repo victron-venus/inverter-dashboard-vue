@@ -75,11 +75,17 @@ function saveDismissedIds() {
  */
 export function dismissBanner(id: string) {
   clearBanner(id)
-  sendCommand?.('dismiss_notification', { id })
+  // Match inverter-desktop / go WS handlers: platform → AcknowledgeAll,
+  // other Victron alarms → SilenceAlarm. Do not send dismiss_notification
+  // (unknown to go/IGW). Non-Victron banners stay local-only.
   if (id.startsWith('victron-platform-')) {
+    sendCommand?.('acknowledge_all_notifications', { id })
     // Cerbo ack is server-side; do not persist platform ids in localStorage —
     // desktop uses Rust user_dismissed until Active clears.
     return
+  }
+  if (id.startsWith('victron-')) {
+    sendCommand?.('silence_alarm', { id })
   }
   dismissedIds.add(id)
   saveDismissedIds()
