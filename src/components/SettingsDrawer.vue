@@ -1,9 +1,9 @@
 <template>
-  <div v-if="open" class="fixed inset-0 z-40 bg-black/60" @click.self="$emit('close')">
+  <ModalDialog :open="open" :label="t('config.title')" class="z-40 bg-black/60" @close="$emit('close')">
     <div class="absolute right-0 top-0 h-full w-72 bg-slate-900 p-3 overflow-y-auto shadow-xl">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-bold text-slate-200">{{ t('config.title') }}</span>
-        <button class="text-slate-400 hover:text-white" @click="$emit('close')">✕</button>
+        <button type="button" aria-label="Close settings" autofocus class="text-slate-400 hover:text-white" @click="$emit('close')">✕</button>
       </div>
 
       <label class="block mb-2">
@@ -51,12 +51,13 @@
         {{ t('config.save') }}
       </button>
     </div>
-  </div>
+  </ModalDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ModalDialog from './ModalDialog.vue'
 import { state } from '../composables/useInverterState'
 
 const props = defineProps<{ open: boolean }>()

@@ -36,5 +36,8 @@ describe('SettingsDrawer', () => {
     expect(saveEv.camera_topic).toBe('frigate/+/events')
     expect(saveEv.mqtt_host).toBe('Cerbo') // seeded from server state
     expect(saveEv.ha_token).toBeUndefined() // masked '***' never sent back
+    await w.get('input').trigger('keydown', { key: 'Escape' })
+    expect(w.emitted('close')).toHaveLength(1)
+    w.unmount()
   })
 })
