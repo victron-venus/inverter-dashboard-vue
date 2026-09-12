@@ -12,6 +12,9 @@ export function useConnection() {
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let lastMessageTime = Date.now()
   const publicMode = isPublicMode()
+  let publicActive = false
+  let publicRequest: AbortController | null = null
+  let publicExpiryTimer: ReturnType<typeof setTimeout> | null = null
 
   function processState(newState: InverterState) {
     state.value = markRaw(newState)
@@ -24,25 +27,37 @@ export function useConnection() {
   }
 
   async function pollPublicGateway() {
+    if (!publicActive || publicRequest) return
+    const request = new AbortController()
+    publicRequest = request
+    const requestTimer = setTimeout(() => request.abort(), 10000)
     try {
       const resp = await fetch(apiUrl(gatewaySnapshotPath()), {
         cache: 'no-store',
         credentials: 'same-origin',
+        signal: request.signal,
       })
       if (!resp.ok) return
-      const snap = (await resp.json()) as GatewaySnapshot
-      const data = snapshotToState(snap)
+      const snap: unknown = await resp.json()
+      if (!snap || typeof snap !== 'object' || Array.isArray(snap)) return
+      const data = snapshotToState(snap as GatewaySnapshot)
+      const hasTelemetry = [data.gt, data.battery_soc, data.battery_power].some(
+        (value) => typeof value === 'number' && Number.isFinite(value),
+      )
+      if (!hasTelemetry || !publicActive || request.signal.aborted) return
       processState({ ...state.value, ...data })
-      if (
-        typeof data.gt === 'number' ||
-        typeof data.battery_soc === 'number' ||
-        typeof data.battery_power === 'number'
-      ) {
-        mqttConnected.value = true
-        lastMessageTime = Date.now()
-      }
+      mqttConnected.value = true
+      if (publicExpiryTimer) clearTimeout(publicExpiryTimer)
+      // Keep the last snapshot visible, but never label an expired snapshot live.
+      publicExpiryTimer = setTimeout(() => {
+        mqttConnected.value = false
+        publicExpiryTimer = null
+      }, 15000)
     } catch {
-      // keep polling
+      // The independent freshness deadline also covers failures and hung requests.
+    } finally {
+      clearTimeout(requestTimer)
+      if (publicRequest === request) publicRequest = null
     }
   }
 
@@ -83,6 +98,8 @@ export function useConnection() {
   }
 
   function connectPublic() {
+    publicActive = true
+    mqttConnected.value = false
     startHttpPoll()
   }
 
@@ -168,6 +185,14 @@ export function useConnection() {
   }
 
   function cleanup() {
+    publicActive = false
+    publicRequest?.abort()
+    publicRequest = null
+    if (publicExpiryTimer) {
+      clearTimeout(publicExpiryTimer)
+      publicExpiryTimer = null
+    }
+    if (publicMode) mqttConnected.value = false
     if (ws) {
       ws.close()
       ws = null
