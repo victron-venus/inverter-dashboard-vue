@@ -8,6 +8,12 @@
 
 Shared Vue 3 frontend SPA and reusable UI component library for Victron Venus ecosystem dashboards.
 
+<!-- ci-release-process:start -->
+## Release process
+
+See the [release strategy](RELEASING.md) for validation, nightly, beta, RC and stable promotion rules, and the [operator runbook](docs/release-workflow.md) for local commands.
+<!-- ci-release-process:end -->
+
 ## Overview
 
 This project provides a modern, reactive web UI that can be embedded into multiple backend implementations:
@@ -164,7 +170,7 @@ Test files use Vitest + @vue/test-utils + Happy DOM.
 - **TypeScript check**: `npm run typecheck`
 - **Tests**: `npm run test`
 - **Build**: `npm run build:all`
-- **Release**: Tags trigger GitHub Actions to build and publish assets
+- **Release**: Qualified RC artifacts are promoted through the [release process](RELEASING.md).
 
 ## Completed Features
 
@@ -172,7 +178,7 @@ Test files use Vitest + @vue/test-utils + Happy DOM.
 - ✅ **Automated Asset Export**: `scripts/export_dist.sh` compiles Vue assets and copies to `inverter-dashboard-go/internal/html/vue-ui` and `inverter-dashboard/src/inverter_dashboard/static`
 - ✅ **Vitest Unit Test Suite**: Tests for composables (`useMqtt`, `useChart`, `useConnection`, `useHA`) and components (`BatterySolarPanel`, `SidePanel`)
 - ✅ **i18n Localization Expansion**: Complete translations for English, German, Dutch, French, Ukrainian
-- ✅ **CI & Package Publishing**: GitHub Actions workflow `.github/workflows/release.yml` builds and publishes to GitHub Releases on tag
+- ✅ **CI & Package Publishing**: Candidate builds and verified promotion use `.github/workflows/release-pipeline.yml`.
 
 ## Related Projects
 

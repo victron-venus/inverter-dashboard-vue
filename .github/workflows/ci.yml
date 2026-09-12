@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call: {}
   push:
     branches: [main, develop]
     paths-ignore:
@@ -117,10 +118,12 @@ jobs:
 
       - name: Preview URL info
         run: |
-          echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "SPA dist artifact attached to PR for review." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Run locally to preview:" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "npm run preview" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Complete"
+            echo "SPA dist artifact attached to PR for review."
+            echo ""
+            echo "Run locally to preview:"
+            echo '```bash'
+            echo "npm run preview"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

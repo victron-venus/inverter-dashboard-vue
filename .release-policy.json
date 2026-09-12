@@ -1,0 +1,22 @@
+{
+  "version_file": "package.json",
+  "validation_workflows": [
+    "ci.yml",
+    "codeql.yml"
+  ],
+  "artifact_pattern": "release-assets*",
+  "local_checks": [
+    "npm ci --ignore-scripts",
+    "npm run typecheck",
+    "npm run lint",
+    "npm test",
+    "npm run build:all"
+  ],
+  "notes": [
+    "SPA and library tarballs are promoted unchanged. Browser/device acceptance remains a release operator check."
+  ],
+  "repository": "victron-venus/inverter-dashboard-vue",
+  "mode": "release",
+  "default_branch": "main",
+  "visibility": "public"
+}
