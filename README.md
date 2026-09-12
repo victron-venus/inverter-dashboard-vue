@@ -195,7 +195,7 @@ Enable any of:
 
 Snapshot URL defaults to same-origin `/api/gateway/snapshot` (override with `VITE_GATEWAY_SNAPSHOT_PATH` or meta `inverter-gateway-snapshot`). Optional `VITE_API_BASE` prefixes API paths.
 
-Proxy that path to gateway `GET /v1/snapshot` (plus health). Writes / WebSocket MQTT are disabled in public mode; the SPA polls the snapshot every ~3s.
+Proxy that path to gateway `GET /v1/snapshot` (plus health). Writes / WebSocket MQTT are disabled in public mode; the SPA polls the snapshot every ~3s. The connection indicator turns offline after 15 seconds without a valid telemetry snapshot, including HTTP failures, invalid responses, and stalled requests. Last-known tiles remain visible while offline; the next valid snapshot restores the live indicator. Requests time out after 10 seconds so polling can recover.
 
 ## License
 
