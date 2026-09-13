@@ -7,8 +7,8 @@
       </div>
       <div class="p-1 flex flex-wrap gap-x-3 gap-y-1.5">
         <div
-          v-for="bat in batteries"
-          :key="bat.name"
+          v-for="(bat, index) in batteries"
+          :key="index"
           class="flex-1 min-w-[130px] border border-slate-200 dark:border-slate-700/50 p-1 rounded-sm"
         >
           <div
@@ -18,7 +18,7 @@
           </div>
           <div class="flex justify-between items-baseline gap-1 mt-0.5">
             <span class="text-[12px] text-slate-600 dark:text-white leading-none"
-              >{{ bat.voltage.toFixed(2) }}V</span
+              >{{ formatMeasurement(bat.voltage, 2, 'V') }}</span
             >
             <span
               v-if="bat.current !== undefined"
@@ -37,10 +37,10 @@
             <span
               class="text-[12px] font-bold leading-none shrink-0"
               :class="
-                bat.soc > 50 ? 'text-battery' : bat.soc > 20 ? 'text-orange-500' : 'text-red-500'
+                bat.soc === undefined ? 'text-slate-400' : bat.soc > 50 ? 'text-battery' : bat.soc > 20 ? 'text-orange-500' : 'text-red-500'
               "
             >
-              {{ bat.soc.toFixed(1) }}%
+              {{ formatMeasurement(bat.soc, 1, '%') }}
             </span>
             <span
               class="text-[10px] text-slate-400 font-medium truncate uppercase ml-2 text-right flex-1"
@@ -59,8 +59,8 @@
       </div>
       <div class="p-1 flex flex-wrap gap-x-2 gap-y-1.5">
         <div
-          v-for="src in solarSources"
-          :key="src.name"
+          v-for="(src, index) in solarSources"
+          :key="index"
           class="flex-1 min-w-[90px] border border-slate-200 dark:border-slate-700/50 p-1 rounded-sm"
         >
           <div
@@ -80,7 +80,7 @@
               >
             </div>
             <div class="text-xl font-bold text-solar leading-none mt-0.5">
-              {{ Math.floor(src.power) }}W
+              {{ formatMeasurement(src.power, 0, 'W') }}
             </div>
           </div>
         </div>
@@ -91,18 +91,19 @@
 
 <script setup lang="ts">
 import { BatteryMedium, SunMedium } from '@lucide/vue'
+import { formatMeasurement } from '../telemetry'
 
 defineProps<{
   batteries: Array<{
     name: string
-    voltage: number
+    voltage?: number
     current?: number
     power?: number
-    soc: number
+    soc?: number
     state: string
     timeToGo?: string
   }>
-  solarSources: Array<{ name: string; pvVoltage?: number; current?: number; power: number }>
+  solarSources: Array<{ name: string; pvVoltage?: number; current?: number; power?: number }>
   showBatteries?: boolean
   showSolar?: boolean
 }>()

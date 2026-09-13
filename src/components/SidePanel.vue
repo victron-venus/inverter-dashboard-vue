@@ -32,7 +32,7 @@
         </div>
         <div class="text-right">
           <div class="text-2xl font-bold text-accent leading-none">
-            {{ Math.floor(carSoc || 0) }}%
+            {{ formatMeasurement(carSoc, 0, '%') }}
           </div>
           <div class="text-[10px] text-slate-500 font-bold text-center tracking-tighter">
             {{ $t('sections.soc') }}
@@ -48,10 +48,10 @@
       </div>
       <div class="p-1 flex justify-between items-center gap-2 px-2">
         <div class="text-xl font-bold" :class="waterValve ? 'text-red-500' : 'text-green-500'">
-          {{ waterLevel || 0 }} cm
+          {{ formatMeasurement(waterLevel, 1, '%') }}
         </div>
         <div class="flex gap-1">
-          <template v-if="readOnly">
+          <template v-if="readOnly || !waterControlsAvailable">
             <span class="classic-status" :class="{ 'classic-status-on': pumpSwitch }"
               >{{ $t('sections.pump') }}</span
             >
@@ -64,7 +64,9 @@
               type="button"
               class="classic-btn"
               :class="{ 'classic-btn-on': pumpSwitch }"
-              @click="$emit('send', 'toggle', { entity: pumpSwitchEntity })"
+              aria-label="Pump manual mode"
+              :disabled="pumpMode === undefined || pumpSwitch === undefined"
+              @click="$emit('send', 'water_mode', { which: 'pump', mode: pumpSwitch ? 2 : 1 })"
             >
               {{ $t('sections.pump') }}
             </button>
@@ -72,10 +74,16 @@
               type="button"
               class="classic-btn"
               :class="{ 'classic-btn-on': waterValve }"
-              @click="$emit('send', 'toggle', { entity: waterValveEntity })"
+              aria-label="Valve manual mode"
+              :disabled="waterValveMode === undefined || waterValve === undefined"
+              @click="onValveClick"
             >
               {{ $t('sections.valve') }}
             </button>
+            <button v-if="pumpMode === 1 || pumpMode === 2" type="button" class="classic-btn"
+              aria-label="Pump automatic mode" @click="$emit('send', 'water_mode', { which: 'pump', mode: 0 })">Auto</button>
+            <button v-if="waterValveMode === 1 || waterValveMode === 2" type="button" class="classic-btn"
+              aria-label="Valve automatic mode" @click="$emit('send', 'water_mode', { which: 'valve', mode: 0 })">Auto</button>
           </template>
         </div>
       </div>
@@ -321,7 +329,7 @@
           <span
             class="text-[10px] font-bold uppercase tracking-tighter"
             :class="dishwasherRunning ? 'text-green-600' : 'text-slate-400'"
-            >{{ dishwasherRunning ? $t('sections.running') : 'Idle' }}</span
+            >{{ dishwasherRunning === undefined ? '—' : dishwasherRunning ? $t('sections.running') : 'Idle' }}</span
           >
           <span
             v-if="dishwasherDuration"
@@ -342,7 +350,7 @@
           <span
             class="text-[10px] font-bold uppercase tracking-tighter"
             :class="washerRunning ? 'text-green-600' : 'text-slate-400'"
-            >{{ washerRunning ? $t('sections.running') : 'Idle' }}</span
+            >{{ washerRunning === undefined ? '—' : washerRunning ? $t('sections.running') : 'Idle' }}</span
           >
           <span
             v-if="washerTime"
@@ -368,7 +376,7 @@
           <span
             class="text-[10px] font-bold uppercase tracking-tighter"
             :class="dryerRunning ? 'text-green-600' : 'text-slate-400'"
-            >{{ dryerRunning ? $t('sections.running') : 'Idle' }}</span
+            >{{ dryerRunning === undefined ? '—' : dryerRunning ? $t('sections.running') : 'Idle' }}</span
           >
           <span v-if="dryerTime" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">{{
             formatDuration(dryerTime)
@@ -409,6 +417,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatMeasurement } from '../telemetry'
 import {
   Blinds,
   Car,
@@ -436,7 +445,7 @@ import type {
 } from '../types/ha'
 import { formatDuration } from '../utils'
 
-defineProps<{
+const props = defineProps<{
   features?: Record<string, boolean>
   evCharging: string
   evPower: string
@@ -444,6 +453,9 @@ defineProps<{
   evChargingKw: number
   evLoadPower: number
   carSoc?: number
+  waterControlsAvailable?: boolean
+  pumpMode?: number
+  waterValveMode?: number
   waterLevel?: number
   waterValve?: boolean
   pumpSwitch?: boolean
@@ -482,13 +494,18 @@ defineProps<{
   readOnly?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   send: [action: string, payload?: Record<string, unknown>]
   'cover-position': [entityId: string, position: number]
   'media-control': [entityId: string, action: string]
   'number-set': [entityId: string, value: number]
   'scene-activate': [entityId: string]
 }>()
+
+function onValveClick() {
+  if (props.waterValve === false && !window.confirm('Open city water valve?')) return
+  emit('send', 'water_mode', { which: 'valve', mode: props.waterValve ? 2 : 1 })
+}
 
 const { t: $t } = useI18n()
 

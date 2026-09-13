@@ -35,9 +35,11 @@
           :gt="state.gt"
           :g1="state.g1"
           :g2="state.g2"
+          :g3="state.g3"
           :tt="state.tt"
           :t1="state.t1"
           :t2="state.t2"
+          :t3="state.t3"
           :solarTotal="state.solar_total"
           :mpptTotal="mpptTotal"
           :pvInvertersTotal="pvInvertersTotal"
@@ -63,6 +65,9 @@
               :evLoadPower="evLoadPower"
               :carSoc="state.car_soc"
               :waterLevel="state.water_level"
+              :pumpMode="state.pump_mode"
+              :waterValveMode="state.water_valve_mode"
+              :waterControlsAvailable="state.water_controls_available"
               :waterValve="waterValveState"
               :pumpSwitch="pumpSwitchState"
               :pumpSwitchEntity="pumpSwitchEntity"
@@ -230,9 +235,11 @@ const essText = computed(() => {
   return m.mode_name || 'ESS'
 })
 
-const mpptTotal = computed(() => state.value.mppt_total || 0)
+const mpptTotal = computed(() => state.value.mppt_total)
 const pvInvertersTotal = computed(() =>
-  (state.value.pv_inverters || []).reduce((sum, p) => sum + (p.power || 0), 0)
+  state.value.pv_inverter_total ?? (state.value.pv_inverters?.some((p) => p.power !== undefined)
+    ? state.value.pv_inverters.reduce((sum, p) => sum + (p.power ?? 0), 0)
+    : undefined)
 )
 
 const evCharging = computed(() => {
@@ -266,31 +273,31 @@ const sortedLoads = computed(() => {
 const batteries = computed(() => {
   const tiles: Array<{
     name: string
-    voltage: number
+    voltage?: number
     current?: number
     power?: number
-    soc: number
+    soc?: number
     state: string
     timeToGo?: string
   }> = []
-  // Bank totals (shunt V/I/P + voltage-derived SOC formula)
+  // Bank measurements selected by the Cerbo backend.
   if (state.value.battery_soc !== undefined && state.value.battery_soc !== null) {
     tiles.push({
       name: 'Bank',
-      voltage: state.value.battery_voltage || 0,
+      voltage: state.value.battery_voltage,
       current: state.value.battery_current,
       power: state.value.battery_power,
       soc: state.value.battery_soc,
-      state: 'Shunt',
+      state: 'System',
     })
   }
   for (const b of state.value.batteries || []) {
     tiles.push({
-      name: b.name || 'Battery',
-      voltage: b.voltage || 0,
+      name: b.name || `Battery ${b.instance ?? ''}`,
+      voltage: b.voltage,
       current: b.current,
       power: b.power,
-      soc: b.soc || 0,
+      soc: b.soc,
       state: b.state || 'Unknown',
       timeToGo: b.time_to_go || '',
     })
@@ -299,13 +306,13 @@ const batteries = computed(() => {
 })
 
 const solarSources = computed(() => {
-  const sources: Array<{ name: string; pvVoltage?: number; current?: number; power: number }> = []
+  const sources: Array<{ name: string; pvVoltage?: number; current?: number; power?: number }> = []
   ;(state.value.mppt_chargers || []).forEach((m) => {
     sources.push({
       name: m.name || 'MPPT',
-      pvVoltage: m.pv_voltage || 0,
-      current: m.current || 0,
-      power: m.power || 0,
+      pvVoltage: m.pv_voltage,
+      current: m.current,
+      power: m.power,
     })
   })
   const pvInvs = state.value.pv_inverters
@@ -313,9 +320,9 @@ const solarSources = computed(() => {
     pvInvs.forEach((p, i) => {
       sources.push({
         name: p.name || 'PV Inverter ' + (i + 1),
-        pvVoltage: p.voltage,
+        pvVoltage: p.voltage ?? p.pv_voltage,
         current: p.current,
-        power: p.power || 0,
+        power: p.power,
       })
     })
   }

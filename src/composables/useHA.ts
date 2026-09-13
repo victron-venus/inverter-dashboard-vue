@@ -54,22 +54,32 @@ export function useHA() {
   const waterValveEntity = computed(() => 'switch.shutoff_valve')
   const pumpSwitchEntity = computed(() => 'switch.pump_switch')
 
-  const waterValveState = computed(() => coerceBool(state.value.water_valve))
-  const pumpSwitchState = computed(() => coerceBool(state.value.pump_switch))
+  const waterValveState = computed(() =>
+    state.value.water_valve === undefined ? undefined : coerceBool(state.value.water_valve)
+  )
+  const pumpSwitchState = computed(() =>
+    state.value.pump_switch === undefined ? undefined : coerceBool(state.value.pump_switch)
+  )
 
   const dishwasherRunning = computed(() => {
+    if (state.value.dishwasher_running !== undefined)
+      return coerceBool(state.value.dishwasher_running)
     const power = state.value.loads?.dishwasher
-    return power !== undefined && (power as number) > 10
+    return power === undefined ? undefined : (power as number) > 10
   })
 
   const washerRunning = computed(() => {
+    if (state.value.washer_time !== undefined) return state.value.washer_time > 0
+    if (state.value.washer_power !== undefined) return coerceBool(state.value.washer_power)
     const power = state.value.loads?.washer
-    return power !== undefined && (power as number) > 10
+    return power === undefined ? undefined : (power as number) > 10
   })
 
   const dryerRunning = computed(() => {
+    if (state.value.dryer_time !== undefined) return state.value.dryer_time > 0
+    if (state.value.dryer_power !== undefined) return coerceBool(state.value.dryer_power)
     const power = state.value.loads?.dryer
-    return power !== undefined && (power as number) > 10
+    return power === undefined ? undefined : (power as number) > 10
   })
 
   const publicMode = isPublicMode()
