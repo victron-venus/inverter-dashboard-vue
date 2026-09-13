@@ -29,3 +29,8 @@ vue-spa-dist.tar.gz
 .release-plan.json
 .release-inputs.json
 release-assets/
+
+# Generated Python bytecode from release tooling checks
+__pycache__/
+*.pyc
+*.pyo

@@ -10,8 +10,6 @@
  *   import { BatterySolarPanel, useMqtt } from '@victron-venus/dashboard-vue'
  */
 
-import { version as packageVersion } from '../package.json'
-
 // Components
 export { default as AppHeader } from './components/AppHeader.vue'
 export { default as BatterySolarPanel } from './components/BatterySolarPanel.vue'
@@ -38,5 +36,5 @@ export {
 export { useTheme } from './composables/useTheme'
 
 // Library version
-export const VERSION = packageVersion
+export { version as VERSION } from '../package.json'
 export const LIBRARY_NAME = '@victron-venus/dashboard-vue'
