@@ -1,6 +1,7 @@
 import { markRaw } from 'vue'
 import { apiUrl, gatewaySnapshotPath, isPublicMode } from '../config/publicMode'
 import { logger } from '../logger'
+import { connectionStatus, normalizeTelemetry } from '../telemetry'
 import { addHistoryPoint } from './useChart'
 import { type InverterState, mqttConnected, state } from './useInverterState'
 import { type GatewaySnapshot, snapshotToState } from './publicGateway'
@@ -17,6 +18,7 @@ export function useConnection() {
   let publicExpiryTimer: ReturnType<typeof setTimeout> | null = null
 
   function processState(newState: InverterState) {
+    newState = normalizeTelemetry(newState)
     state.value = markRaw(newState)
     addHistoryPoint({
       gt: newState.gt,
@@ -24,6 +26,7 @@ export function useConnection() {
       battery_power: newState.battery_power,
       setpoint: newState.setpoint,
     })
+    return newState
   }
 
   async function pollPublicGateway() {
@@ -41,12 +44,16 @@ export function useConnection() {
       const snap: unknown = await resp.json()
       if (!snap || typeof snap !== 'object' || Array.isArray(snap)) return
       const data = snapshotToState(snap as GatewaySnapshot)
-      const hasTelemetry = [data.gt, data.battery_soc, data.battery_power].some(
-        (value) => typeof value === 'number' && Number.isFinite(value),
-      )
-      if (!hasTelemetry || !publicActive || request.signal.aborted) return
-      processState({ ...state.value, ...data })
-      mqttConnected.value = true
+      const hasTelemetry = [
+        data.gt,
+        data.tt,
+        data.solar_total,
+        data.battery_soc,
+        data.battery_power,
+      ].some((value) => typeof value === 'number' && Number.isFinite(value))
+      if (!publicActive || request.signal.aborted) return
+      processState(data)
+      mqttConnected.value = hasTelemetry
       if (publicExpiryTimer) clearTimeout(publicExpiryTimer)
       // Keep the last snapshot visible, but never label an expired snapshot live.
       publicExpiryTimer = setTimeout(() => {
@@ -71,8 +78,12 @@ export function useConnection() {
       if (!resp.ok) return
       const data = (await resp.json()) as InverterState & { ok?: boolean }
       if (!data || data.ok === false) return
-      processState({ ...state.value, ...data })
-      if (typeof data.gt === 'number' || typeof data.battery_soc === 'number') {
+      const normalized = processState(data)
+      const connected = connectionStatus(data)
+      if (connected !== undefined) {
+        mqttConnected.value = connected
+        if (connected) lastMessageTime = Date.now()
+      } else if (typeof normalized.gt === 'number' || typeof normalized.battery_soc === 'number') {
         mqttConnected.value = true
         lastMessageTime = Date.now()
       }
@@ -150,7 +161,7 @@ export function useConnection() {
       try {
         const data = JSON.parse(e.data) as InverterState
         processState(data)
-        mqttConnected.value = true
+        mqttConnected.value = connectionStatus(data) ?? true
       } catch (err) {
         logger.error('Failed to parse WS message:', err)
       }

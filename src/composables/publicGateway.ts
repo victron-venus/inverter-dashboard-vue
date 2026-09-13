@@ -16,9 +16,6 @@ const INVERTER_STATES: Record<number, string> = {
   252: 'External control',
 }
 
-const V_SOC_MIN = 40.0
-const V_SOC_MAX = 54.4
-
 type SnapSection = Record<string, unknown>
 
 export type GatewaySnapshot = {
@@ -38,11 +35,6 @@ type BatteryEntry = NonNullable<InverterState['batteries']>[number]
 type MpptEntry = NonNullable<InverterState['mppt_chargers']>[number]
 type PvEntry = NonNullable<InverterState['pv_inverters']>[number]
 
-function voltageSoc(v: number): number {
-  const pct = ((v - V_SOC_MIN) / (V_SOC_MAX - V_SOC_MIN)) * 100.0
-  return Math.round(Math.max(0, Math.min(100, pct)))
-}
-
 function stateFromCurrent(amps: number): string {
   if (amps > 0.5) return 'Charging'
   if (amps < -0.5) return 'Discharging'
@@ -60,17 +52,20 @@ function groupByInstance(section: SnapSection | undefined): Record<string, SnapS
     out[inst] ??= {}
     out[inst][path] = section[key]
   }
+  for (const [instance, leaves] of Object.entries(out)) {
+    if (num(leaves.Connected) === 0) delete out[instance]
+  }
   return out
 }
 
 function num(v: unknown): number | null {
-  return typeof v === 'number' && !Number.isNaN(v) ? v : null
+  return typeof v === 'number' && Number.isFinite(v) ? v : null
 }
 
 /** Coerce gateway leaf to string; only string/number are accepted (avoids "[object Object]"). */
 function asString(v: unknown): string | null {
   if (typeof v === 'string') return v
-  if (typeof v === 'number' && !Number.isNaN(v)) return String(v)
+  if (typeof v === 'number' && Number.isFinite(v)) return String(v)
   return null
 }
 
@@ -80,7 +75,7 @@ function deviceName(e: SnapSection, fallback: string): string {
 
 function sortedInstanceKeys(map: Record<string, SnapSection>): string[] {
   return Object.keys(map).sort(
-    (a, b) => (Number.parseInt(a, 10) || 0) - (Number.parseInt(b, 10) || 0),
+    (a, b) => (Number.parseInt(a, 10) || 0) - (Number.parseInt(b, 10) || 0)
   )
 }
 
@@ -104,19 +99,16 @@ function stripNulls<T extends object>(obj: T): T {
   return obj
 }
 
-function extractBatteries(section: SnapSection | undefined): {
-  batteries: BatteryEntry[]
-  shunt: { voltage: number | null; current: number | null; power: number | null } | null
-} {
+function extractBatteries(section: SnapSection | undefined): BatteryEntry[] {
   const batteriesMap = groupByInstance(section)
   const batteries: BatteryEntry[] = []
-  let shunt: { voltage: number | null; current: number | null; power: number | null } | null = null
 
   for (const inst of sortedInstanceKeys(batteriesMap)) {
     const e = batteriesMap[inst]
     const name = deviceName(e, `Battery ${inst}`)
     const current = num(e['Dc/0/Current'])
     const entry: BatteryEntry = {
+      instance: inst,
       name,
       soc: num(e.Soc) ?? undefined,
       voltage: num(e['Dc/0/Voltage']) ?? undefined,
@@ -124,22 +116,14 @@ function extractBatteries(section: SnapSection | undefined): {
       power: num(e['Dc/0/Power']) ?? undefined,
       state: current != null ? stateFromCurrent(current) : 'Unknown',
     }
-    if (name.toLowerCase().includes('shunt')) {
-      shunt = {
-        voltage: entry.voltage ?? null,
-        current: entry.current ?? null,
-        power: entry.power ?? null,
-      }
-      continue
-    }
     batteries.push(entry)
   }
-  return { batteries, shunt }
+  return batteries
 }
 
 function resolveBatteryMetrics(
   sys: (path: string) => unknown,
-  shunt: { voltage: number | null; current: number | null; power: number | null } | null,
+  selected: BatteryEntry | null
 ): {
   battV: number | null
   battI: number | null
@@ -149,69 +133,61 @@ function resolveBatteryMetrics(
   let battV = num(sys('Dc/Battery/Voltage'))
   let battI = num(sys('Dc/Battery/Current'))
   let battP = num(sys('Dc/Battery/Power'))
-  let battSoc: number | null = null
+  const battSoc = num(sys('Dc/Battery/Soc')) ?? selected?.soc ?? null
 
-  if (shunt?.voltage != null) {
-    battSoc = voltageSoc(shunt.voltage)
-    battV ??= shunt.voltage
-    battI ??= shunt.current
-    battP ??= shunt.power
-  } else if (battV != null) {
-    battSoc = voltageSoc(battV)
-  }
+  battV ??= selected?.voltage ?? null
+  battI ??= selected?.current ?? null
+  battP ??= selected?.power ?? (battV != null && battI != null ? battV * battI : null)
 
   return { battV, battI, battP, battSoc }
 }
 
-function extractMppt(section: SnapSection | undefined): { chargers: MpptEntry[]; total: number } {
+function extractMppt(section: SnapSection | undefined): {
+  chargers: MpptEntry[]
+  total: number | null
+} {
   const chargersMap = groupByInstance(section)
   const chargers: MpptEntry[] = []
-  let total = 0
+  let total: number | null = null
   for (const inst of sortedInstanceKeys(chargersMap)) {
     const e = chargersMap[inst]
-    const power = num(e['Yield/Power']) || 0
-    total += power
+    const voltage = num(e['Dc/0/Voltage'])
+    const current = num(e['Dc/0/Current'])
+    const power =
+      num(e['Yield/Power']) ??
+      num(e['Dc/0/Power']) ??
+      (voltage != null && current != null ? voltage * current : null)
+    if (power != null) total = (total ?? 0) + power
     chargers.push({
       name: deviceName(e, `MPPT ${inst}`),
-      power,
-      pv_voltage: num(e['Pv/V']) || 0,
-      current: num(e['Dc/0/Current']) || 0,
+      power: power ?? undefined,
+      pv_voltage: num(e['Pv/V']) ?? undefined,
+      current: num(e['Dc/0/Current']) ?? undefined,
     })
   }
   return { chargers, total }
 }
 
-function extractPvInverters(section: SnapSection | undefined): { inverters: PvEntry[]; total: number } {
+function extractPvInverters(section: SnapSection | undefined): {
+  inverters: PvEntry[]
+  total: number | null
+} {
   const pvMap = groupByInstance(section)
   const inverters: PvEntry[] = []
-  let total = 0
+  let total: number | null = null
   for (const inst of sortedInstanceKeys(pvMap)) {
     const e = pvMap[inst]
     let power = num(e['Ac/Power'])
-    power ??= num(e['Ac/L1/Power']) || 0
-    total += power
+    power ??= sumPresent([1, 2, 3].map((phase) => num(e[`Ac/L${phase}/Power`])))
+    if (power != null) total = (total ?? 0) + power
     inverters.push({
       name: deviceName(e, `PV Inverter ${inst}`),
-      power,
+      power: power ?? undefined,
       voltage: num(e['Ac/L1/Voltage']) ?? undefined,
       current: num(e['Ac/L1/Current']) ?? undefined,
     })
   }
   return { inverters, total }
-}
-
-function resolveSolarTotal(
-  sys: (path: string) => unknown,
-  mpptChargers: MpptEntry[],
-  pvInverters: PvEntry[],
-  mpptTotal: number,
-  pvTotal: number,
-): number {
-  let solarTotal = num(sys('Dc/Pv/Power'))
-  if (mpptChargers.length || pvInverters.length) {
-    return mpptTotal + pvTotal
-  }
-  return solarTotal ?? 0
 }
 
 function extractLoads(section: SnapSection | undefined): Record<string, number> {
@@ -221,7 +197,7 @@ function extractLoads(section: SnapSection | undefined): Record<string, number> 
     const e = loadsMap[inst]
     const name = deviceName(e, `Load ${inst}`)
     let power = num(e['Ac/Power'])
-    power ??= num(e['Ac/L1/Power'])
+    power ??= sumPresent([1, 2, 3].map((phase) => num(e[`Ac/L${phase}/Power`])))
     if (power == null) continue
     let key = name
     let n = 2
@@ -270,26 +246,43 @@ function firstEvPower(section: SnapSection | undefined): number | null {
 }
 
 /** Map inverter-gateway /v1/snapshot → dashboard InverterState (public read-only). */
-export function snapshotToState(snap: GatewaySnapshot | null | undefined): InverterState & { ok: boolean } {
+export function snapshotToState(
+  snap: GatewaySnapshot | null | undefined
+): InverterState & { ok: boolean } {
   const data = snap ?? {}
   const system = data.system ?? {}
   const sys = (path: string) => system[`0/${path}`]
 
-  const g1 = num(sys('Ac/Grid/L1/Power'))
-  const g2 = num(sys('Ac/Grid/L2/Power'))
-  const g3 = num(sys('Ac/Grid/L3/Power'))
+  const grid = firstInstance(groupByInstance(data.grid)) ?? {}
+  const g1 = num(sys('Ac/Grid/L1/Power')) ?? num(grid['Ac/L1/Power'])
+  const g2 = num(sys('Ac/Grid/L2/Power')) ?? num(grid['Ac/L2/Power'])
+  const g3 = num(sys('Ac/Grid/L3/Power')) ?? num(grid['Ac/L3/Power'])
   const t1 = num(sys('Ac/Consumption/L1/Power'))
   const t2 = num(sys('Ac/Consumption/L2/Power'))
   const t3 = num(sys('Ac/Consumption/L3/Power'))
-  const gt = sumPresent([g1, g2, g3])
-  const tt = sumPresent([t1, t2, t3])
+  const gt = num(sys('Ac/Grid/Total/Power')) ?? num(grid['Ac/Power']) ?? sumPresent([g1, g2, g3])
+  const tt = num(sys('Ac/Consumption/Total/Power')) ?? sumPresent([t1, t2, t3])
 
-  const { batteries, shunt } = extractBatteries(data.battery)
-  const { battV, battI, battP, battSoc } = resolveBatteryMetrics(sys, shunt)
+  const batteries = extractBatteries(data.battery)
+  const selectedId = num(sys('Dc/Battery/Instance'))
+  const selectedBattery =
+    selectedId != null
+      ? (batteries.find((battery) => String(battery.instance) === String(selectedId)) ?? null)
+      : batteries.length === 1
+        ? batteries[0]
+        : null
+  const { battV, battI, battP, battSoc } = resolveBatteryMetrics(sys, selectedBattery)
 
-  const { chargers: mpptChargers, total: mpptTotal } = extractMppt(data.solarcharger)
-  const { inverters: pvInverters, total: pvTotal } = extractPvInverters(data.pvinverter)
-  const solarTotal = resolveSolarTotal(sys, mpptChargers, pvInverters, mpptTotal, pvTotal)
+  const { chargers: mpptChargers, total: deviceMpptTotal } = extractMppt(data.solarcharger)
+  const { inverters: pvInverters, total: devicePvTotal } = extractPvInverters(data.pvinverter)
+  const mpptTotal = num(sys('Dc/Pv/Power')) ?? deviceMpptTotal
+  const pvTotal =
+    sumPresent(
+      ['Grid', 'Output', 'Genset'].flatMap((location) =>
+        [1, 2, 3].map((phase) => num(sys(`Ac/PvOn${location}/L${phase}/Power`)))
+      )
+    ) ?? devicePvTotal
+  const solarTotal = sumPresent([mpptTotal, pvTotal])
 
   const loads = extractLoads(data.acload)
   const { inverterState, setpoint } = extractVebus(data.vebus)
@@ -305,11 +298,14 @@ export function snapshotToState(snap: GatewaySnapshot | null | undefined): Inver
     gt: gt ?? undefined,
     g1: g1 ?? undefined,
     g2: g2 ?? undefined,
+    g3: g3 ?? undefined,
     tt: tt ?? undefined,
     t1: t1 ?? undefined,
     t2: t2 ?? undefined,
-    solar_total: solarTotal,
-    mppt_total: mpptTotal,
+    t3: t3 ?? undefined,
+    solar_total: solarTotal ?? undefined,
+    mppt_total: mpptTotal ?? undefined,
+    pv_inverter_total: pvTotal ?? undefined,
     mppt_chargers: mpptChargers,
     pv_inverters: pvInverters,
     battery_soc: battSoc ?? undefined,
@@ -322,6 +318,7 @@ export function snapshotToState(snap: GatewaySnapshot | null | undefined): Inver
     inverter_state: inverterState ?? undefined,
     water_level: waterLevel ?? undefined,
     ev_power: evPower ?? undefined,
+    car_soc: firstNumericField(data.ev, 'Soc') ?? undefined,
     ev_charging_kw: evChargingKw ?? undefined,
     features: {
       public_gateway: true,

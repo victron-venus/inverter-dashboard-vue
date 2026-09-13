@@ -4,17 +4,17 @@ const MAX_HISTORY_POINTS = 1800
 const CHART_UPDATE_INTERVAL_MS = 1000
 
 interface TooltipParam {
-  value: number[]
+  value: [number, number | null]
   seriesName: string
   color: string
 }
 
 const historyData = {
   timestamps: [] as number[],
-  grid: [] as number[],
-  solar: [] as number[],
-  battery: [] as number[],
-  setpoint: [] as number[],
+  grid: [] as (number | null)[],
+  solar: [] as (number | null)[],
+  battery: [] as (number | null)[],
+  setpoint: [] as (number | null)[],
 }
 
 let chartUpdateCallback: (() => void) | null = null
@@ -39,14 +39,21 @@ export function addHistoryPoint(newState: {
     newState.solar_total === undefined &&
     newState.battery_power === undefined
   ) {
-    return
+    const last = historyData.timestamps.length - 1
+    if (
+      last < 0 ||
+      (historyData.grid[last] === null &&
+        historyData.solar[last] === null &&
+        historyData.battery[last] === null)
+    )
+      return
   }
   const now = Date.now() / 1000
   historyData.timestamps.push(now)
-  historyData.grid.push(newState.gt || 0)
-  historyData.solar.push(newState.solar_total || 0)
-  historyData.battery.push(newState.battery_power || 0)
-  historyData.setpoint.push(newState.setpoint || 0)
+  historyData.grid.push(newState.gt ?? null)
+  historyData.solar.push(newState.solar_total ?? null)
+  historyData.battery.push(newState.battery_power ?? null)
+  historyData.setpoint.push(newState.setpoint ?? null)
   if (historyData.timestamps.length > MAX_HISTORY_POINTS) {
     historyData.timestamps.shift()
     historyData.grid.shift()
@@ -94,7 +101,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           })
           let result = `${timeStr}<br/>`
           params.forEach((p: TooltipParam) => {
-            if (p.seriesName === 'Setpoint') return
+            if (p.seriesName === 'Setpoint' || p.value[1] === null) return
             const val = Math.floor(p.value[1])
             const valStr = val >= 1000 ? `${(val / 1000).toFixed(1)}kW` : `${val}W`
             result += `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${p.color};"></span>`
@@ -136,7 +143,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           type: 'line',
           smooth: true,
           showSymbol: false,
-          data: timeData.map((t, i) => [t, grid[i] || 0]),
+          data: timeData.map((t, i) => [t, grid[i] ?? null]),
           lineStyle: { color: '#2196f3', width: 2 },
           areaStyle: { color: 'rgba(33,150,243,0.1)' },
         },
@@ -145,7 +152,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           type: 'line',
           smooth: true,
           showSymbol: false,
-          data: timeData.map((t, i) => [t, solar[i] || 0]),
+          data: timeData.map((t, i) => [t, solar[i] ?? null]),
           lineStyle: { color: '#ff9800', width: 2 },
           areaStyle: { color: 'rgba(255,152,0,0.1)' },
         },
@@ -154,7 +161,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           type: 'line',
           smooth: true,
           showSymbol: false,
-          data: timeData.map((t, i) => [t, battery[i] || 0]),
+          data: timeData.map((t, i) => [t, battery[i] ?? null]),
           lineStyle: { color: '#4caf50', width: 2 },
           areaStyle: { color: 'rgba(76,175,80,0.1)' },
         },
@@ -163,7 +170,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           type: 'line',
           smooth: true,
           showSymbol: false,
-          data: timeData.map((t, i) => [t, setpoint[i] || 0]),
+          data: timeData.map((t, i) => [t, setpoint[i] ?? null]),
           lineStyle: { color: '#00bcd4', width: 2, type: 'dashed' },
           areaStyle: { opacity: 0 },
         },

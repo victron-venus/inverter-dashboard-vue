@@ -38,11 +38,18 @@ describe('public snapshot freshness', () => {
   it.each([
     ['HTTP error', () => Promise.resolve(response(snapshot(999), false))],
     ['network failure', () => Promise.reject(new Error('offline'))],
-    ['empty snapshot', () => Promise.resolve(response({}))],
     ['null JSON', () => Promise.resolve(response(null))],
     ['array JSON', () => Promise.resolve(response([]))],
-    ['invalid JSON', () => Promise.resolve({ ok: true, json: async () => { throw new Error('JSON') } })],
-    ['non-finite telemetry', () => Promise.resolve(response(snapshot(Number.POSITIVE_INFINITY)))],
+    [
+      'invalid JSON',
+      () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => {
+            throw new Error('JSON')
+          },
+        }),
+    ],
   ])('expires after %s and recovers on valid telemetry', async (_name, failure) => {
     await connect()
     fetchMock.mockImplementation(failure)
@@ -57,6 +64,21 @@ describe('public snapshot freshness', () => {
     expect(state.value.gt).toBe(456)
   })
 
+  it.each([
+    {},
+    snapshot(Number.POSITIVE_INFINITY),
+  ])('clears measurements removed by a complete snapshot', async (empty) => {
+    await connect()
+    fetchMock.mockResolvedValue(response(empty))
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(mqttConnected.value).toBe(false)
+    expect(state.value.gt).toBeUndefined()
+    fetchMock.mockResolvedValue(response(snapshot(0)))
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(mqttConnected.value).toBe(true)
+    expect(state.value.gt).toBe(0)
+  })
+
   it('renews the deadline only when another valid snapshot arrives', async () => {
     await connect()
     await vi.advanceTimersByTimeAsync(12000)
@@ -69,9 +91,12 @@ describe('public snapshot freshness', () => {
 
   it('expires during a hung request, aborts it and resumes polling', async () => {
     await connect()
-    fetchMock.mockImplementation((_url: string, init: RequestInit) => new Promise((_resolve, reject) => {
-      init.signal?.addEventListener('abort', () => reject(new Error('aborted')))
-    }))
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new Error('aborted')))
+        })
+    )
     await vi.advanceTimersByTimeAsync(15000)
     expect(mqttConnected.value).toBe(false)
     expect(fetchMock.mock.calls[1][1].signal.aborted).toBe(true)
@@ -82,7 +107,12 @@ describe('public snapshot freshness', () => {
 
   it('does not apply an in-flight response after cleanup', async () => {
     let resolve!: (value: ReturnType<typeof response>) => void
-    fetchMock.mockImplementation(() => new Promise((done) => { resolve = done }))
+    fetchMock.mockImplementation(
+      () =>
+        new Promise((done) => {
+          resolve = done
+        })
+    )
     connection.connectMqtt()
     connection.cleanup()
     resolve(response(snapshot(999)))

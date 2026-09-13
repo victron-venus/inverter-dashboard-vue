@@ -12,6 +12,7 @@
       </div>
       <div class="text-[11px] text-slate-500 dark:text-slate-300 font-bold">
         {{ formatPower(g1) }} <span class="opacity-30 mx-0.5">|</span> {{ formatPower(g2) }}
+        <template v-if="g3 !== undefined"> <span class="opacity-30 mx-0.5">|</span> {{ formatPower(g3) }}</template>
       </div>
     </div>
 
@@ -27,6 +28,7 @@
       </div>
       <div class="text-[11px] text-slate-500 dark:text-slate-300 font-bold">
         {{ formatPower(t1) }} <span class="opacity-30 mx-0.5">|</span> {{ formatPower(t2) }}
+        <template v-if="t3 !== undefined"> <span class="opacity-30 mx-0.5">|</span> {{ formatPower(t3) }}</template>
       </div>
     </div>
 
@@ -54,14 +56,14 @@
         Battery
       </div>
       <div class="text-3xl font-bold text-battery leading-none tracking-tight">
-        {{ Math.floor(batterySoc || 0) }}%
+        {{ formatMeasurement(batterySoc, 0, '%') }}
       </div>
       <div
         class="text-[11px] text-slate-500 dark:text-slate-300 font-bold truncate w-full text-center"
       >
         {{ formatPower(batteryPower) }} <span class="opacity-30 mx-0.5">|</span>
-        {{ (batteryVoltage || 0).toFixed(2) }}V <span class="opacity-30 mx-0.5">|</span>
-        {{ (batteryCurrent || 0).toFixed(1) }}A
+        {{ formatMeasurement(batteryVoltage, 2, 'V') }} <span class="opacity-30 mx-0.5">|</span>
+        {{ formatMeasurement(batteryCurrent, 1, 'A') }}
       </div>
     </div>
 
@@ -78,7 +80,7 @@
       <div
         class="text-[11px] text-slate-500 dark:text-slate-300 font-bold truncate w-full text-center uppercase tracking-tighter"
       >
-        {{ inverterState || 'Bulk' }}
+        {{ inverterState || '—' }}
       </div>
     </div>
   </div>
@@ -86,17 +88,20 @@
 
 <script setup lang="ts">
 import { formatPower } from '../utils'
+import { formatMeasurement } from '../telemetry'
 
 defineProps<{
   gt?: number
   g1?: number
   g2?: number
+  g3?: number
   tt?: number
   t1?: number
   t2?: number
+  t3?: number
   solarTotal?: number
-  mpptTotal: number
-  pvInvertersTotal: number
+  mpptTotal?: number
+  pvInvertersTotal?: number
   batterySoc?: number
   batteryPower?: number
   batteryVoltage?: number
