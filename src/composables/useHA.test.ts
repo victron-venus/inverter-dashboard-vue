@@ -50,3 +50,35 @@ describe('useHA rich entity population', () => {
     expect(ha.haWeather.value).toBeNull()
   })
 })
+
+describe('appliance telemetry independent of legacy load names', () => {
+  it('does not report idle when neither HA nor named load telemetry is available', () => {
+    const ha = useHA()
+    state.value = { loads: { Oven: 420 } }
+    expect(ha.dishwasherRunning.value).toBeUndefined()
+    expect(ha.washerRunning.value).toBeUndefined()
+    expect(ha.dryerRunning.value).toBeUndefined()
+    state.value = { loads: { dishwasher: 0, washer: 0, dryer: 0 } }
+    expect(ha.dishwasherRunning.value).toBe(false)
+    expect(ha.washerRunning.value).toBe(false)
+    expect(ha.dryerRunning.value).toBe(false)
+    ha.cleanupHa()
+  })
+
+  it('uses explicit HA states and timers without loads', () => {
+    const ha = useHA()
+    state.value = { dishwasher_running: true, washer_time: 120, dryer_time: 60 }
+    expect(ha.dishwasherRunning.value).toBe(true)
+    expect(ha.washerRunning.value).toBe(true)
+    expect(ha.dryerRunning.value).toBe(true)
+    state.value = {
+      dishwasher_running: false,
+      washer_time: 0,
+      dryer_power: false,
+      loads: { dishwasher: 100, washer: 100, dryer: 100 },
+    }
+    expect(ha.dishwasherRunning.value).toBe(false)
+    expect(ha.washerRunning.value).toBe(false)
+    expect(ha.dryerRunning.value).toBe(false)
+  })
+})

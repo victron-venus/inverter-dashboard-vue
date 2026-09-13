@@ -9,14 +9,21 @@ import type {
 } from '../types/ha'
 
 export interface InverterState {
+  data_source?: string
+  mqtt_connected?: boolean
+  gateway_connected?: boolean
   gt?: number
   g1?: number
   g2?: number
+  g3?: number
   tt?: number
   t1?: number
   t2?: number
+  t3?: number
+  telemetry_available?: Record<string, boolean>
   solar_total?: number
   mppt_total?: number
+  pv_inverter_total?: number
   battery_soc?: number
   battery_power?: number
   battery_voltage?: number
@@ -32,10 +39,27 @@ export interface InverterState {
   booleans?: Record<string, boolean>
   features?: Record<string, boolean>
   mppt_individual?: number[]
-  mppt_chargers?: Array<{ name?: string; pv_voltage?: number; current?: number; power?: number }>
+  mppt_chargers?: Array<{
+    instance?: string | number
+    name?: string
+    pv_voltage?: number
+    current?: number
+    power?: number
+    telemetry_available?: Record<string, boolean>
+  }>
   // AC PV inverters of any vendor (V/I/P per device)
-  pv_inverters?: Array<{ name?: string; voltage?: number; current?: number; power?: number }>
+  pv_inverters?: Array<{
+    instance?: string | number
+    name?: string
+    voltage?: number
+    pv_voltage?: number
+    current?: number
+    power?: number
+    telemetry_available?: Record<string, boolean>
+  }>
   batteries?: Array<{
+    instance?: string | number
+    telemetry_available?: Record<string, boolean>
     name?: string
     voltage?: number
     current?: number
@@ -115,6 +139,9 @@ export interface InverterState {
   ev_charging_kw?: number
   ev_power?: number
   car_soc?: number
+  water_controls_available?: boolean
+  pump_mode?: number
+  water_valve_mode?: number
   water_level?: number
   water_valve?: boolean
   pump_switch?: boolean

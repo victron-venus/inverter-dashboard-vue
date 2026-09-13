@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { addHistoryPoint, setChartUpdateCallback } from './useChart'
+import { ref } from 'vue'
+import { addHistoryPoint, setChartUpdateCallback, useChart } from './useChart'
 
 describe('useChart', () => {
   beforeEach(() => {
@@ -8,6 +9,24 @@ describe('useChart', () => {
   })
 
   describe('addHistoryPoint', () => {
+    it('keeps missing readings as gaps rather than false zero power', () => {
+      const chart = useChart(ref(false))
+      addHistoryPoint({ gt: 0, battery_power: 0 })
+      addHistoryPoint({ gt: 10 })
+      chart.forceUpdateChart()
+      const options = chart.chartOption.value as {
+        series: Array<{ data: Array<[number, number | null]> }>
+      }
+      expect(options.series[0].data.slice(-2)[0]?.[1]).toBe(0)
+      expect(options.series[2].data.slice(-2)[0]?.[1]).toBe(0)
+      expect(options.series[2].data.slice(-1)[0]?.[1]).toBeNull()
+      addHistoryPoint({})
+      addHistoryPoint({ gt: 20 })
+      chart.forceUpdateChart()
+      const restored = chart.chartOption.value as typeof options
+      expect(restored.series[0].data.slice(-2)[0]?.[1]).toBeNull()
+      expect(restored.series[0].data.slice(-1)[0]?.[1]).toBe(20)
+    })
     it('should add grid power to history', () => {
       addHistoryPoint({ gt: 1500, solar_total: 3000, battery_power: 0, setpoint: 0 })
       // Basic smoke test - verify no errors thrown

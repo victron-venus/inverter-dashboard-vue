@@ -1,4 +1,5 @@
 export function formatPower(w: number | undefined) {
+  if (typeof w !== 'number' || !Number.isFinite(w)) return '—'
   const v = Math.abs(Math.floor(w || 0))
   const sign = w && w < 0 ? '-' : ''
   return v >= 1000 ? sign + (v / 1000).toFixed(1) + 'kW' : sign + v + 'W'

@@ -206,3 +206,30 @@ Proxy that path to gateway `GET /v1/snapshot` (plus health). Writes / WebSocket 
 ## License
 
 MIT
+
+## Cerbo telemetry contract
+
+The Python and Go backends serve the same complete state over WebSocket and
+`/api/state`. HTTP fallback replaces the previous snapshot, including removed
+devices. Embedded SPA assets in both backends are built from this source.
+
+- `g1`/`g2`/`g3` and `t1`/`t2`/`t3` are phase powers in W; totals include all
+  available phases. Battery SoC is measured, never inferred from pack voltage.
+- `telemetry_available[field] = false` means unknown, even if a typed backend
+  serializes a numeric zero. Device entries can carry the same availability map.
+  The UI preserves measured zero and renders unavailable readings as a dash.
+- `mqtt_connected`, or `gateway_connected` when `data_source` is `igw`, describes
+  the upstream connection. Receipt of a WebSocket frame alone is not proof that
+  Cerbo is connected. Missing power readings create gaps in chart history.
+- `ev_power` is vehicle power in W; `ev_charging_kw` is charger power in kW.
+  `water_level` is the Victron tank percentage, including readings below 1%.
+- Water overrides use `water_mode` with `which: "pump" | "valve"` and
+  `mode: 0 | 1 | 2` (auto/on/off). They require `water_controls_available`, a
+  known Mode on the configured device, and readback from Cerbo. Public and
+  gateway-only views cannot issue water overrides.
+- Control flags, daily statistics and forecasts remain controller-owned.
+  Appliance states and configured rich Home Assistant controls use the direct
+  HA integration; HA overlays cannot replace native Cerbo measurements.
+
+Build with `npm ci`, then `npm run build` and `npm test`. The checked-in backend
+assets must be refreshed from this `dist/` when changing the wire contract.
