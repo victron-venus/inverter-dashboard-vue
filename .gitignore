@@ -24,3 +24,4 @@ logs/
 Thumbs.db
 vue-spa-dist.tar.gz
 *.backup
+/release-output/
