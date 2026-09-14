@@ -203,6 +203,18 @@ Snapshot URL defaults to same-origin `/api/gateway/snapshot` (override with `VIT
 
 Proxy that path to gateway `GET /v1/snapshot` (plus health). Writes / WebSocket MQTT are disabled in public mode; the SPA polls the snapshot every ~3s. The connection indicator turns offline after 15 seconds without a valid telemetry snapshot, including HTTP failures, invalid responses, and stalled requests. Last-known tiles remain visible while offline; the next valid snapshot restores the live indicator. Requests time out after 10 seconds so polling can recover.
 
+The browser talks to the dashboard backend or a snapshot proxy; it must never
+contain IGW bearer tokens or Cloudflare Access service credentials. Configure the
+LAN backend/proxy with `GATEWAY_URL=https://gateway.example.com:9151`, using the
+hostname covered by the IGW certificate. Cloud-hosted proxies must use the public
+HTTPS gateway URL reachable from their hosting environment. Keep certificate
+verification enabled and disable upstream redirects in the proxy.
+
+Public snapshot requests reject redirects. `VITE_GATEWAY_SNAPSHOT_PATH` remains a
+route such as `/api/gateway/snapshot`; use an HTTPS `VITE_API_BASE` for a remote
+proxy. Relative same-origin routes remain supported, including local development.
+HTTP remote proxy URLs, URL credentials, and protocol-relative URLs are rejected.
+
 ## License
 
 MIT

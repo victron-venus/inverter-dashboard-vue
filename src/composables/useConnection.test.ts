@@ -4,7 +4,7 @@ import { mqttConnected, state } from './useInverterState'
 
 vi.mock('../config/publicMode', () => ({
   apiUrl: (path: string) => path,
-  gatewaySnapshotPath: () => '/snapshot',
+  gatewaySnapshotUrl: () => '/snapshot',
   isPublicMode: () => true,
 }))
 vi.mock('./useChart', () => ({ addHistoryPoint: vi.fn() }))
@@ -35,11 +35,20 @@ async function connect() {
 }
 
 describe('public snapshot freshness', () => {
+  it('rejects redirects at fetch and keeps credentials on the same origin', async () => {
+    await connect()
+    expect(fetchMock).toHaveBeenCalledWith('/snapshot', expect.objectContaining({
+      credentials: 'same-origin',
+      redirect: 'error',
+    }))
+  })
+
   it.each([
     ['HTTP error', () => Promise.resolve(response(snapshot(999), false))],
     ['network failure', () => Promise.reject(new Error('offline'))],
     ['null JSON', () => Promise.resolve(response(null))],
     ['array JSON', () => Promise.resolve(response([]))],
+    ['redirected response', () => Promise.resolve({ ...response(snapshot(999)), redirected: true })],
     [
       'invalid JSON',
       () =>
