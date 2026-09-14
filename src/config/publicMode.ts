@@ -60,3 +60,30 @@ export function apiUrl(path: string): string {
   const base = apiBase()
   return base ? `${base}${p}` : p
 }
+
+/** Keep IGW credentials in the proxy; remote snapshot proxies must use HTTPS. */
+export function resolveGatewaySnapshotUrl(path: string, base: string, origin: string): string {
+  if (/[\\\s]/.test(path + base) || path.startsWith('//') || base.startsWith('//')) {
+    throw new Error('Invalid gateway snapshot URL')
+  }
+  // snapshotPath is a route, not an alternate origin. apiBase selects the proxy.
+  if (/^[a-z][a-z\d+.-]*:/i.test(path)) throw new Error('Invalid gateway snapshot path')
+  if (base && !base.startsWith('/')) {
+    const remote = new URL(base)
+    if (remote.protocol !== 'https:' || remote.username || remote.password || remote.search || remote.hash) {
+      throw new Error('Remote gateway proxy requires an HTTPS URL without credentials')
+    }
+  }
+  const route = path.startsWith('/') ? path : `/${path}`
+  const target = `${base.replace(/\/$/, '')}${route}`
+  const parsed = new URL(target, origin)
+  if (parsed.username || parsed.password || parsed.hash ||
+      (parsed.origin !== origin && parsed.protocol !== 'https:')) {
+    throw new Error('Invalid gateway snapshot URL')
+  }
+  return target
+}
+
+export function gatewaySnapshotUrl(): string {
+  return resolveGatewaySnapshotUrl(gatewaySnapshotPath(), apiBase(), window.location.origin)
+}

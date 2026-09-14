@@ -1,5 +1,5 @@
 import { markRaw } from 'vue'
-import { apiUrl, gatewaySnapshotPath, isPublicMode } from '../config/publicMode'
+import { apiUrl, gatewaySnapshotUrl, isPublicMode } from '../config/publicMode'
 import { logger } from '../logger'
 import { connectionStatus, normalizeTelemetry } from '../telemetry'
 import { addHistoryPoint } from './useChart'
@@ -35,12 +35,13 @@ export function useConnection() {
     publicRequest = request
     const requestTimer = setTimeout(() => request.abort(), 10000)
     try {
-      const resp = await fetch(apiUrl(gatewaySnapshotPath()), {
+      const resp = await fetch(gatewaySnapshotUrl(), {
         cache: 'no-store',
         credentials: 'same-origin',
+        redirect: 'error',
         signal: request.signal,
       })
-      if (!resp.ok) return
+      if (!resp.ok || resp.redirected) return
       const snap: unknown = await resp.json()
       if (!snap || typeof snap !== 'object' || Array.isArray(snap)) return
       const data = snapshotToState(snap as GatewaySnapshot)
