@@ -36,5 +36,5 @@ export {
 export { useTheme } from './composables/useTheme'
 
 // Library version
-export const VERSION = '2.1.1'
+export { version as VERSION } from '../package.json'
 export const LIBRARY_NAME = '@victron-venus/dashboard-vue'

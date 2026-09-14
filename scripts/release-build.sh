@@ -7,5 +7,6 @@ CHANNEL="${2:-rc}"
 python3 scripts/check-release-version.py "$VERSION" "$CHANNEL"
 mkdir -p release-output
 npm run build:all
+python3 scripts/write_web_build_metadata.py dist dist-lib
 tar -czf release-output/vue-spa-dist.tar.gz -C dist .
 tar -czf release-output/vue-library-dist.tar.gz -C dist-lib .

@@ -25,3 +25,12 @@ Thumbs.db
 vue-spa-dist.tar.gz
 *.backup
 /release-output/
+# Frozen release overlays and final build staging
+.release-plan.json
+.release-inputs.json
+release-assets/
+
+# Generated Python bytecode from release tooling checks
+__pycache__/
+*.pyc
+*.pyo
