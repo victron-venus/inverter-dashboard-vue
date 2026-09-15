@@ -1,4 +1,5 @@
 import { ref, shallowRef } from 'vue'
+import type { DashboardControl } from '../utils'
 import type {
   HaCoverDisplay,
   HaMediaPlayerDisplay,
@@ -35,8 +36,9 @@ export interface InverterState {
   ha_connected?: boolean
   ha_direct_connected?: boolean
   dry_run?: boolean
-  ess_mode?: { mode_name?: string; is_external?: boolean }
-  booleans?: Record<string, boolean>
+  controller_controls_available?: boolean
+  ess_mode?: { hub4_mode?: number; battery_life_state?: number; mode_name?: string; is_external?: boolean }
+  booleans?: Record<string, unknown>
   features?: Record<string, boolean>
   mppt_individual?: number[]
   mppt_chargers?: Array<{
@@ -72,7 +74,7 @@ export interface InverterState {
   ui_config?: {
     loads?: { hidden?: string[]; min_watts?: number }
     home_buttons?: Array<{ id: string; label: string; entity: string; state_key?: string }>
-    header_toggles?: Array<{ id: string; label: string; entity: string }>
+    header_toggles?: DashboardControl[]
     // Runtime-editable settings persisted via /api/settings or WS set_settings
     settings?: {
       camera_topic?: string
@@ -88,6 +90,7 @@ export interface InverterState {
       show_dryer?: boolean
       show_dishwasher?: boolean
       show_home_section?: boolean
+      show_header_toggles?: boolean
       show_ha_covers?: boolean
       show_ha_media?: boolean
       show_ha_scenes?: boolean
@@ -138,6 +141,11 @@ export interface InverterState {
   }
   ev_charging_kw?: number
   ev_power?: number
+  ev_charging_power?: number
+  car_charging_power?: number
+  ev_present?: boolean
+  evcharger_present?: boolean
+  discovered_water_ev?: Array<{ kind: string; instance: number; name?: string }>
   car_soc?: number
   water_controls_available?: boolean
   pump_mode?: number

@@ -15,6 +15,31 @@ const props = {
 }
 
 describe('SidePanel disclosures', () => {
+  it('renders discovered idle EV values even when the legacy feature flag is off', () => {
+    const wrapper = mount(SidePanel, {
+      props: { ...props, features: { ev: false }, evPresent: true, carSoc: 0, evPower: '0W' },
+      global: { plugins: [i18n] },
+    })
+    const ev = wrapper.get('[data-testid="ev-section"]')
+    expect(ev.text()).toContain('0.0kW')
+    expect(ev.text()).toContain('0W')
+    expect(ev.text()).toContain('0%')
+    expect(ev.text()).toContain('Charger')
+    wrapper.unmount()
+  })
+
+  it('shows missing EV readings as unknown and respects the explicit visibility setting', async () => {
+    const wrapper = mount(SidePanel, {
+      props: { ...props, features: { ev: false }, evPresent: true, evPowerWatts: undefined, evChargingKw: undefined, evPower: '—' },
+      global: { plugins: [i18n] },
+    })
+    expect(wrapper.get('[data-testid="ev-section"]').text()).not.toContain('0.0kW')
+    expect(wrapper.get('[data-testid="ev-section"]').text()).not.toContain('0%')
+    await wrapper.setProps({ showEv: false })
+    expect(wrapper.find('[data-testid="ev-section"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('uses native buttons and exposes the expanded state for all five sections', async () => {
     const wrapper = mount(SidePanel, { props, global: { plugins: [i18n] } })
     const controls = wrapper.findAll('button[aria-expanded]')

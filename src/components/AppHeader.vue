@@ -17,7 +17,10 @@
           type="button"
           class="classic-btn min-w-[28px]"
           :class="{ 'classic-btn-on': dryRun }"
-          @click="$emit('send', 'dry_run')"
+          :disabled="controlsAvailable === false || dryRun === undefined"
+          :aria-pressed="dryRun"
+          :title="dryRun === undefined ? 'Controller state unavailable' : 'Dry run'"
+          @click="$emit('send', 'dry_run', { value: !dryRun })"
         >
           <FlaskConical :size="7" /> DRY
         </button>
@@ -26,6 +29,8 @@
           type="button"
           class="classic-btn min-w-[45px]"
           :class="{ 'classic-btn-on': essClass === 'on' }"
+          :disabled="controlsAvailable === false || essClass === 'unavailable'"
+          :aria-pressed="essClass === 'unavailable' ? undefined : essClass === 'on'"
           @click="$emit('send', 'ess_mode')"
         >
           <Zap :size="7" /> {{ essText.toUpperCase() }}
@@ -40,11 +45,10 @@
             :key="toggle.id"
             class="classic-btn min-w-[55px]"
             :class="{ 'classic-btn-on': toggleStates?.[toggle.id] === 'on' }"
-            @click="
-              $emit('send', 'toggle', {
-                entity: inverterControlFlagKey(toggle.entity) || toggle.entity,
-              })
-            "
+            :disabled="toggleUnavailable(toggle)"
+            :aria-pressed="toggleUnavailable(toggle) ? undefined : toggleStates?.[toggle.id] === 'on'"
+            :title="toggleUnavailable(toggle) ? 'Controller state unavailable' : toggle.label"
+            @click="sendToggle(toggle)"
           >
             {{ toggle.label.toUpperCase() }}
           </button>
@@ -71,24 +75,40 @@
 
 <script setup lang="ts">
 import { FlaskConical, Moon, Settings, Sun, Zap } from '@lucide/vue'
-import { inverterControlFlagKey } from '../utils'
+import { type DashboardControl, inverterControlFlagKey } from '../utils'
 import NotificationHistory from './NotificationHistory.vue'
 
-defineProps<{
-  dryRun: boolean
+const props = withDefaults(defineProps<{
+  dryRun?: boolean
   essClass: string
   essText: string
-  headerToggles: Array<{ id: string; label: string; entity: string }>
+  headerToggles: DashboardControl[]
   toggleStates: Record<string, string> | undefined
   isDark: boolean
   showHeaderToggles?: boolean
+  controlsAvailable?: boolean
   /** Public / here.now: status display only — no command buttons. */
   readOnly?: boolean
-}>()
+}>(), { dryRun: undefined, showHeaderToggles: true, controlsAvailable: true })
 
-defineEmits<{
+const emit = defineEmits<{
   send: [action: string, payload?: Record<string, unknown>]
   'toggle-theme': []
   'open-settings': []
 }>()
+
+function toggleUnavailable(toggle: DashboardControl): boolean {
+  const value = props.toggleStates?.[toggle.id]
+  return (inverterControlFlagKey(toggle.entity) !== null && props.controlsAvailable === false)
+    || (value !== 'on' && value !== 'off')
+}
+
+function sendToggle(toggle: DashboardControl) {
+  if (toggleUnavailable(toggle)) return
+  const flag = inverterControlFlagKey(toggle.entity)
+  emit('send', 'toggle', {
+    entity: flag ?? toggle.entity,
+    ...(flag ? { state: props.toggleStates?.[toggle.id] === 'on' ? 'off' : 'on' } : {}),
+  })
+}
 </script>

@@ -76,9 +76,14 @@
   line-height: normal !important;
 }
 
-.classic-btn:hover {
+.classic-btn:hover:not(:disabled) {
   transform: scale(1.02) !important;
   filter: brightness(1.1) !important;
+}
+
+.classic-btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.45;
 }
 
 /* State: ON - Exact v1.0.9 .toggle-btn.on */

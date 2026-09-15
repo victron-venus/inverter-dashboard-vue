@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml)
 [![Vue.js](https://img.shields.io/badge/vue-3.x-green.svg)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-6-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/vite-8.x-646cff.svg)](https://vitejs.dev/)
 
 Shared Vue 3 frontend SPA and reusable UI component library for Victron Venus ecosystem dashboards.
@@ -67,12 +67,21 @@ Use Tab to reach section headers and notification entries, then Enter or Space t
 ## Tech Stack
 
 - Vue 3 (Composition API + `<script setup>`)
-- TypeScript 6
+- TypeScript 5.9.3 (pinned for the JavaScript compiler API used by `vue-tsc`)
 - Vite 8 (with Library Mode for component exports)
 - Tailwind CSS v4
 - ECharts (via vue-echarts)
 - vue-i18n for localization
 - Vitest for unit testing
+
+ESS status, the seven inverter-control header flags, and EV discovery work with
+either backend's direct Cerbo MQTT or IGW source without Home Assistant. Unknown
+states remain unavailable, measured EV zero remains visible, and controller
+writes require a live command connection. See the
+[controller and EV contract](docs/controller-contract.md) for fields and commands.
+The locked TypeScript 5.9.3 dependency keeps `vue-tsc` checks functional; TypeScript
+7's native compiler no longer exposes the JavaScript compiler entry point that
+the current `vue-tsc` uses.
 
 ## Scripts
 

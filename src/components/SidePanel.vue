@@ -5,29 +5,31 @@
       v-if="
         showEv !== false &&
         (features?.ev !== false ||
-          evPowerWatts > 0 ||
-          evChargingKw > 0 ||
+          evPresent ||
+          evPowerWatts !== undefined ||
+          evChargingKw !== undefined ||
           evLoadPower > 0 ||
-          (carSoc && carSoc > 0))
+          carSoc !== undefined)
       "
       class="classic-card"
+      data-testid="ev-section"
     >
       <div class="classic-header flex items-center gap-1.5">
         <Car :size="10" /> {{ $t('sections.ev') }}
       </div>
       <div class="p-1 flex justify-between items-center gap-2">
-        <div v-if="evChargingKw > 0">
+        <div>
           <div class="text-xl font-bold text-solar leading-none">
-            {{ evChargingKw.toFixed(1) }}kW
+            {{ formatMeasurement(evChargingKw, 1, 'kW') }}
           </div>
           <div class="text-[10px] text-slate-500 font-bold text-center">
             {{ $t('sections.charging') }}
           </div>
         </div>
-        <div class="text-center" v-if="evPowerWatts > 0">
+        <div class="text-center">
           <div class="text-xl font-bold text-slate-500 leading-none">{{ evPower }}</div>
           <div class="text-[10px] text-slate-500 font-bold tracking-tighter">
-            {{ $t('sections.vue') }}
+            {{ $t('sections.charger') }}
           </div>
         </div>
         <div class="text-right">
@@ -445,12 +447,13 @@ import type {
 } from '../types/ha'
 import { formatDuration } from '../utils'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   features?: Record<string, boolean>
   evCharging: string
   evPower: string
-  evPowerWatts: number
-  evChargingKw: number
+  evPowerWatts?: number
+  evChargingKw?: number
+  evPresent?: boolean
   evLoadPower: number
   carSoc?: number
   waterControlsAvailable?: boolean
@@ -492,7 +495,7 @@ const props = defineProps<{
   } | null
   /** Public / here.now: status display only — no command controls. */
   readOnly?: boolean
-}>()
+}>(), { showEv: true })
 
 const emit = defineEmits<{
   send: [action: string, payload?: Record<string, unknown>]

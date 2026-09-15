@@ -10,6 +10,7 @@ export default {
   sections: {
     ev: 'E-Auto',
     charging: 'Laden',
+    charger: 'Ladestation',
     vue: 'VUE',
     soc: 'SoC',
     water: 'Wasser',
