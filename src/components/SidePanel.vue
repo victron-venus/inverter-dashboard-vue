@@ -44,21 +44,21 @@
     </div>
 
     <!-- Water Section -->
-    <div v-if="features?.water !== false" class="classic-card">
+    <div v-if="hasWater" class="classic-card" data-testid="water-section">
       <div class="classic-header flex items-center gap-1.5">
         <Droplets :size="10" /> {{ $t('sections.water') }}
       </div>
       <div class="p-1 flex justify-between items-center gap-2 px-2">
-        <div class="text-xl font-bold" :class="waterValve ? 'text-red-500' : 'text-green-500'">
+        <div class="text-xl font-bold" :class="waterValve === true ? 'text-red-500' : 'text-green-500'">
           {{ formatMeasurement(waterLevel, 1, '%') }}
         </div>
         <div class="flex gap-1">
-          <template v-if="readOnly || !waterControlsAvailable">
-            <span class="classic-status" :class="{ 'classic-status-on': pumpSwitch }"
-              >{{ $t('sections.pump') }}</span
+          <template v-if="readOnly">
+            <span class="classic-status" :class="{ 'classic-status-on': pumpSwitch === true }"
+              >{{ $t('sections.pump') }}{{ typeof pumpSwitch === 'boolean' ? '' : ' —' }}</span
             >
-            <span class="classic-status" :class="{ 'classic-status-on': waterValve }"
-              >{{ $t('sections.valve') }}</span
+            <span class="classic-status" :class="{ 'classic-status-on': waterValve === true }"
+              >{{ $t('sections.valve') }}{{ typeof waterValve === 'boolean' ? '' : ' —' }}</span
             >
           </template>
           <template v-else>
@@ -67,25 +67,29 @@
               class="classic-btn"
               :class="{ 'classic-btn-on': pumpSwitch }"
               aria-label="Pump manual mode"
-              :disabled="pumpMode === undefined || pumpSwitch === undefined"
-              @click="$emit('send', 'water_mode', { which: 'pump', mode: pumpSwitch ? 2 : 1 })"
+              :aria-pressed="pumpSwitch"
+              :disabled="!canControlPump || typeof pumpSwitch !== 'boolean'"
+              @click="sendWaterMode('pump', pumpSwitch ? 2 : 1)"
             >
-              {{ $t('sections.pump') }}
+              {{ $t('sections.pump') }}{{ typeof pumpSwitch === 'boolean' ? '' : ' —' }}
             </button>
             <button
               type="button"
               class="classic-btn"
               :class="{ 'classic-btn-on': waterValve }"
               aria-label="Valve manual mode"
-              :disabled="waterValveMode === undefined || waterValve === undefined"
+              :aria-pressed="waterValve"
+              :disabled="!canControlValve || typeof waterValve !== 'boolean'"
               @click="onValveClick"
             >
-              {{ $t('sections.valve') }}
+              {{ $t('sections.valve') }}{{ typeof waterValve === 'boolean' ? '' : ' —' }}
             </button>
             <button v-if="pumpMode === 1 || pumpMode === 2" type="button" class="classic-btn"
-              aria-label="Pump automatic mode" @click="$emit('send', 'water_mode', { which: 'pump', mode: 0 })">Auto</button>
+              aria-label="Pump automatic mode" :disabled="!canControlPump"
+              @click="sendWaterMode('pump', 0)">Auto</button>
             <button v-if="waterValveMode === 1 || waterValveMode === 2" type="button" class="classic-btn"
-              aria-label="Valve automatic mode" @click="$emit('send', 'water_mode', { which: 'valve', mode: 0 })">Auto</button>
+              aria-label="Valve automatic mode" :disabled="!canControlValve"
+              @click="sendWaterMode('valve', 0)">Auto</button>
           </template>
         </div>
       </div>
@@ -435,7 +439,7 @@ import {
   Sparkles,
   WashingMachine,
 } from '@lucide/vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   HaCoverDisplay,
@@ -456,14 +460,17 @@ const props = withDefaults(defineProps<{
   evPresent?: boolean
   evLoadPower: number
   carSoc?: number
+  waterVisible?: boolean
   waterControlsAvailable?: boolean
+  waterPumpControlsAvailable?: boolean
+  waterValveControlsAvailable?: boolean
   pumpMode?: number
   waterValveMode?: number
   waterLevel?: number
   waterValve?: boolean
   pumpSwitch?: boolean
-  pumpSwitchEntity: string
-  waterValveEntity: string
+  pumpSwitchEntity?: string
+  waterValveEntity?: string
   dishwasherRunning?: boolean
   dishwasherDuration?: number
   washerRunning?: boolean
@@ -495,7 +502,14 @@ const props = withDefaults(defineProps<{
   } | null
   /** Public / here.now: status display only — no command controls. */
   readOnly?: boolean
-}>(), { showEv: true })
+}>(), {
+  showEv: true,
+  waterVisible: undefined,
+  pumpSwitch: undefined,
+  waterValve: undefined,
+  waterPumpControlsAvailable: undefined,
+  waterValveControlsAvailable: undefined,
+})
 
 const emit = defineEmits<{
   send: [action: string, payload?: Record<string, unknown>]
@@ -506,8 +520,21 @@ const emit = defineEmits<{
 }>()
 
 function onValveClick() {
+  if (!canControlValve.value || typeof props.waterValve !== 'boolean') return
   if (props.waterValve === false && !window.confirm('Open city water valve?')) return
-  emit('send', 'water_mode', { which: 'valve', mode: props.waterValve ? 2 : 1 })
+  sendWaterMode('valve', props.waterValve ? 2 : 1)
+}
+
+const hasWater = computed(() => props.waterVisible ?? (props.waterLevel !== undefined
+  || typeof props.pumpSwitch === 'boolean' || typeof props.waterValve === 'boolean'))
+const canControlPump = computed(() => !props.readOnly
+  && (props.waterPumpControlsAvailable ?? props.waterControlsAvailable) === true)
+const canControlValve = computed(() => !props.readOnly
+  && (props.waterValveControlsAvailable ?? props.waterControlsAvailable) === true)
+
+function sendWaterMode(which: 'pump' | 'valve', mode: 0 | 1 | 2) {
+  if (!(which === 'pump' ? canControlPump.value : canControlValve.value)) return
+  emit('send', 'water_mode', { which, mode })
 }
 
 const { t: $t } = useI18n()

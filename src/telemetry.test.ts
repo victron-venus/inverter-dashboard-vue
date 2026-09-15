@@ -10,6 +10,9 @@ describe('Cerbo telemetry availability', () => {
       connectionStatus({ data_source: 'igw', mqtt_connected: false, gateway_connected: true })
     ).toBe(true)
     expect(connectionStatus({ gt: 0 })).toBeUndefined()
+    expect(connectionStatus({ data_source: 'igw', native_connected: true, mqtt_connected: false })).toBe(true)
+    expect(connectionStatus({ data_source: 'igw', native_connected: false, gateway_connected: true })).toBe(false)
+    expect(connectionStatus({ data_source: 'igw', mqtt_connected: true })).toBeUndefined()
   })
   it('distinguishes measured zero from unavailable Go scalar and device fields', () => {
     const input = {

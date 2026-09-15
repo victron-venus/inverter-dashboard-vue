@@ -13,6 +13,13 @@ export interface InverterState {
   data_source?: string
   mqtt_connected?: boolean
   gateway_connected?: boolean
+  native_connected?: boolean
+  telemetry?: {
+    source?: string | null
+    observed_at?: string | number | null
+    timestamp_source?: 'local_receipt' | 'gateway_observation'
+    quality?: 'live' | 'stale' | 'unknown'
+  }
   gt?: number
   g1?: number
   g2?: number
@@ -71,6 +78,7 @@ export interface InverterState {
     time_to_go?: string
   }>
   loads?: Record<string, number>
+  load_names?: Record<string, string>
   ui_config?: {
     loads?: { hidden?: string[]; min_watts?: number }
     home_buttons?: Array<{ id: string; label: string; entity: string; state_key?: string }>
@@ -91,6 +99,9 @@ export interface InverterState {
       show_dishwasher?: boolean
       show_home_section?: boolean
       show_header_toggles?: boolean
+      show_batteries?: boolean
+      show_solar_production?: boolean
+      show_active_loads?: boolean
       show_ha_covers?: boolean
       show_ha_media?: boolean
       show_ha_scenes?: boolean
@@ -148,6 +159,9 @@ export interface InverterState {
   discovered_water_ev?: Array<{ kind: string; instance: number; name?: string }>
   car_soc?: number
   water_controls_available?: boolean
+  water_pump_controls_available?: boolean
+  water_valve_controls_available?: boolean
+  water_pump_mode?: number
   pump_mode?: number
   water_valve_mode?: number
   water_level?: number

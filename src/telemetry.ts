@@ -25,8 +25,9 @@ export function normalizeTelemetry(input: InverterState): InverterState {
 
 /** WebSocket reachability does not imply the backend's MQTT connection is live. */
 export function connectionStatus(input: InverterState): boolean | undefined {
-  if (input.data_source === 'igw' && typeof input.gateway_connected === 'boolean') {
-    return input.gateway_connected
+  if (typeof input.native_connected === 'boolean') return input.native_connected
+  if (input.data_source === 'igw') {
+    return typeof input.gateway_connected === 'boolean' ? input.gateway_connected : undefined
   }
   return typeof input.mqtt_connected === 'boolean' ? input.mqtt_connected : undefined
 }
