@@ -4,13 +4,15 @@
       <!-- Dashboard Header -->
       <div class="flex items-center justify-between mb-1">
         <AppHeader
-          :dryRun="coerceBool(state.dry_run)"
+          :dryRun="dryRun"
           :essClass="essClass"
           :essText="essText"
           :headerToggles="headerToggles"
           :toggleStates="headerToggleStates"
           :isDark="isDark"
           :readOnly="readOnly"
+          :controlsAvailable="controllerControlsAvailable"
+          :showHeaderToggles="uiSettings.show_header_toggles"
           @send="send"
           @toggle-theme="toggleTheme"
           @open-settings="settingsOpen = true"
@@ -63,7 +65,8 @@
               :evPowerWatts="evPowerWatts"
               :evChargingKw="evChargingKw"
               :evLoadPower="evLoadPower"
-              :carSoc="state.car_soc"
+              :carSoc="ev.soc"
+              :evPresent="ev.present"
               :waterLevel="state.water_level"
               :pumpMode="state.pump_mode"
               :waterValveMode="state.water_valve_mode"
@@ -149,13 +152,15 @@ import { useHA } from './composables/useHA'
 import { initSystemNotifications } from './composables/useSystemNotifications'
 import { useTheme } from './composables/useTheme'
 import { isPublicMode } from './config/publicMode'
-import { formatPower, inverterControlFlagKey } from './utils'
+import { essStatus, evTelemetry } from './controllerTelemetry'
+import { controlBooleanState, formatPower, inverterControlFlagKey, resolveHeaderToggleState } from './utils'
 
 const readOnly = isPublicMode()
 
 const {
   state,
   mqttConnected,
+  commandConnected,
   connectMqtt,
   send: wsSend,
   cleanup: cleanupConnection,
@@ -183,25 +188,43 @@ const {
   dishwasherRunning,
   washerRunning,
   dryerRunning,
-  coerceBool,
   initHa,
   cleanupHa,
 } = useHA()
 const { isDark, toggleTheme } = useTheme()
 const settingsOpen = ref(false)
 const uiSettings = computed(() => state.value.ui_config?.settings ?? {})
+const controllerControlsAvailable = computed(() =>
+  commandConnected.value && mqttConnected.value && state.value.controller_controls_available !== false
+)
+const dryRun = computed(() => {
+  const value = controlBooleanState(state.value.dry_run)
+  return value === 'unavailable' ? undefined : value === 'on'
+})
 function onSaveSettings(patch: Record<string, unknown>) {
   send('set_settings', patch)
 }
 const { chartOption, forceUpdateChart } = useChart(isDark)
 
+function flagTogglePayload(payload: Record<string, unknown>): Record<string, unknown> | null {
+  if (typeof payload.entity !== 'string') return payload
+  const flag = inverterControlFlagKey(payload.entity)
+  if (!flag) return payload
+  if (!controllerControlsAvailable.value) return null
+  const current = resolveHeaderToggleState({ id: flag, entity: flag }, state.value.booleans ?? {})
+  if (current === 'unavailable') return null
+  return { ...payload, entity: flag, state: payload.state ?? (current === 'on' ? 'off' : 'on') }
+}
+
 async function send(action: string, payload: Record<string, unknown> = {}) {
   if (readOnly) return
   // Control flags: publish bare key on Cerbo MQTT (desktop parity).
-  if (action === 'toggle' && typeof payload.entity === 'string') {
-    const flag = inverterControlFlagKey(payload.entity)
-    if (flag) payload = { ...payload, entity: flag }
+  if (action === 'toggle') {
+    const normalized = flagTogglePayload(payload)
+    if (normalized === null) return
+    payload = normalized
   }
+  if ((action === 'ess_mode' || action === 'dry_run') && !controllerControlsAvailable.value) return
   wsSend(action, payload)
 }
 
@@ -221,19 +244,12 @@ async function onSceneActivate(entityId: string) {
   send('scene_activate', { entity: entityId })
 }
 
+const ess = computed(() => essStatus(state.value.ess_mode))
 const essClass = computed(() => {
-  const m = state.value.ess_mode
-  if (!m) return 'off'
-  if (m.mode_name === 'Off' || m.mode_name === 'Charger only') return 'off'
-  return 'on'
+  if (!ess.value.available) return 'unavailable'
+  return ess.value.active ? 'on' : 'off'
 })
-
-const essText = computed(() => {
-  const m = state.value.ess_mode
-  if (!m) return 'ESS'
-  if (m.is_external) return 'External'
-  return m.mode_name || 'ESS'
-})
+const essText = computed(() => ess.value.text)
 
 const mpptTotal = computed(() => state.value.mppt_total)
 const pvInvertersTotal = computed(() =>
@@ -242,14 +258,11 @@ const pvInvertersTotal = computed(() =>
     : undefined)
 )
 
-const evCharging = computed(() => {
-  const kw = parseFloat(String(state.value.ev_charging_kw)) || 0
-  return kw > 0 ? kw.toFixed(1) + 'kW' : '0'
-})
-
-const evPower = computed(() => formatPower(state.value.ev_power))
-const evPowerWatts = computed(() => Math.abs(state.value.ev_power || 0))
-const evChargingKw = computed(() => Number.parseFloat(String(state.value.ev_charging_kw)) || 0)
+const ev = computed(() => evTelemetry(state.value))
+const evCharging = computed(() => ev.value.chargingKw === undefined ? '—' : `${ev.value.chargingKw.toFixed(1)}kW`)
+const evPower = computed(() => formatPower(ev.value.power))
+const evPowerWatts = computed(() => ev.value.power)
+const evChargingKw = computed(() => ev.value.chargingKw)
 const evLoadPower = computed(() => {
   const loads = state.value.loads
   if (!loads) return 0

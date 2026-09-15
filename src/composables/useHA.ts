@@ -8,7 +8,7 @@ import type {
   HaWeatherDisplay,
 } from '../types/ha'
 import { isPublicMode } from '../config/publicMode'
-import { resolveHeaderToggleState } from '../utils'
+import { DEFAULT_INVERTER_CONTROLS, resolveHeaderToggleState } from '../utils'
 import { state } from './useInverterState'
 
 // HA initialization and cleanup
@@ -93,30 +93,8 @@ export function useHA() {
   const headerToggles = computed(() => {
     if (publicMode) return []
     const uiConfig = state.value.ui_config || {}
-    if (uiConfig.header_toggles && uiConfig.header_toggles.length > 0) {
-      return uiConfig.header_toggles
-    }
-    return [
-      { id: 'only_charging', label: 'ONLY CHARGING', entity: 'input_boolean.only_charging' },
-      { id: 'no_feed', label: 'NO FEED', entity: 'input_boolean.no_feed' },
-      { id: 'house_support', label: 'HOUSE SUPPORT', entity: 'input_boolean.house_support' },
-      { id: 'charge_battery', label: 'CHARGE BATTERY', entity: 'input_boolean.charge_battery' },
-      {
-        id: 'do_not_supply_charger',
-        label: 'DO NOT SUPPLY EV',
-        entity: 'input_boolean.do_not_supply_charger',
-      },
-      {
-        id: 'set_limit_to_ev_charger',
-        label: 'LIMIT TO EV',
-        entity: 'input_boolean.set_limit_to_ev_charger',
-      },
-      {
-        id: 'minimize_charging',
-        label: 'MINIMIZE CHARGING',
-        entity: 'input_boolean.minimize_charging',
-      },
-    ]
+    // An explicit empty list is a deliberate user/daemon choice.
+    return uiConfig.header_toggles ?? DEFAULT_INVERTER_CONTROLS
   })
 
   const buttonStates = computed(() => {

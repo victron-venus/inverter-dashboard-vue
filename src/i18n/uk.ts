@@ -10,6 +10,7 @@ export default {
   sections: {
     ev: 'ЕА',
     charging: 'Зарядка',
+    charger: 'Зарядна станція',
     vue: 'VUE',
     soc: 'SoC',
     water: 'Вода',

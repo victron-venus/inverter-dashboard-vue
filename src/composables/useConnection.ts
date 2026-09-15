@@ -1,4 +1,4 @@
-import { markRaw } from 'vue'
+import { markRaw, ref } from 'vue'
 import { apiUrl, gatewaySnapshotUrl, isPublicMode } from '../config/publicMode'
 import { logger } from '../logger'
 import { connectionStatus, normalizeTelemetry } from '../telemetry'
@@ -7,6 +7,7 @@ import { type InverterState, mqttConnected, state } from './useInverterState'
 import { type GatewaySnapshot, snapshotToState } from './publicGateway'
 
 export function useConnection() {
+  const commandConnected = ref(false)
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
@@ -139,6 +140,7 @@ export function useConnection() {
     }
 
     ws.onopen = () => {
+      commandConnected.value = true
       logger.log('WebSocket connected')
       lastMessageTime = Date.now()
       startHeartbeat()
@@ -146,12 +148,14 @@ export function useConnection() {
     }
 
     ws.onclose = () => {
+      commandConnected.value = false
       mqttConnected.value = false
       stopHeartbeat()
       reconnectTimer = setTimeout(connectMqtt, 2000)
     }
 
     ws.onerror = () => {
+      commandConnected.value = false
       logger.error('WebSocket error')
       mqttConnected.value = false
       ws?.close()
@@ -197,6 +201,7 @@ export function useConnection() {
   }
 
   function cleanup() {
+    commandConnected.value = false
     publicActive = false
     publicRequest?.abort()
     publicRequest = null
@@ -244,6 +249,7 @@ export function useConnection() {
   return {
     state,
     mqttConnected,
+    commandConnected,
     haMqttConnected: { value: null },
     appConfig: { value: null },
     connectMqtt,
