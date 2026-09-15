@@ -1,4 +1,4 @@
-# Controller and EV telemetry
+# Native telemetry and controls
 
 The Python and Go dashboard backends provide the same state shape over WebSocket
 and `/api/state`, whether they consume Cerbo MQTT directly or use IGW. Home
@@ -33,6 +33,37 @@ with legacy `ev_power` as its fallback, converted once to kilowatts for display.
 zero is valid, and discovery keeps an idle EV visible even when the legacy
 feature flag is false. Missing values display a dash. The explicit `show_ev`
 user setting remains authoritative.
+
+Active loads use native `loads` keyed by instance and `load_names` from Cerbo.
+The default threshold is absolute power greater than 2 W, including negative
+generation. Rows sort by absolute power, then display name. Explicit
+`ui_config.loads.hidden` entries still match instance IDs or legacy names, and
+`min_watts: 0` remains a valid override. The main battery tile uses the backend's
+`battery_soc` calculation unchanged; the Batteries list contains only actual
+`batteries` entries, without a synthetic aggregate Bank or name-based exclusions.
+
+Water appears when tank/pump discovery or native Level/State is present and
+remains visible after discovery. `water_level` is already percent: 0.5 is 0.5%.
+`pump_switch` and `water_valve` are nullable boolean readbacks; unknown is not off.
+`water_pump_mode` is canonical, with `pump_mode` as a legacy alias. Buttons send
+`water_mode` with `which: "pump" | "valve"` and mode 0 (automatic), 1 (on), or 2
+(off). Opening the city-water valve requires confirmation. Controls require the
+live command channel, active native transport, and the relevant
+`water_pump_controls_available` or `water_valve_controls_available` capability;
+the aggregate `water_controls_available` is a fallback for older backends. These
+controls are independent of HA and inverter-control availability. Older IGW
+versions without water capability remain read-only. Commands never update the
+display optimistically; readback remains authoritative.
+
+`native_connected` reports the selected source; legacy payloads fall back to
+`gateway_connected` for `data_source: "igw"` or `mqtt_connected` for direct MQTT.
+The footer names this active transport explicitly. It separately displays
+`telemetry.quality` (live, stale, unknown), `telemetry.source` and
+`telemetry.observed_at` (ISO UTC or epoch milliseconds), alongside web and
+controller versions. Timestamp provenance (`timestamp_source`) distinguishes
+local receipt from a gateway observation in the tooltip. Missing quality
+is unknown even on an open WebSocket; a lost connection marks previously live
+data stale.
 
 Build `npm run build:all` after installing the locked dependencies. The `dist/`
 SPA is the shared artifact copied into each backend's static asset directory.

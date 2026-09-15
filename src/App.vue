@@ -68,13 +68,13 @@
               :carSoc="ev.soc"
               :evPresent="ev.present"
               :waterLevel="state.water_level"
-              :pumpMode="state.pump_mode"
+              :waterVisible="waterVisible"
+              :pumpMode="state.water_pump_mode ?? state.pump_mode"
               :waterValveMode="state.water_valve_mode"
-              :waterControlsAvailable="state.water_controls_available"
-              :waterValve="waterValveState"
-              :pumpSwitch="pumpSwitchState"
-              :pumpSwitchEntity="pumpSwitchEntity"
-              :waterValveEntity="waterValveEntity"
+              :waterPumpControlsAvailable="waterPumpControlsAvailable"
+              :waterValveControlsAvailable="waterValveControlsAvailable"
+              :waterValve="state.water_valve"
+              :pumpSwitch="state.pump_switch"
               :dishwasherRunning="dishwasherRunning"
               :dishwasherDuration="state.dishwasher_duration"
               :washerRunning="washerRunning"
@@ -109,18 +109,20 @@
         <BatterySolarPanel
           :batteries="batteries"
           :solarSources="solarSources"
-          :showBatteries="true"
-          :showSolar="true"
+          :showBatteries="uiSettings.show_batteries !== false"
+          :showSolar="uiSettings.show_solar_production !== false"
         />
 
-        <LoadsTable :sortedLoads="sortedLoads" />
+        <LoadsTable v-if="uiSettings.show_active_loads !== false" :loads="sortedLoads" />
       </div>
 
       <!-- Bottom Status Bar -->
       <StatusBar
         :haEnabled="haEnabled"
         :haConnected="haConnected"
-        :mqttConnected="mqttConnected"
+        :mqttConnected="nativeConnected"
+        :dataSource="state.data_source"
+        :telemetry="state.telemetry"
         :haMqttConnected="null"
         :uptime="state.uptime"
         :appVersion="state.dashboard_version || ''"
@@ -132,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
 import CameraPopup from './components/CameraPopup.vue'
@@ -153,6 +155,8 @@ import { initSystemNotifications } from './composables/useSystemNotifications'
 import { useTheme } from './composables/useTheme'
 import { isPublicMode } from './config/publicMode'
 import { essStatus, evTelemetry } from './controllerTelemetry'
+import { activeLoads, waterControlAvailable, waterPresent } from './nativeSections'
+import { connectionStatus } from './telemetry'
 import { controlBooleanState, formatPower, inverterControlFlagKey, resolveHeaderToggleState } from './utils'
 
 const readOnly = isPublicMode()
@@ -175,10 +179,6 @@ const {
   buttonStates,
   headerToggles,
   headerToggleStates,
-  waterValveEntity,
-  pumpSwitchEntity,
-  waterValveState,
-  pumpSwitchState,
   haSensors,
   haNumbers,
   haCovers,
@@ -194,9 +194,17 @@ const {
 const { isDark, toggleTheme } = useTheme()
 const settingsOpen = ref(false)
 const uiSettings = computed(() => state.value.ui_config?.settings ?? {})
+const nativeConnected = computed(() => mqttConnected.value && connectionStatus(state.value) !== false)
 const controllerControlsAvailable = computed(() =>
-  commandConnected.value && mqttConnected.value && state.value.controller_controls_available !== false
+  commandConnected.value && nativeConnected.value && state.value.controller_controls_available !== false
 )
+const waterPumpControlsAvailable = computed(() =>
+  commandConnected.value && nativeConnected.value && waterControlAvailable(state.value, 'pump'))
+const waterValveControlsAvailable = computed(() =>
+  commandConnected.value && nativeConnected.value && waterControlAvailable(state.value, 'valve'))
+const waterSeen = ref(false)
+watchEffect(() => { if (waterPresent(state.value)) waterSeen.value = true })
+const waterVisible = computed(() => waterSeen.value || waterPresent(state.value))
 const dryRun = computed(() => {
   const value = controlBooleanState(state.value.dry_run)
   return value === 'unavailable' ? undefined : value === 'on'
@@ -225,7 +233,15 @@ async function send(action: string, payload: Record<string, unknown> = {}) {
     payload = normalized
   }
   if ((action === 'ess_mode' || action === 'dry_run') && !controllerControlsAvailable.value) return
+  if (action === 'water_mode' && !canSendWaterMode(payload)) return
   wsSend(action, payload)
+}
+
+function canSendWaterMode(payload: Record<string, unknown>): boolean {
+  if (payload.mode !== 0 && payload.mode !== 1 && payload.mode !== 2) return false
+  if (payload.which === 'pump') return waterPumpControlsAvailable.value
+  if (payload.which === 'valve') return waterValveControlsAvailable.value
+  return false
 }
 
 async function onNumberSet(entityId: string, value: number) {
@@ -267,21 +283,13 @@ const evLoadPower = computed(() => {
   const loads = state.value.loads
   if (!loads) return 0
   for (const [key, val] of Object.entries(loads)) {
-    if (key.toLowerCase().includes('ev') || key.toLowerCase().includes('charger')) return val
+    const name = (state.value.load_names?.[key] ?? key).toLowerCase()
+    if (typeof val === 'number' && Number.isFinite(val) && (name.includes('ev') || name.includes('charger'))) return val
   }
   return 0
 })
 
-const sortedLoads = computed(() => {
-  const loads = state.value.loads || {}
-  const uiConfig = state.value.ui_config || {}
-  const loadsConfig = uiConfig.loads || {}
-  const hiddenLoads = loadsConfig.hidden || ['solar_shed']
-  const minWatts = loadsConfig.min_watts || 10
-  return Object.entries(loads)
-    .filter(([name, v]) => v > minWatts && !hiddenLoads.includes(name))
-    .sort((a, b) => b[1] - a[1])
-})
+const sortedLoads = computed(() => activeLoads(state.value))
 
 const batteries = computed(() => {
   const tiles: Array<{
@@ -293,17 +301,6 @@ const batteries = computed(() => {
     state: string
     timeToGo?: string
   }> = []
-  // Bank measurements selected by the Cerbo backend.
-  if (state.value.battery_soc !== undefined && state.value.battery_soc !== null) {
-    tiles.push({
-      name: 'Bank',
-      voltage: state.value.battery_voltage,
-      current: state.value.battery_current,
-      power: state.value.battery_power,
-      soc: state.value.battery_soc,
-      state: 'System',
-    })
-  }
   for (const b of state.value.batteries || []) {
     tiles.push({
       name: b.name || `Battery ${b.instance ?? ''}`,

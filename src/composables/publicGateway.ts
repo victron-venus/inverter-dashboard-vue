@@ -295,6 +295,7 @@ export function snapshotToState(
     ok: true,
     public_mode: true,
     read_only: true,
+    data_source: 'igw',
     gt: gt ?? undefined,
     g1: g1 ?? undefined,
     g2: g2 ?? undefined,
