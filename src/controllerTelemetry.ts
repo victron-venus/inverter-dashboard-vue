@@ -11,10 +11,11 @@ export function essStatus(mode: InverterState['ess_mode']) {
   if (name && !/^unknown\b/i.test(name)) {
     return { text: name, active: name !== 'Off' && name !== 'Charger only', available: true }
   }
-  if (mode.hub4_mode === 1) {
-    const text = mode.battery_life_state === 9 ? 'Keep batteries charged'
-      : mode.battery_life_state === 0 || mode.battery_life_state === 10
-        ? 'Optimized without BatteryLife' : 'Optimized (BatteryLife)'
+  if (mode.hub4_mode === 1 && typeof mode.battery_life_state === 'number'
+      && Number.isInteger(mode.battery_life_state) && mode.battery_life_state >= 0) {
+    let text = 'Optimized (BatteryLife)'
+    if (mode.battery_life_state === 9) text = 'Keep batteries charged'
+    else if (mode.battery_life_state === 0 || mode.battery_life_state === 10) text = 'Optimized without BatteryLife'
     return { text, active: true, available: true }
   }
   return unknown

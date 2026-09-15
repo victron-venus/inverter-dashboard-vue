@@ -10,6 +10,8 @@ describe('controller ESS state', () => {
   })
   it('distinguishes unknown ESS from a confirmed inactive mode', () => {
     expect(essStatus(undefined)).toEqual({ text: 'ESS —', active: false, available: false })
+    expect(essStatus({ hub4_mode: 1 }).available).toBe(false)
+    expect(essStatus({ hub4_mode: 1, battery_life_state: Number.NaN }).available).toBe(false)
     expect(essStatus({ hub4_mode: 0, mode_name: 'Unknown (0)', is_external: false }).available).toBe(false)
     expect(essStatus({ mode_name: 'Off' })).toEqual({ text: 'Off', active: false, available: true })
   })

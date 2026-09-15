@@ -206,17 +206,23 @@ function onSaveSettings(patch: Record<string, unknown>) {
 }
 const { chartOption, forceUpdateChart } = useChart(isDark)
 
+function flagTogglePayload(payload: Record<string, unknown>): Record<string, unknown> | null {
+  if (typeof payload.entity !== 'string') return payload
+  const flag = inverterControlFlagKey(payload.entity)
+  if (!flag) return payload
+  if (!controllerControlsAvailable.value) return null
+  const current = resolveHeaderToggleState({ id: flag, entity: flag }, state.value.booleans ?? {})
+  if (current === 'unavailable') return null
+  return { ...payload, entity: flag, state: payload.state ?? (current === 'on' ? 'off' : 'on') }
+}
+
 async function send(action: string, payload: Record<string, unknown> = {}) {
   if (readOnly) return
   // Control flags: publish bare key on Cerbo MQTT (desktop parity).
-  if (action === 'toggle' && typeof payload.entity === 'string') {
-    const flag = inverterControlFlagKey(payload.entity)
-    if (flag) {
-      if (!controllerControlsAvailable.value) return
-      const current = resolveHeaderToggleState({ id: flag, entity: flag }, state.value.booleans ?? {})
-      if (current === 'unavailable') return
-      payload = { ...payload, entity: flag, state: payload.state ?? (current === 'on' ? 'off' : 'on') }
-    }
+  if (action === 'toggle') {
+    const normalized = flagTogglePayload(payload)
+    if (normalized === null) return
+    payload = normalized
   }
   if ((action === 'ess_mode' || action === 'dry_run') && !controllerControlsAvailable.value) return
   wsSend(action, payload)
@@ -239,7 +245,10 @@ async function onSceneActivate(entityId: string) {
 }
 
 const ess = computed(() => essStatus(state.value.ess_mode))
-const essClass = computed(() => ess.value.available ? (ess.value.active ? 'on' : 'off') : 'unavailable')
+const essClass = computed(() => {
+  if (!ess.value.available) return 'unavailable'
+  return ess.value.active ? 'on' : 'off'
+})
 const essText = computed(() => ess.value.text)
 
 const mpptTotal = computed(() => state.value.mppt_total)
