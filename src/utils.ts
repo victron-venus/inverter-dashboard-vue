@@ -66,6 +66,7 @@ export function isInverterControlFlag(entityOrId: string): boolean {
 export type ControlState = 'on' | 'off' | 'unavailable'
 
 export function controlBooleanState(value: unknown): ControlState {
+  if (typeof value === 'string') value = value.trim().toLowerCase()
   if (value === true || value === 1 || value === 'true' || value === '1' || value === 'on') return 'on'
   if (value === false || value === 0 || value === 'false' || value === '0' || value === 'off') return 'off'
   return 'unavailable'
