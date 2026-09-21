@@ -1,11 +1,20 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
+    groups:
+      codeql:
+        patterns:
+          - "github/codeql-action/*"
     directory: /
     schedule:
       interval: daily
 
   - package-ecosystem: npm
+    # vue-tsc 3.3.x uses TypeScript internals removed in TypeScript 7.
+    # Lift this only with a verified compiler/vue-tsc upgrade.
+    ignore:
+      - dependency-name: typescript
+        versions: [">=7"]
     directory: /
     schedule:
       interval: daily
