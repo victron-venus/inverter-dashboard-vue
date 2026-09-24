@@ -29,7 +29,7 @@
       <span class="font-bold text-slate-600 dark:text-white">{{ grid }}kWh</span>
     </div>
 
-    <TariffCost :kwh="ds.grid_kwh" :tariff-scope="tariffScope" :readOnly="readOnly" />
+    <TariffCost :kwh="ds.grid_kwh" :tariff-scope="tariffScope" :readOnly="readOnly" :configured-tariff="state.ui_config?.electricity_tariff" />
 
     <div v-if="hasBattery" class="flex items-center gap-1.5 flex-1 min-w-fit">
       <div v-if="hasSolar || hasGrid" class="w-px h-3 bg-slate-300"></div>

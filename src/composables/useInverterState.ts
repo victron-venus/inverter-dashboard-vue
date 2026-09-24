@@ -80,6 +80,7 @@ export interface InverterState {
   loads?: Record<string, number>
   load_names?: Record<string, string>
   ui_config?: {
+    electricity_tariff?: unknown
     loads?: { hidden?: string[]; min_watts?: number }
     home_buttons?: Array<{ id: string; label: string; entity: string; state_key?: string }>
     header_toggles?: DashboardControl[]
