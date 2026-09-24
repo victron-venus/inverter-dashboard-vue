@@ -27,8 +27,9 @@
       <div v-if="hasSolar" class="w-px h-3 bg-slate-300"></div>
       <Zap :size="14" class="text-slate-400 dark:text-slate-500" />
       <span class="font-bold text-slate-600 dark:text-white">{{ grid }}kWh</span>
-      <span class="text-green-600 font-bold">(${{ gridCost }})</span>
     </div>
+
+    <TariffCost :kwh="ds.grid_kwh" :tariff-scope="tariffScope" :readOnly="readOnly" />
 
     <div v-if="hasBattery" class="flex items-center gap-1.5 flex-1 min-w-fit">
       <div v-if="hasSolar || hasGrid" class="w-px h-3 bg-slate-300"></div>
@@ -72,7 +73,9 @@ import { Battery as BatteryIcon, Zap } from '@lucide/vue'
 import { computed } from 'vue'
 import { state } from '../composables/useInverterState'
 
-const GRID_COST_PER_KWH = 0.31
+import TariffCost from '../tariffs/TariffCost.vue'
+
+withDefaults(defineProps<{ tariffScope?: string; readOnly?: boolean }>(), { tariffScope: 'dashboard', readOnly: false })
 
 const ds = computed(() => state.value.daily_stats || {})
 
@@ -87,7 +90,6 @@ const prod = computed(() => (ds.value.produced_today || 0).toFixed(2))
 const prodY = computed(() => (ds.value.produced_yesterday || 0).toFixed(1))
 const dollars = computed(() => (ds.value.produced_dollars || 0).toFixed(2))
 const grid = computed(() => (ds.value.grid_kwh || 0).toFixed(2))
-const gridCost = computed(() => (Number.parseFloat(grid.value) * GRID_COST_PER_KWH).toFixed(2))
 const batIn = computed(() => (ds.value.battery_in || 0).toFixed(2))
 const batOut = computed(() => (ds.value.battery_out || 0).toFixed(2))
 const batInY = computed(() => (ds.value.battery_in_yesterday || 0).toFixed(1))

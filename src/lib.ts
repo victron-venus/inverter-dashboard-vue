@@ -38,3 +38,7 @@ export { useTheme } from './composables/useTheme'
 // Library version
 export { version as VERSION } from '../package.json'
 export const LIBRARY_NAME = '@victron-venus/dashboard-vue'
+
+export { default as TariffCost } from './tariffs/TariffCost.vue'
+export { validatePlan, importTariff, estimateDailyCost, currentRate } from './tariffs/model'
+export type { TariffPlan } from './tariffs/model'

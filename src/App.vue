@@ -31,7 +31,7 @@
           @close="settingsOpen = false"
           @save="onSaveSettings"
         />
-        <DailyStats />
+        <DailyStats :readOnly="readOnly" />
 
         <StatCards
           :gt="state.gt"
