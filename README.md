@@ -254,3 +254,8 @@ devices. Embedded SPA assets in both backends are built from this source.
 
 Build with `npm ci`, then `npm run build` and `npm test`. The checked-in backend
 assets must be refreshed from this `dist/` when changing the wire contract.
+
+## Electricity tariffs
+
+The daily strip includes a weekly Univer tariff editor with Emporia reference
+import and local persistence. See [tariff editing](docs/electricity-tariffs.md).
