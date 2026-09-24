@@ -17,7 +17,7 @@ export interface TariffDraft extends Omit<TariffPlan, 'rates'> {
 }
 
 export function rateGrid(value: number | null = null): RateGrid {
-  return Array.from({ length: SLOTS }, () => Array(7).fill(value))
+  return Array.from({ length: SLOTS }, () => new Array(7).fill(value))
 }
 
 export function slotLabel(slot: number): string {
@@ -88,7 +88,7 @@ export function validatePlan(value: unknown): TariffPlan {
 }
 
 // This imports the sanitized companion export, never Emporia credentials or a
-// raw account dump. A utility plan ID does not contain its actual TOU schedule.
+// raw account dump. A utility plan ID does not contain its actual YOU schedule.
 export function importTariff(value: unknown): { draft: TariffDraft; message: string } {
   const data = object(value)
   if (data.type !== 'emporia-tariff-reference')
@@ -113,14 +113,14 @@ export function importTariff(value: unknown): { draft: TariffDraft; message: str
   }
   // Validate metadata independently of an intentionally incomplete schedule.
   validatePlan({ ...draft, rates: rateGrid(0) })
-  return {
-    draft,
-    message: reference
-      ? `Emporia utility plan ${reference}: its time-of-use schedule is not included in the available device properties. Copy the rates from the Emporia app before saving.`
-      : rate === null
-        ? 'Emporia did not supply an energy rate. Enter the rates before saving.'
-        : 'Imported the Emporia flat energy rate (cents converted to currency/kWh). Review it before saving.',
+  let message =
+    'Imported the Emporia flat energy rate (cents converted to currency/kWh). Review it before saving.'
+  if (reference) {
+    message = `Emporia utility plan ${reference}: its time-of-use schedule is not included in the available device properties. Copy the rates from the Emporia app before saving.`
+  } else if (rate === null) {
+    message = 'Emporia did not supply an energy rate. Enter the rates before saving.'
   }
+  return { draft, message }
 }
 
 export function flatRate(plan: TariffPlan): number | null {
@@ -145,6 +145,6 @@ export function currentRate(plan: TariffPlan, at = new Date()): number {
 export function estimateDailyCost(plan: TariffPlan | null, kwh: unknown): number | null {
   if (!plan || typeof kwh !== 'number' || !Number.isFinite(kwh) || kwh < 0) return null
   const rate = flatRate(plan)
-  // Daily totals cannot be assigned to individual TOU periods retroactively.
+  // Daily totals cannot be assigned to individual YOU periods retroactively.
   return rate === null ? null : kwh * rate
 }
