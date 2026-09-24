@@ -259,3 +259,8 @@ assets must be refreshed from this `dist/` when changing the wire contract.
 
 The daily strip includes a weekly Univer tariff editor with Emporia reference
 import and local persistence. See [tariff editing](docs/electricity-tariffs.md).
+
+Tariffs can also be entered during SetupHelper configuration or first-run desktop
+setup and provisioned with deployment files. Seasons and billing start dates
+survive configuration backups and updates. See [installation defaults and tariff
+configuration](docs/electricity-tariffs.md#installation-defaults-and-configuration-backups).
