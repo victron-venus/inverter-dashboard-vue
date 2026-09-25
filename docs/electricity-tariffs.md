@@ -100,3 +100,90 @@ Validation covers rates, missing data, source metadata, separate scopes, storage
 failure, season changes, pending-cell preservation, short-month billing boundaries
 and local-time/DST selection. Run the existing frontend build and test
 commands after changing the mirrored files.
+
+## Measured interval energy cost
+
+Open **Interval energy cost** next to **Edit tariff** in the daily energy strip.
+Import measured grid-import readings as CSV or JSON. The dialog calculates each
+supported interval's kWh multiplied by its applicable price in the selected
+tariff. It applies weekday, half-hour, season and IANA time-zone rules, including
+the repeated hour in autumn and missing hour in spring. This is an energy charge
+calculation, not a utility invoice: export credits, taxes, demand charges, fixed
+fees and tariff-effective-date history are not modeled. Confirm that the selected
+tariff applied throughout the requested dates; editing it reprices the whole
+history.
+
+The initial range is the billing period containing the latest imported reading
+(or its local day when billing day is unset). Billing day 17 selects the 17th
+through the following 16th. Both date fields use the tariff time zone; the last
+date is inclusive. You can inspect earlier periods by changing these dates.
+The complete period duration includes any future days in an unfinished cycle,
+which remain explicitly missing until actual readings arrive.
+
+### Obtain and prepare the data
+
+Export interval **import/consumption energy** from your utility or a meter that
+separately measures grid import. Map its columns to this CSV layout:
+
+```csv
+start,end,import_kwh
+2026-09-24T00:00:00-07:00,2026-09-24T00:30:00-07:00,0.25
+2026-09-24T00:30:00-07:00,2026-09-24T01:00:00-07:00,0
+```
+
+These are illustrative values. Each reading covers `[start, end)`: start is
+inclusive, end exclusive. Use ISO dates with seconds `00` and either `Z` or an
+explicit UTC offset. Convert Wh to kWh before import (divide by 1,000); do not
+convert kW or a cumulative meter directly into interval kWh. During a repeated
+clock hour the two offsets distinguish separate measurements. Do not guess an
+offset for an ambiguous provider timestamp. Blank readings must be omitted,
+not changed to zero; explicitly measured zero is valid.
+
+Do **not** use signed net mains energy or subtract exported energy from imported
+energy: positive net energy can conceal import and export within the interval.
+Emporia's current upstream [chart-history implementation](https://github.com/magico13/PyEmVue/blob/master/pyemvue/pyemvue.py)
+explicitly returns no history for `MainsFromGrid` and `MainsToGrid`; its net mains
+chart is not an equivalent source. Our driver currently exposes instantaneous
+power plus daily/monthly aggregates. InfluxDB's sampled signed grid power is
+also not measured import energy. This feature therefore supports explicit file
+import; it does not claim automatic Emporia or controller history synchronization.
+
+JSON uses the same units and semantics:
+
+```json
+{
+  "type": "grid-import-intervals",
+  "version": 1,
+  "intervals": [
+    {"start": "2026-09-24T07:00:00Z", "end": "2026-09-24T07:30:00Z", "importKwh": 0.25}
+  ]
+}
+```
+
+### Coverage, limits and storage
+
+Files are limited to 2 MB, 20,000 readings and a span of 366 days. Supported
+readings have whole-minute timestamps, duration up to one hour and finite,
+nonnegative kWh. Years 2000–2099 are accepted. Overlaps and duplicate readings
+are rejected rather than double counted. Export/net columns, negative import,
+missing values and malformed timestamps are rejected before replacing saved data.
+
+An interval crossing a price change or selected date boundary is excluded from
+the charge: its energy cannot be divided accurately without finer measurements.
+Import finer measured readings instead. The result reports excluded intervals,
+missing hours and the fraction of the selected period duration that was priced.
+An incomplete result is prominently labeled **Partial energy charge**. No
+priced intervals means unavailable, not zero. Complete duration coverage still
+depends on the accuracy of the meter and the selected tariff.
+
+A successful import replaces this dashboard's previous history and persists in
+local device/browser storage, scoped by the same installation identity as its
+tariff. Invalid files or storage errors preserve the previous history. Other
+installations remain separate. **Remove saved intervals** deletes this local
+copy. Readings are not uploaded, written to the controller, included in tariff
+exports or included in desktop configuration backups. Keep the original meter
+export if you need a durable history archive.
+
+The controller now publishes `daily_stats.grid_kwh: null` when it has no measured
+daily grid-energy source. Updated clients do not display a fabricated zero-cost
+estimate for this unavailable reading; measured daily zero remains a valid zero.
