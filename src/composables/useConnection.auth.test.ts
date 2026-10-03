@@ -40,7 +40,7 @@ describe('private mode forwards page token', () => {
     vi.stubGlobal('location', {
       protocol: 'https:',
       host: 'dash.example',
-      search: '?token=s3cret',
+      search: '?token=a%26b%2Bc',
     })
     fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -59,7 +59,7 @@ describe('private mode forwards page token', () => {
 
   it('opens WebSocket with token query', () => {
     connection.connectMqtt()
-    expect(FakeWebSocket.instances[0]?.url).toBe('wss://dash.example/ws?token=s3cret')
+    expect(FakeWebSocket.instances[0]?.url).toBe('wss://dash.example/ws?token=a%26b%2Bc')
   })
 
   it('polls /api/state with token query', async () => {
@@ -70,6 +70,6 @@ describe('private mode forwards page token', () => {
     // advance past 8000ms silence window without messages
     await vi.advanceTimersByTimeAsync(9000)
     const urls = fetchMock.mock.calls.map((c) => c[0])
-    expect(urls.some((u) => String(u).includes('/api/state?token=s3cret'))).toBe(true)
+    expect(urls.some((u) => String(u).includes('/api/state?token=a%26b%2Bc'))).toBe(true)
   })
 })
