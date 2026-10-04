@@ -29,6 +29,7 @@ export function useConnection() {
   let ws: WebSocket | null = null
   let disposed = false
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let connectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let lastMessageTime = Date.now()
@@ -136,6 +137,13 @@ export function useConnection() {
     startHttpPoll()
   }
 
+  function clearConnectTimer() {
+    if (connectTimer) {
+      clearTimeout(connectTimer)
+      connectTimer = null
+    }
+  }
+
   function connectMqtt() {
     if (disposed) return
     if (publicMode) {
@@ -149,6 +157,7 @@ export function useConnection() {
       reconnectTimer = null
     }
 
+    clearConnectTimer()
     startHttpPoll()
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
     let socket: WebSocket
@@ -164,6 +173,7 @@ export function useConnection() {
 
     socket.onopen = () => {
       if (disposed || ws !== socket) return
+      clearConnectTimer()
       commandConnected.value = true
       logger.log('WebSocket connected')
       lastMessageTime = Date.now()
@@ -173,6 +183,7 @@ export function useConnection() {
 
     socket.onclose = () => {
       if (disposed || ws !== socket) return
+      clearConnectTimer()
       ws = null
       commandConnected.value = false
       mqttConnected.value = false
@@ -199,6 +210,11 @@ export function useConnection() {
         logger.error('Failed to parse WS message:', err)
       }
     }
+    connectTimer = setTimeout(() => {
+      if (disposed || ws !== socket) return
+      connectTimer = null
+      if (socket.readyState === WebSocket.CONNECTING) socket.close()
+    }, 10000)
   }
 
   function startHeartbeat() {
@@ -229,6 +245,7 @@ export function useConnection() {
   }
 
   function closeSocket() {
+    clearConnectTimer()
     const socket = ws
     ws = null
     if (!socket) return

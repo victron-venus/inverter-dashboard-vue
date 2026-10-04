@@ -84,7 +84,8 @@ describe('private connection lifetime', () => {
     connection.connectMqtt()
     FakeWebSocket.instances[0].open()
     connection.cleanup()
-    await vi.advanceTimersByTimeAsync(2500)
+    await vi.advanceTimersByTimeAsync(15000)
+    expect(vi.getTimerCount()).toBe(0)
     expect(FakeWebSocket.instances).toHaveLength(1)
     expect(connection.commandConnected.value).toBe(false)
     expect(mqttConnected.value).toBe(false)
@@ -166,4 +167,46 @@ describe('private connection lifetime', () => {
     expect(state.value.gt).toBe(123)
     expect(mqttConnected.value).toBe(false)
   })
+  it('bounds a stalled handshake and retries once without another browser event', async () => {
+    connection.connectMqtt()
+    const stalled = FakeWebSocket.instances[0]
+    await vi.advanceTimersByTimeAsync(9999)
+    expect(stalled.closeCalls).toBe(0)
+    expect(FakeWebSocket.instances).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(2002)
+    expect(stalled.closeCalls).toBe(1)
+    expect(FakeWebSocket.instances).toHaveLength(2)
+  })
+
+  it('clears the handshake deadline when the socket opens', async () => {
+    connection.connectMqtt()
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    await vi.advanceTimersByTimeAsync(11000)
+    expect(socket.closeCalls).toBe(0)
+    expect(FakeWebSocket.instances).toHaveLength(1)
+    expect(connection.commandConnected.value).toBe(true)
+  })
+
+  it('replaces the handshake deadline when online recovery replaces its socket', async () => {
+    const timeouts = vi.spyOn(globalThis, 'setTimeout')
+    connection.connectMqtt()
+    const oldDeadline = timeouts.mock.calls.find(([, delay]) => delay === 10000)?.[0]
+    expect(oldDeadline).toEqual(expect.any(Function))
+    const old = FakeWebSocket.instances[0]
+    window.dispatchEvent(new Event('online'))
+    await vi.advanceTimersByTimeAsync(500)
+    const current = FakeWebSocket.instances[1]
+    // Even a stale queued timer must neither close this socket nor clear its deadline.
+    ;(oldDeadline as () => void)()
+    await vi.advanceTimersByTimeAsync(9500)
+    expect(old.closeCalls).toBe(1)
+    expect(current.closeCalls).toBe(0)
+    await vi.advanceTimersByTimeAsync(500)
+    expect(current.closeCalls).toBe(1)
+    connection.cleanup()
+    await vi.advanceTimersByTimeAsync(12000)
+    expect(FakeWebSocket.instances).toHaveLength(2)
+  })
+
 })
