@@ -172,6 +172,58 @@ describe('useNotifications', () => {
     expect(historyNotifications.value).toHaveLength(1)
   })
 
+  it('refreshes metadata while source time remains unavailable without making history unread', async () => {
+    const n = { id: 'event-time-unknown-metadata', level: 'alarm', title: 'Alarm', body: '' }
+    state.value = { ...state.value, notifications: [n] }
+    await nextTick()
+    markNotificationRead(n.id)
+    state.value = { ...state.value, notifications: [{ ...n, body: 'JBD Battery Chain 1' }] }
+    await nextTick()
+    expect(historyNotifications.value).toHaveLength(1)
+    expect(historyNotifications.value[0]).toMatchObject({
+      body: 'JBD Battery Chain 1',
+      timestamp: null,
+      read: true,
+    })
+  })
+
+  it('remembers cleared absent events beyond the former 500-event compaction threshold', async () => {
+    const n = {
+      id: 'event-time-long-replay',
+      level: 'alarm',
+      title: 'Alarm',
+      ts: '2026-10-05T18:47:00Z',
+    }
+    const sync = async (id: string) => {
+      state.value = { ...state.value, notifications: [{ ...n, id }] }
+      await nextTick()
+    }
+    await sync(n.id)
+    historyNotifications.value = []
+    for (let i = 0; i < 600; i++) await sync(`event-time-long-other-${i}`)
+    await sync(n.id)
+    expect(historyNotifications.value.find((h) => h.id === n.id)).toBeUndefined()
+  })
+
+  it('bounds per-tab replay memory to the last 4096 observed identities', async () => {
+    const n = {
+      id: 'event-time-retention-boundary',
+      level: 'alarm',
+      title: 'Alarm',
+      ts: '2026-10-05T18:47:00Z',
+    }
+    const sync = async (id: string) => {
+      state.value = { ...state.value, notifications: [{ ...n, id }] }
+      await nextTick()
+    }
+    await sync(n.id)
+    historyNotifications.value = []
+    for (let i = 0; i < 4096; i++) await sync(`event-time-retention-other-${i}`)
+    await sync(n.id)
+    expect(historyNotifications.value.filter((h) => h.id === n.id)).toHaveLength(1)
+    expect(historyNotifications.value[0].timestamp).toBe(Date.parse(n.ts))
+  })
+
   it('acks platform banners via acknowledge_all_notifications (Cerbo / IGW)', () => {
     const sent: Array<{ action: string; payload?: Record<string, unknown> }> = []
     setNotificationCommandSender((action, payload) => {

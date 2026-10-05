@@ -160,8 +160,12 @@ function normalize(n: {
   }
 }
 
-let seenEventTimes = new Map<string, number | null>()
-let seenEvents = new Set<string>()
+// Per-tab replay memory is bounded independently of the visible 100-row history.
+// Remember the last 4096 observed identities, including cleared/absent events.
+// Beyond this window (or after a page reload), a replay may be recorded again.
+const MAX_SEEN_EVENTS = 4096
+const seenEventTimes = new Map<string, number | null>()
+const seenEvents = new Set<string>()
 
 function eventKey(id: string, timestamp: number | null): string {
   return JSON.stringify([id, timestamp])
@@ -183,7 +187,7 @@ function syncHistory(incoming: BannerNotification[]) {
       previous === null && timestamp !== null
         ? entries.find((h) => h.id === n.id && h.timestamp === null)
         : undefined
-    if (entry && timestamp !== null) {
+    if (entry) {
       Object.assign(entry, n, { timestamp })
     } else if (pending) {
       Object.assign(pending, n, { timestamp })
@@ -192,17 +196,18 @@ function syncHistory(incoming: BannerNotification[]) {
     }
     // Remember cleared occurrences too: reordered/replayed snapshots must not
     // refill cleared history. Unknown reconnects never erase a known time.
+    seenEvents.delete(key)
     seenEvents.add(key)
-    if (timestamp !== null || !seenEventTimes.has(n.id)) seenEventTimes.set(n.id, timestamp)
+    seenEventTimes.delete(n.id)
+    seenEventTimes.set(n.id, timestamp ?? previous ?? null)
+    while (seenEvents.size > MAX_SEEN_EVENTS) {
+      seenEvents.delete(seenEvents.values().next().value!)
+    }
+    while (seenEventTimes.size > MAX_SEEN_EVENTS) {
+      seenEventTimes.delete(seenEventTimes.keys().next().value!)
+    }
   }
   historyNotifications.value = [...fresh, ...historyNotifications.value].slice(0, MAX_HISTORY)
-  if (seenEvents.size > 500) {
-    seenEvents = new Set([
-      ...historyNotifications.value.map((n) => eventKey(n.id, n.timestamp)),
-      ...incoming.map((n) => eventKey(n.id, notificationTimestampMs(n.ts))),
-    ])
-    seenEventTimes = new Map(incoming.map((n) => [n.id, seenEventTimes.get(n.id) ?? null]))
-  }
 }
 
 watch(
