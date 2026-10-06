@@ -39,8 +39,8 @@ function normalizedEvent(value) {
   if (!['victron', 'ha', 'system'].includes(value.source)) return null
   if (value.kind === 'native' && !['victron', 'system'].includes(value.source)) return null
   if (typeof value.eventKey !== 'string' || !/^[a-f0-9]{64}$/.test(value.eventKey)) return null
-  if (typeof value.title !== 'string' || !value.title || value.title.length > 120) return null
-  if (typeof value.body !== 'string' || value.body.length > 1000) return null
+  if (typeof value.title !== 'string' || !value.title || Array.from(value.title).length > 120) return null
+  if (typeof value.body !== 'string' || Array.from(value.body).length > 1000) return null
   const now = Date.now()
   for (const timestamp of [value.sourceTimestampMs, value.observedAtMs]) {
     if (!Number.isSafeInteger(timestamp) || timestamp <= 0 || timestamp > now + 30_000 || now - timestamp > MAX_EVENT_AGE_MS) return null

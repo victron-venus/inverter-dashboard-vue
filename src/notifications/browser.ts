@@ -4,7 +4,7 @@ export type WorkerSettings = { enabled: boolean }
 export async function workerRequest<T>(registration: ServiceWorkerRegistration, request: Record<string, unknown>): Promise<T> {
   const worker = registration.active
   const script = worker ? new URL(worker.scriptURL) : null
-  if (!worker || !script || script.pathname !== WORKER_PATH || script.origin !== location.origin || script.search || script.hash) {
+  if (!worker || script?.pathname !== WORKER_PATH || script.origin !== location.origin || script.search || script.hash) {
     throw new Error('The notification worker is not ready. Reload this page and try again.')
   }
   return await new Promise<T>((resolve, reject) => {
@@ -26,7 +26,7 @@ export function isNotificationRegistration(registration: ServiceWorkerRegistrati
 
 export function subscriptionMatchesKey(subscription: PushSubscription, expected: Uint8Array): boolean {
   const actual = subscription.options?.applicationServerKey
-  if (!actual || actual.byteLength !== expected.byteLength) return false
+  if (actual?.byteLength !== expected.byteLength) return false
   return new Uint8Array(actual).every((value, index) => value === expected[index])
 }
 
@@ -56,6 +56,6 @@ export async function registerNotificationWorker(): Promise<ServiceWorkerRegistr
 export function applicationServerKey(encoded: string): Uint8Array<ArrayBuffer> {
   if (!/^[A-Za-z0-9_-]{87}$/.test(encoded)) throw new Error('The notification server supplied an invalid public key.')
   const decoded = atob(encoded.replace(/-/g, '+').replace(/_/g, '/') + '=')
-  if (decoded.length !== 65 || decoded.charCodeAt(0) !== 4) throw new Error('The notification server supplied an invalid public key.')
-  return Uint8Array.from(decoded, (character) => character.charCodeAt(0))
+  if (decoded.length !== 65 || decoded.codePointAt(0) !== 4) throw new Error('The notification server supplied an invalid public key.')
+  return Uint8Array.from(decoded, (character) => character.codePointAt(0) ?? 0)
 }

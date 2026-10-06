@@ -62,6 +62,13 @@ describe('persistent notification worker', () => {
     await w.run(`deliver(${JSON.stringify({ ...alarm, source: 'system' })})`)
     expect(shown).toHaveBeenCalledTimes(1)
   })
+  it('accepts the server Unicode character bounds rather than UTF-16 unit counts', async () => {
+    const w = worker(); await w.run("settings({enabled:true})")
+    await w.run(`deliver(${JSON.stringify({ ...alarm, title: '🔋'.repeat(120), body: '🔋'.repeat(500) })})`)
+    expect(shown).toHaveBeenCalledTimes(1)
+    await w.run(`deliver(${JSON.stringify({ ...alarm, eventKey: 'c'.repeat(64), title: '🔋'.repeat(121) })})`)
+    expect(shown).toHaveBeenCalledTimes(1)
+  })
   it('does not consume an event if the OS rejects display', async () => {
     const w = worker(); await w.run("settings({enabled:true})")
     shown.mockRejectedValueOnce(new Error('denied'))

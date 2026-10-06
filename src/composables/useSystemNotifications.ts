@@ -100,6 +100,14 @@ export function initSystemNotifications(): () => void {
   }
 }
 
+async function renewSubscription(currentRegistration: ServiceWorkerRegistration, existing: PushSubscription) {
+  await workerRequest(currentRegistration, { type: 'notification-settings-set', enabled: false })
+  optedIn.value = false; registered.value = false
+  const deleted = await notificationApi<SubscriptionStatus>('subscription', 'DELETE', { endpoint: existing.endpoint })
+  if (deleted.registered !== false) throw new Error('Old subscription deletion unconfirmed')
+  if (!await existing.unsubscribe() && await currentRegistration.pushManager.getSubscription()) throw new Error('Old subscription remains active')
+}
+
 /** Called only by the Enable button; requestPermission runs before any await. */
 async function enable() {
   if (busy.value || !updateSupport() || !server.value?.available || !server.value.enabled) return
@@ -115,11 +123,7 @@ async function enable() {
     if (!publicKey) throw new Error('Missing public key')
     const key = applicationServerKey(publicKey)
     if (existing && !subscriptionMatchesKey(existing, key)) {
-      await workerRequest(registration, { type: 'notification-settings-set', enabled: false })
-      optedIn.value = false; registered.value = false
-      const deleted = await notificationApi<SubscriptionStatus>('subscription', 'DELETE', { endpoint: existing.endpoint })
-      if (deleted.registered !== false) throw new Error('Old subscription deletion unconfirmed')
-      if (!await existing.unsubscribe() && await registration.pushManager.getSubscription()) throw new Error('Old subscription remains active')
+      await renewSubscription(registration, existing)
       existing = null
     }
     const subscription = existing ?? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key })

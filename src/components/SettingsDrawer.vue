@@ -28,7 +28,7 @@
         </label>
       </div>
 
-      <div role="group" aria-label="Dashboard sections" class="space-y-1">
+      <fieldset aria-label="Dashboard sections" class="m-0 min-w-0 border-0 p-0 space-y-1">
         <label
           v-for="opt in VISIBILITY"
           :key="opt.key"
@@ -42,7 +42,7 @@
             @change="toggle(opt.key, ($event.target as HTMLInputElement).checked)"
           />
         </label>
-      </div>
+      </fieldset>
 
       <div class="mt-3 border-t border-slate-800 pt-2 text-slate-300">
         <TariffConfiguration v-if="open" tariff-scope="dashboard" :configured-tariff="state.ui_config?.electricity_tariff" />
