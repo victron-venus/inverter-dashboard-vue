@@ -76,6 +76,25 @@ describe('persistent notification worker', () => {
     await w.run(`deliver(${JSON.stringify(alarm)})`)
     expect(shown).toHaveBeenCalledTimes(2)
   })
+  it('settles a claim release and closes storage when the transaction aborts', async () => {
+    const w = worker(); await w.run("settings({enabled:true})")
+    await w.run(`claimEvent({key: '${alarm.eventKey}'})`)
+    await w.run(`(async () => {
+      const db = await openDatabase()
+      const transaction = db.transaction.bind(db)
+      const close = db.close.bind(db)
+      globalThis.releaseClosed = false
+      db.close = () => { globalThis.releaseClosed = true; close() }
+      db.transaction = (...args) => {
+        const tx = transaction(...args)
+        Promise.resolve().then(() => tx.abort())
+        return tx
+      }
+      openDatabase = async () => db
+    })()`)
+    await expect(w.run(`releaseClaim('${alarm.eventKey}')`)).rejects.toThrow('Notification storage unavailable')
+    expect(w.run('releaseClosed')).toBe(true)
+  })
   it('bounds dedupe storage while preserving recent claims', async () => {
     const w = worker(); await w.run("settings({enabled:true})")
     await w.run(`(async () => {

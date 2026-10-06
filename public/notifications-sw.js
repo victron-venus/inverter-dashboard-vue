@@ -93,6 +93,7 @@ async function releaseClaim(key) {
       tx.objectStore('events').delete(key)
       tx.oncomplete = resolve
       tx.onerror = () => reject(new Error('Notification storage unavailable'))
+      tx.onabort = tx.onerror
     })
   } finally { db.close() }
 }
