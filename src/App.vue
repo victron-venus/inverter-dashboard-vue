@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
 import CameraPopup from './components/CameraPopup.vue'
@@ -248,13 +248,13 @@ const waterPumpControlsAvailable = computed(() =>
   commandConnected.value && nativeConnected.value && waterControlAvailable(state.value, 'pump'))
 const waterValveControlsAvailable = computed(() =>
   commandConnected.value && nativeConnected.value && waterControlAvailable(state.value, 'valve'))
-const haControlsAvailable = computed(() => {
-  void now.value
+const haControlsAvailable = ref(false)
+watch([now, commandConnected, state], () => {
   const at = state.value.ha_observed_at
   const age = typeof at === 'number' ? Date.now() / 1000 - at : Number.NaN
-  return !readOnly && commandConnected.value && state.value.ha_direct_connected === true
+  haControlsAvailable.value = !readOnly && commandConnected.value && state.value.ha_direct_connected === true
     && state.value.ha_controls_available === true && age >= 0 && age <= 30
-})
+}, { immediate: true, flush: 'sync' })
 const waterSeen = ref(false)
 watchEffect(() => { if (waterPresent(state.value)) waterSeen.value = true })
 const waterVisible = computed(() => waterSeen.value || waterPresent(state.value))

@@ -19,17 +19,17 @@
           Cerbo applies this setpoint every 2 seconds until stopped, even after this page closes.
           Positive = import; negative = export.
         </p>
-        <p v-if="!ready" class="mt-2 text-xs" role="status">
+        <output v-if="!ready" class="block mt-2 text-xs">
           Current override status is unavailable. Wait for a live controller connection with override support.
-        </p>
+        </output>
         <form class="mt-3" novalidate @submit.prevent="submit">
           <label class="block text-xs">
             Watts
-            <input v-model="draft" autofocus aria-label="Watts" type="text" inputmode="decimal"
+            <input v-model="draft" aria-label="Watts" type="text" inputmode="decimal"
               class="classic-input w-full mt-1" :disabled="!!pending" :aria-invalid="inputError ? true : undefined"
               @input="inputError = ''" />
           </label>
-          <p v-if="pending" class="mt-2 text-xs" role="status">Waiting for the controller to confirm…</p>
+          <output v-if="pending" class="block mt-2 text-xs">Waiting for the controller to confirm…</output>
           <p v-if="error" class="mt-2 text-xs text-consumption break-words" role="alert">{{ error }}</p>
           <div class="mt-4 flex flex-wrap justify-end gap-2">
             <button v-if="active" type="button" class="classic-btn mr-auto" :disabled="!ready || !!pending" @click="apply(null)">Stop override</button>
@@ -78,11 +78,11 @@ const valid = computed(() => {
     (status.last_error === null || typeof status.last_error === 'string') &&
     (status.request_id === null || typeof status.request_id === 'string')
 })
-const ready = computed(() => {
-  void clock.value
-  return !props.readOnly && props.connected && props.available &&
+const ready = ref(false)
+watch([clock, () => props.status, () => props.observedAt, () => props.readOnly, () => props.connected, () => props.available], () => {
+  ready.value = !props.readOnly && props.connected && props.available &&
     isSetpointOverrideFresh(props.status, props.observedAt)
-})
+}, { immediate: true, flush: 'sync' })
 const active = computed(() => valid.value && props.status?.value !== null)
 const error = computed(() => inputError.value || operationError.value || (!pending.value ? props.status?.last_error : ''))
 

@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { GridBackupStatus } from '../composables/useInverterState'
 import type { SetpointOverrideStatus } from '../setpointOverride'
 import type { EssModeCommandError } from '../essMode'
@@ -137,12 +137,12 @@ const clock = ref(Date.now())
 let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => { timer = setInterval(() => { clock.value = Date.now() }, 1000) })
 onUnmounted(() => clearInterval(timer))
-const backupLive = computed(() => {
-  void clock.value
+const backupLive = ref(false)
+watch([clock, () => props.gridBackupObservedAt], () => {
   const observed = props.gridBackupObservedAt
   const age = typeof observed === 'number' ? Date.now() / 1000 - observed : Number.NaN
-  return age >= -5 && age <= 30
-})
+  backupLive.value = age >= -5 && age <= 30
+}, { immediate: true, flush: 'sync' })
 const backupActive = computed(() => props.gridUsingBackup && backupLive.value && props.gridBackup?.available === true)
 const backupPower = computed(() => backupLive.value && props.gridBackup?.available === true
   ? formatPower(props.gridBackup.power ?? undefined) : '—')

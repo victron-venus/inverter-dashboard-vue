@@ -17,6 +17,10 @@ export interface ControllerTariffState {
   }
 }
 
+function canonicalPlan(value: unknown): string {
+  return JSON.stringify(value === null ? null : validatePlan(value))
+}
+
 /** A transport receipt is not proof that the controller durably saved a tariff. */
 export function useControllerTariff(options: {
   state: Ref<ControllerTariffState>
@@ -40,7 +44,10 @@ export function useControllerTariff(options: {
       && status.value?.writable === true && /^[a-f0-9]{64}$/.test(revision.value)
       && Number.isFinite(age) && age >= 0 && age <= 30
   }
-  const writable = computed(() => { void clock.value; return isWritable(Date.now()) })
+  const writable = ref(false)
+  watch([clock, options.state, options.connected], () => {
+    writable.value = isWritable(Date.now())
+  }, { immediate: true, flush: 'sync' })
   const pending = computed(() => operation.value !== null)
   let deadline: ReturnType<typeof setTimeout> | undefined
   const clockTimer = setInterval(() => { clock.value = Date.now() }, 1000)
@@ -53,9 +60,6 @@ export function useControllerTariff(options: {
     if (!request) return
     if (error) request.reject(new Error(error))
     else request.resolve()
-  }
-  function canonicalPlan(value: unknown): string {
-    return JSON.stringify(value === null ? null : validatePlan(value))
   }
   function inspect() {
     const request = operation.value
