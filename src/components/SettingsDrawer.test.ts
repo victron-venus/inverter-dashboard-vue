@@ -2,6 +2,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { state } from '../composables/useInverterState'
 import { i18n } from '../i18n'
+import TariffConfiguration from '../tariffs/TariffConfiguration.vue'
 import SettingsDrawer from './SettingsDrawer.vue'
 
 describe('SettingsDrawer', () => {
@@ -20,7 +21,7 @@ describe('SettingsDrawer', () => {
     }
     const w = mount(SettingsDrawer, { props: { open: true }, global: { plugins: [i18n] } })
     const boxes = w.findAll('[aria-label="Dashboard sections"] input[type="checkbox"]')
-    expect(boxes).toHaveLength(9)
+    expect(boxes).toHaveLength(16)
     expect(w.get('[aria-label="Electricity tariff"]').text()).toContain('Use a local tariff on this device')
     // show_ev false → first toggle unchecked
     expect((boxes[0].element as HTMLInputElement).checked).toBe(false)
@@ -63,4 +64,18 @@ it('keeps tariff settings and nested editor Escape separate from closing the dra
   expect(w.emitted('close')).toHaveLength(1)
   w.unmount()
   vi.unstubAllGlobals()
+})
+
+it('forwards controller tariff authority and the asynchronous save contract only through Settings', async () => {
+  const save = vi.fn().mockResolvedValue(undefined)
+  const wrapper = mount(SettingsDrawer, { props: { open: true, tariffWritable: true,
+    tariffRevision: 'a'.repeat(64), saveControllerTariff: save }, global: { plugins: [i18n] } })
+  const tariff = wrapper.getComponent(TariffConfiguration)
+  expect(tariff.props('controllerWritable')).toBe(true)
+  expect(tariff.props('controllerRevision')).toBe('a'.repeat(64))
+  await tariff.props('savePlan')!(null, 'a'.repeat(64))
+  expect(save).toHaveBeenCalledWith(null, 'a'.repeat(64))
+  await wrapper.setProps({ tariffWritable: false })
+  expect(tariff.props('controllerWritable')).toBe(false)
+  wrapper.unmount()
 })

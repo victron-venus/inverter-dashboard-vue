@@ -45,7 +45,8 @@
       </fieldset>
 
       <div class="mt-3 border-t border-slate-800 pt-2 text-slate-300">
-        <TariffConfiguration v-if="open" tariff-scope="dashboard" :configured-tariff="state.ui_config?.electricity_tariff" />
+        <TariffConfiguration v-if="open" tariff-scope="dashboard" :configured-tariff="state.ui_config?.electricity_tariff"
+          :controller-writable="tariffWritable" :controller-revision="tariffRevision" :save-plan="saveControllerTariff" />
       </div>
 
       <SystemNotificationSettings v-if="open" />
@@ -63,12 +64,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { TariffPlan } from '../tariffs/model'
 import TariffConfiguration from '../tariffs/TariffConfiguration.vue'
 import ModalDialog from './ModalDialog.vue'
 import SystemNotificationSettings from './SystemNotificationSettings.vue'
 import { state } from '../composables/useInverterState'
 
-const props = defineProps<{ open: boolean }>()
+const props = defineProps<{
+  open: boolean
+  tariffWritable?: boolean
+  tariffRevision?: string
+  saveControllerTariff?: (plan: TariffPlan | null, revision: string) => Promise<void>
+}>()
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'save', patch: Record<string, unknown>): void
@@ -84,6 +91,13 @@ const VISIBILITY = [
   { key: 'show_ha_media', label: 'sections.media', fallback: 'Media players' },
   { key: 'show_ha_scenes', label: 'sections.scenes', fallback: 'Scenes' },
   { key: 'show_ha_weather', label: 'sections.weather', fallback: 'Weather' },
+  { key: 'show_daily_stats', label: 'sections.dailyStats', fallback: 'Daily energy' },
+  { key: 'show_header_toggles', label: 'sections.headerToggles', fallback: 'Control buttons' },
+  { key: 'show_batteries', label: 'sections.batteries', fallback: 'Batteries' },
+  { key: 'show_solar_production', label: 'sections.solarProduction', fallback: 'Solar production' },
+  { key: 'show_active_loads', label: 'sections.activeLoads', fallback: 'Active loads' },
+  { key: 'show_ha_sensors', label: 'sections.sensors', fallback: 'Sensors' },
+  { key: 'show_ha_numbers', label: 'sections.numbers', fallback: 'Numbers' },
 ] as const
 
 const settings = computed(() => state.value.ui_config?.settings ?? {})
