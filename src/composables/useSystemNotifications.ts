@@ -16,6 +16,8 @@ let registration: ServiceWorkerRegistration | null = null
 let refreshPending: Promise<void> | null = null
 let users = 0
 let generation = 0
+let workerGeneration = 0
+let refreshAfterMutation = false
 
 function updateSupport() {
   supported.value = !isPublicMode() && window.isSecureContext === true && 'Notification' in window &&
@@ -35,10 +37,11 @@ function invalidateRefresh() {
 }
 
 async function readSubscription(status: ServerStatus, currentRegistration: ServiceWorkerRegistration | null) {
-  const snapshot = { optedIn: false, registered: false, error: '', preferences: undefined as NotificationPreferences | undefined }
+  const snapshot = { optedIn: false, registered: false, generation: 0, error: '', preferences: undefined as NotificationPreferences | undefined }
   if (!currentRegistration) return snapshot
   const local = await workerRequest<WorkerSettings>(currentRegistration, { type: 'notification-settings-get' })
   snapshot.optedIn = local.enabled === true
+  snapshot.generation = local.generation
   const subscription = await currentRegistration.pushManager.getSubscription()
   if (!subscription || !status.available || !status.enabled || !status.publicKey) return snapshot
   if (!subscriptionMatchesKey(subscription, applicationServerKey(status.publicKey))) {
@@ -64,6 +67,7 @@ async function refreshStatus() {
       const snapshot = await readSubscription(status, nextRegistration)
       if (!current()) return
       server.value = status; registration = nextRegistration
+      workerGeneration = snapshot.generation
       optedIn.value = snapshot.optedIn; registered.value = snapshot.registered; error.value = snapshot.error
       if (snapshot.preferences) preferences.value = { ...snapshot.preferences }
     } catch {
@@ -77,10 +81,23 @@ async function refreshStatus() {
 }
 
 function workerChanged(event: MessageEvent) {
-  if (event.data?.type === 'notification-settings-changed') void refreshStatus()
+  if (event.data?.type !== 'notification-settings-changed') return
+  invalidateRefresh()
+  if (busy.value) refreshAfterMutation = true
+  else void refreshStatus()
 }
 function visibilityChanged() {
   if (document.visibilityState === 'visible') void refreshStatus()
+}
+
+async function finishMutation() {
+  busy.value = false
+  if (!refreshAfterMutation) return
+  refreshAfterMutation = false
+  const actionError = error.value
+  const observedGeneration = generation
+  await refreshStatus()
+  if (actionError && observedGeneration === generation && !busy.value) error.value = actionError
 }
 
 /** No permission request or subscription is created during application startup. */
@@ -101,23 +118,32 @@ export function initSystemNotifications(): () => void {
 }
 
 async function renewSubscription(currentRegistration: ServiceWorkerRegistration, existing: PushSubscription) {
-  await workerRequest(currentRegistration, { type: 'notification-settings-set', enabled: false })
-  optedIn.value = false; registered.value = false
   const deleted = await notificationApi<SubscriptionStatus>('subscription', 'DELETE', { endpoint: existing.endpoint })
   if (deleted.registered !== false) throw new Error('Old subscription deletion unconfirmed')
   if (!await existing.unsubscribe() && await currentRegistration.pushManager.getSubscription()) throw new Error('Old subscription remains active')
+}
+
+async function changeWorkerSettings(currentRegistration: ServiceWorkerRegistration, request: Record<string, unknown>) {
+  const result = await workerRequest<WorkerSettings>(currentRegistration, request)
+  workerGeneration = result.generation
+  optedIn.value = result.enabled === true
+  if (!result.applied) throw new Error('A newer notification choice superseded this operation')
+  return result.generation
 }
 
 /** Called only by the Enable button; requestPermission runs before any await. */
 async function enable() {
   if (busy.value || !updateSupport() || !server.value?.available || !server.value.enabled) return
   if (permission.value === 'denied') return
+  const expectedGeneration = workerGeneration
   invalidateRefresh()
   busy.value = true; error.value = ''; notice.value = ''
   try {
     permission.value = permission.value === 'default' ? await Notification.requestPermission() : permission.value
     if (permission.value !== 'granted') return
     registration = await registerNotificationWorker()
+    const operation = await changeWorkerSettings(registration, { type: 'notification-settings-begin', generation: expectedGeneration })
+    registered.value = false
     let existing = await registration.pushManager.getSubscription()
     const publicKey = server.value.publicKey
     if (!publicKey) throw new Error('Missing public key')
@@ -130,13 +156,13 @@ async function enable() {
     if (!subscriptionMatchesKey(subscription, key)) throw new Error('Subscription key mismatch')
     const result = await notificationApi<SubscriptionStatus>('subscription', 'POST', { subscription: subscription.toJSON(), preferences: preferences.value })
     if (result.registered !== true) throw new Error('Registration unconfirmed')
-    await workerRequest(registration, { type: 'notification-settings-set', enabled: true })
+    await changeWorkerSettings(registration, { type: 'notification-settings-set', enabled: true, generation: operation })
     optedIn.value = true; registered.value = true
     if (result.preferences) preferences.value = { ...result.preferences }
   } catch {
     registered.value = false
     error.value = 'Notifications were not enabled. The server registration or browser setup failed; retry to complete it.'
-  } finally { busy.value = false }
+  } finally { await finishMutation() }
 }
 
 async function disable() {
@@ -144,11 +170,9 @@ async function disable() {
   invalidateRefresh()
   busy.value = true; error.value = ''; notice.value = ''
   try {
-    registration ??= await existingRegistration()
-    if (!registration) { optedIn.value = false; registered.value = false; return }
+    registration ??= await existingRegistration() ?? await registerNotificationWorker()
     // Stop local display immediately, even if deleting on the server needs a retry.
-    await workerRequest(registration, { type: 'notification-settings-set', enabled: false })
-    optedIn.value = false
+    await changeWorkerSettings(registration, { type: 'notification-settings-set', enabled: false })
     const subscription = await registration.pushManager.getSubscription()
     if (subscription) {
       const result = await notificationApi<SubscriptionStatus>('subscription', 'DELETE', { endpoint: subscription.endpoint })
@@ -159,7 +183,7 @@ async function disable() {
     notice.value = 'Notifications disabled on this browser.'
   } catch {
     error.value = 'Disabling is incomplete. Retry Disable to remove the server subscription and browser registration.'
-  } finally { busy.value = false }
+  } finally { await finishMutation() }
 }
 
 async function savePreferences() {
@@ -173,7 +197,7 @@ async function savePreferences() {
     if (!result.registered) throw new Error('Registration unconfirmed')
     notice.value = 'Notification categories saved.'
   } catch { error.value = 'Notification categories were not saved. Retry when the dashboard is reachable.' }
-  finally { busy.value = false }
+  finally { await finishMutation() }
 }
 
 async function test() {
@@ -187,7 +211,7 @@ async function test() {
     if (result.queued !== true) throw new Error('Test unconfirmed')
     notice.value = 'Test queued. Check your system notifications; delivery has not yet been confirmed.'
   } catch { error.value = 'The test could not be queued. Check the connection, or wait a minute before retrying.' }
-  finally { busy.value = false }
+  finally { await finishMutation() }
 }
 
 export function useSystemNotifications() {

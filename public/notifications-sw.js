@@ -3,7 +3,7 @@ const DATABASE = 'inverter-system-notifications-v1'
 const MAX_EVENTS = 4096
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000
 const MAX_EVENT_AGE_MS = 5 * 60 * 1000
-const DEFAULT_SETTINGS = { enabled: false }
+const DEFAULT_SETTINGS = { enabled: false, generation: 0 }
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
@@ -25,12 +25,34 @@ async function settings(update) {
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('settings', update ? 'readwrite' : 'readonly')
       const store = tx.objectStore('settings')
-      const request = update ? store.put(update, 'delivery') : store.get('delivery')
-      tx.oncomplete = () => resolve(update || request.result || DEFAULT_SETTINGS)
+      const request = store.get('delivery')
+      let result
+      request.onsuccess = () => {
+        const saved = request.result || DEFAULT_SETTINGS
+        const current = { enabled: saved.enabled === true, generation: Number.isSafeInteger(saved.generation) ? saved.generation : 0 }
+        const next = update?.(current)
+        if (next) store.put(next, 'delivery')
+        result = { ...(next || current), applied: !update || !!next }
+      }
+      tx.oncomplete = () => resolve(result)
       tx.onerror = () => reject(new Error('Notification settings unavailable'))
       tx.onabort = tx.onerror
     })
   } finally { db.close() }
+}
+
+function changeSettings(request) {
+  // Persist intent before browser/server awaits; another tab's Disable retires it.
+  return settings((current) => {
+    if (request.type === 'notification-settings-begin' || request.enabled === true) {
+      if (!Number.isSafeInteger(request.generation) || request.generation !== current.generation) return null
+    }
+    if (request.type === 'notification-settings-begin' || request.enabled === false) {
+      if (current.generation >= Number.MAX_SAFE_INTEGER) return null
+      return { enabled: false, generation: current.generation + 1 }
+    }
+    return { enabled: true, generation: current.generation }
+  })
 }
 
 function normalizedEvent(value) {
@@ -104,6 +126,8 @@ async function deliver(value) {
   const config = await settings()
   if (!config.enabled) return false
   if (!await claimEvent(event)) return false
+  const current = await settings()
+  if (!current.enabled || current.generation !== config.generation) return false
   try {
     await self.registration.showNotification(event.title, {
       body: `${event.body ? `${event.body}\n` : ''}Event: ${new Date(event.timestamp).toLocaleString(undefined, { timeZoneName: 'short' })}`,
@@ -130,11 +154,13 @@ self.addEventListener('message', (event) => {
     try {
       let result
       if (request?.type === 'notification-settings-get') result = await settings()
-      else if (request?.type === 'notification-settings-set') {
-        if (typeof request.enabled !== 'boolean') return
-        result = await settings({ enabled: request.enabled })
-        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-        for (const client of windows) client.postMessage({ type: 'notification-settings-changed' })
+      else if (request?.type === 'notification-settings-set' || request?.type === 'notification-settings-begin') {
+        if (request.type === 'notification-settings-set' && typeof request.enabled !== 'boolean') return
+        result = await changeSettings(request)
+        if (result.applied) {
+          const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+          for (const client of windows) client.postMessage({ type: 'notification-settings-changed' })
+        }
       } else return
       event.ports?.[0]?.postMessage({ ok: true, result })
     } catch {

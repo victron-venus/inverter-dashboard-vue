@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ api: vi.fn(), worker: vi.fn(), register: vi.fn(), getRegistration: vi.fn(), getSubscription: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), requestPermission: vi.fn(), enabled: false }))
+const mocks = vi.hoisted(() => ({ api: vi.fn(), worker: vi.fn(), register: vi.fn(), getRegistration: vi.fn(), getSubscription: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), requestPermission: vi.fn(), enabled: false, generation: 0 }))
 vi.mock('../notifications/api', async (original) => ({ ...await original<typeof import('../notifications/api')>(), notificationApi: mocks.api }))
 vi.mock('../notifications/browser', async (original) => ({ ...await original<typeof import('../notifications/browser')>(), registerNotificationWorker: mocks.register, workerRequest: mocks.worker }))
 const endpoint = 'https://push.example/private-capability'
@@ -10,7 +10,7 @@ const status = { enabled: true, available: true, publicKey: 'B' + 'A'.repeat(86)
 let module: typeof import('./useSystemNotifications')
 let cleanup: (() => void) | undefined
 beforeEach(async () => {
-  vi.resetModules(); vi.clearAllMocks(); mocks.enabled = false
+  vi.resetModules(); vi.clearAllMocks(); mocks.enabled = false; mocks.generation = 0
   vi.stubGlobal('isSecureContext', true)
   vi.stubGlobal('Notification', { permission: 'default', requestPermission: mocks.requestPermission })
   vi.stubGlobal('PushManager', class {})
@@ -21,7 +21,13 @@ beforeEach(async () => {
   mocks.subscribe.mockResolvedValue(subscription)
   mocks.unsubscribe.mockResolvedValue(true)
   mocks.requestPermission.mockResolvedValue('granted')
-  mocks.worker.mockImplementation(async (_registration, message) => { if (message.type === 'notification-settings-set') mocks.enabled = message.enabled; return { enabled: mocks.enabled } })
+  mocks.worker.mockImplementation(async (_registration, message) => {
+    let applied = true
+    if (message.type === 'notification-settings-begin' || message.enabled === true) applied = message.generation === mocks.generation
+    if (applied && (message.type === 'notification-settings-begin' || message.enabled === false)) { mocks.generation++; mocks.enabled = false }
+    else if (applied && message.enabled === true) mocks.enabled = true
+    return { enabled: mocks.enabled, generation: mocks.generation, applied }
+  })
   mocks.api.mockImplementation(async (path, method) => {
     if (path === 'status') return status
     if (path === 'test') return { queued: true }
@@ -111,6 +117,103 @@ async function until(predicate: () => boolean) {
 }
 
 describe('notification lifecycle races and key rotation', () => {
+  it('invalidates a pending status read when another tab changes worker settings', async () => {
+    cleanup = module.initSystemNotifications()
+    const ui = module.useSystemNotifications(); await ui.refresh(); await ui.enable()
+    mocks.getRegistration.mockResolvedValue(registration)
+    const changed = vi.mocked(navigator.serviceWorker.addEventListener).mock.calls.find(([type]) => type === 'message')?.[1] as (event: MessageEvent) => void
+    const pending = deferred<{ registered: boolean }>(); let queries = 0
+    mocks.api.mockImplementation(async (path) => {
+      if (path === 'status') return status
+      if (path === 'subscription/status' && ++queries === 1) return pending.promise
+      return { registered: false }
+    })
+    const stale = ui.refresh(); await until(() => queries === 1)
+    mocks.enabled = false; mocks.generation++
+    changed({ data: { type: 'notification-settings-changed' } } as MessageEvent)
+    await until(() => queries === 2)
+    pending.resolve({ registered: true }); await stale; await ui.refresh()
+    expect(ui.optedIn.value).toBe(false)
+    expect(ui.ready.value).toBe(false)
+  })
+  it('preserves the action failure after a queued worker resynchronization', async () => {
+    cleanup = module.initSystemNotifications()
+    const ui = module.useSystemNotifications(); await ui.refresh()
+    mocks.getRegistration.mockResolvedValue(registration)
+    const changed = vi.mocked(navigator.serviceWorker.addEventListener).mock.calls.find(([type]) => type === 'message')?.[1] as (event: MessageEvent) => void
+    const original = mocks.worker.getMockImplementation()!
+    mocks.worker.mockImplementation(async (...args) => {
+      if (args[1].enabled === true) throw new Error('Storage failed after server registration')
+      const result = await original(...args)
+      if (args[1].type === 'notification-settings-begin') changed({ data: { type: 'notification-settings-changed' } } as MessageEvent)
+      return result
+    })
+    await ui.enable()
+    expect(mocks.enabled).toBe(false)
+    expect(ui.ready.value).toBe(false)
+    expect(ui.error.value).toContain('not enabled')
+  })
+  it('resynchronizes a Disable broadcast received while an older Enable reply is pending', async () => {
+    cleanup = module.initSystemNotifications()
+    const first = module.useSystemNotifications(); await first.refresh()
+    const changed = vi.mocked(navigator.serviceWorker.addEventListener).mock.calls.find(([type]) => type === 'message')?.[1] as (event: MessageEvent) => void
+    vi.resetModules()
+    const second = (await import('./useSystemNotifications')).useSystemNotifications()
+    mocks.getRegistration.mockResolvedValue(registration)
+    await second.refresh()
+    const reply = deferred<{ enabled: boolean; generation: number; applied: boolean }>()
+    const original = mocks.worker.getMockImplementation()!
+    let committed = false
+    mocks.worker.mockImplementation(async (...args) => {
+      const result = await original(...args)
+      if (args[1].enabled === true) { committed = true; return reply.promise }
+      return result
+    })
+    const enabling = first.enable(); await until(() => committed)
+    await second.disable()
+    changed({ data: { type: 'notification-settings-changed' } } as MessageEvent)
+    reply.resolve({ enabled: true, generation: 1, applied: true }); await enabling
+    expect(first.optedIn.value).toBe(false)
+    expect(first.ready.value).toBe(false)
+  })
+  it('does not let an earlier Enable in another tab undo a completed Disable', async () => {
+    const first = module.useSystemNotifications(); await first.refresh()
+    vi.resetModules()
+    const secondModule = await import('./useSystemNotifications')
+    const second = secondModule.useSystemNotifications()
+    mocks.getRegistration.mockResolvedValue(registration)
+    await second.refresh()
+    const pending = deferred<{ registered: boolean }>(); let posting = false
+    mocks.api.mockImplementation(async (path, method) => {
+      if (path === 'status') return status
+      if (path === 'subscription' && method === 'POST') { posting = true; return pending.promise }
+      return { registered: method !== 'DELETE' }
+    })
+    const enabling = first.enable(); await until(() => posting)
+    await second.disable()
+    expect(mocks.enabled).toBe(false)
+    pending.resolve({ registered: true }); await enabling
+    expect(mocks.enabled).toBe(false)
+    expect(first.ready.value).toBe(false)
+    expect(second.ready.value).toBe(false)
+  })
+  it('fences an earlier permission prompt even when Disable must create the shared worker', async () => {
+    const first = module.useSystemNotifications(); await first.refresh()
+    vi.resetModules()
+    const second = (await import('./useSystemNotifications')).useSystemNotifications()
+    await second.refresh()
+    const permission = deferred<NotificationPermission>()
+    mocks.requestPermission.mockReturnValue(permission.promise)
+    const enabling = first.enable()
+    expect(mocks.requestPermission).toHaveBeenCalledTimes(1)
+    await second.disable()
+    expect(mocks.register).toHaveBeenCalledTimes(1)
+    permission.resolve('granted'); await enabling
+    expect(mocks.enabled).toBe(false)
+    expect(first.ready.value).toBe(false)
+    expect(mocks.subscribe).not.toHaveBeenCalled()
+    expect(mocks.api).not.toHaveBeenCalledWith('subscription', 'POST', expect.anything())
+  })
   it('ignores an old negative subscription status arriving after Enable succeeds', async () => {
     const ui = module.useSystemNotifications(); await ui.refresh()
     mocks.getRegistration.mockResolvedValue(registration)

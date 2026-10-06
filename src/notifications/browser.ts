@@ -1,5 +1,5 @@
 export const WORKER_PATH = '/notifications-sw.js'
-export type WorkerSettings = { enabled: boolean }
+export type WorkerSettings = { enabled: boolean; generation: number; applied: boolean }
 
 export async function workerRequest<T>(registration: ServiceWorkerRegistration, request: Record<string, unknown>): Promise<T> {
   const worker = registration.active
