@@ -1,5 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { createI18n } from 'vue-i18n'
+import { supportedLocales } from '../i18n'
 import { i18n } from '../i18n'
 import SidePanel from './SidePanel.vue'
 
@@ -107,5 +109,46 @@ describe('desktop appliance and configured Home parity', () => {
     expect(wrapper.text()).not.toContain('Bedroom guard 3')
     expect(wrapper.text()).not.toContain('Laundry')
     wrapper.unmount()
+  })
+})
+
+
+describe('localized water controls', () => {
+  it.each(supportedLocales)('keeps $code visible labels in accessible names and preserves water commands', async ({ code }) => {
+    const localI18n = createI18n({
+      legacy: false, locale: code, fallbackLocale: 'en',
+      messages: Object.fromEntries(supportedLocales.map(({ code: locale }) =>
+        [locale, i18n.global.getLocaleMessage(locale)])),
+    })
+    const wrapper = mount(SidePanel, {
+      props: { ...props, waterControlsAvailable: true, pumpSwitch: false, waterValve: true,
+        pumpMode: 1, waterValveMode: 1 },
+      global: { plugins: [localI18n] },
+    })
+    try {
+      const buttons = wrapper.get('[data-testid="water-section"]').findAll('button')
+      const [pump, valve, pumpAuto, valveAuto] = buttons
+      for (const button of [pump, valve]) {
+        expect(button.attributes('aria-label')?.toLocaleLowerCase()).toContain(button.text().toLocaleLowerCase())
+      }
+      expect(pump.attributes('aria-pressed')).toBe('false')
+      expect(valve.attributes('aria-pressed')).toBe('true')
+      await pump.trigger('click')
+      await valve.trigger('click')
+      await pumpAuto.trigger('click')
+      await valveAuto.trigger('click')
+      expect(wrapper.emitted('send')).toEqual([
+        ['water_mode', { which: 'pump', mode: 1 }],
+        ['water_mode', { which: 'valve', mode: 2 }],
+        ['water_mode', { which: 'pump', mode: 0 }],
+        ['water_mode', { which: 'valve', mode: 0 }],
+      ])
+      await wrapper.setProps({ commandPending: true })
+      for (const button of buttons) {
+        expect(button.attributes('disabled')).toBeDefined()
+        await button.trigger('click')
+      }
+      expect(wrapper.emitted('send')).toHaveLength(4)
+    } finally { wrapper.unmount() }
   })
 })

@@ -122,8 +122,8 @@ describe('native dashboard sections', () => {
     state.value = normalizeTelemetry(JSON.parse('{"water_level":0,"pump_switch":null,"water_valve":null}'))
     await nextTick()
     expect(wrapper.get('[data-testid="water-section"]').text()).toContain('0.0%')
-    expect(wrapper.get('[aria-label="Pump manual mode"]').attributes('disabled')).toBeDefined()
-    expect(wrapper.get('[aria-label="Pump manual mode"]').attributes('aria-pressed')).toBeUndefined()
+    expect(wrapper.get('[aria-label="PUMP manual mode"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[aria-label="PUMP manual mode"]').attributes('aria-pressed')).toBeUndefined()
     state.value = {}
     await nextTick()
     expect(wrapper.get('[data-testid="water-section"]').text()).toContain('—')
@@ -157,21 +157,21 @@ describe('native dashboard sections', () => {
     const wrapper = render()
     expect(wrapper.get('[data-testid="transport-status"]').text()).toBe(source.toUpperCase())
     expect(wrapper.get('[data-testid="water-section"]').text()).toContain('0.5%')
-    await wrapper.get('[aria-label="Pump manual mode"]').trigger('click')
+    await wrapper.get('[aria-label="PUMP manual mode"]').trigger('click')
     await acceptLatest()
     await wrapper.get('[aria-label="Pump automatic mode"]').trigger('click')
-    await wrapper.get('[aria-label="Valve manual mode"]').trigger('click')
+    await wrapper.get('[aria-label="VALVE manual mode"]').trigger('click')
     await wrapper.get('[aria-label="Valve automatic mode"]').trigger('click')
     expect(commands.send.mock.calls).toEqual([
       ['water_mode', expect.objectContaining({ which: 'pump', mode: 1, request_id: expect.any(String) })], ['water_mode', expect.objectContaining({ which: 'pump', mode: 0, request_id: expect.any(String) })],
     ])
-    expect(wrapper.get('[aria-label="Pump manual mode"]').attributes('aria-pressed')).toBe('false')
+    expect(wrapper.get('[aria-label="PUMP manual mode"]').attributes('aria-pressed')).toBe('false')
     state.value = { ...state.value, native_connected: false }
     await nextTick()
-    expect(wrapper.get('[aria-label="Pump manual mode"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[aria-label="PUMP manual mode"]').attributes('disabled')).toBeDefined()
     expect(wrapper.get('[aria-label="Pump automatic mode"]').attributes('disabled')).toBeDefined()
     expect(wrapper.get('[data-testid="transport-status"]').attributes('data-connected')).toBe('false')
-    await wrapper.get('[aria-label="Pump manual mode"]').trigger('click')
+    await wrapper.get('[aria-label="PUMP manual mode"]').trigger('click')
     expect(commands.send).toHaveBeenCalledTimes(2)
   })
 

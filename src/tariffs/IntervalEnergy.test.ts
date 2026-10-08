@@ -100,3 +100,30 @@ it('retains a user-selected range when telemetry repeats a tariff or a price is 
   expect(wrapper.text()).toContain('1.60')
   wrapper.unmount()
 })
+
+
+it('keeps the same live region through import, error, scope reset and removal', async () => {
+  const wrapper = mount(IntervalEnergy, {
+    props: { plan: tariff, tariffScope: 'site' }, attachTo: document.body,
+  })
+  try {
+    const node = wrapper.get('[role="status"]').element
+    expect(node.isConnected).toBe(true)
+    expect(wrapper.get('[role="status"]').text()).toBe('')
+    await upload(wrapper, csv)
+    expect(wrapper.get('[role="status"]').element).toBe(node)
+    expect(wrapper.get('[role="status"]').text()).toContain('Imported and saved measured intervals')
+    await upload(wrapper, 'bad header')
+    expect(wrapper.get('[role="status"]').element).toBe(node)
+    expect(wrapper.get('[role="status"]').text()).toBe('')
+    expect(wrapper.get('[role="alert"]').text()).toContain('CSV header')
+    await wrapper.setProps({ tariffScope: 'other' })
+    expect(wrapper.get('[role="status"]').element).toBe(node)
+    await upload(wrapper, csv)
+    const remove = wrapper.findAll('button').find((button) => button.text() === 'Remove saved intervals')
+    expect(remove).toBeDefined()
+    await remove!.trigger('click')
+    expect(wrapper.get('[role="status"]').element).toBe(node)
+    expect(wrapper.get('[role="status"]').text()).toBe('Saved intervals removed.')
+  } finally { wrapper.unmount() }
+})
