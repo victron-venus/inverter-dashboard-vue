@@ -31,6 +31,7 @@ export default {
     noData: 'Geen data',
   },
   actions: {
+    manualMode: '{name}: handmatige modus',
     dry: 'DROOG',
     settings: 'Instellingen...',
   },

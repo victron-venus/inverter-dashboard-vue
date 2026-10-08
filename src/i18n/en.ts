@@ -39,6 +39,7 @@ export default {
     noData: 'No data',
   },
   actions: {
+    manualMode: '{name} manual mode',
     dry: 'DRY',
     settings: 'Settings...',
   },

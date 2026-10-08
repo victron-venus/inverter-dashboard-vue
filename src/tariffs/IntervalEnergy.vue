@@ -49,7 +49,7 @@ start,end,import_kwh
       </p>
     </details>
     <p v-if="error" role="alert">{{ error }}</p>
-    <p v-if="message" role="status">{{ message }}</p>
+    <div role="status" aria-atomic="true"><p v-if="message">{{ message }}</p></div>
     <template v-if="history">
       <div class="range">
         <label>First local date<input v-model="range.start" type="date" /></label>

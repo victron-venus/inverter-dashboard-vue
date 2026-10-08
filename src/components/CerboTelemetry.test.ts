@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { createI18n } from 'vue-i18n'
+import en from '../i18n/en'
 import BatterySolarPanel from './BatterySolarPanel.vue'
 import SidePanel from './SidePanel.vue'
 import StatCards from './StatCards.vue'
@@ -40,7 +41,7 @@ describe('Cerbo measurements in dashboard tiles', () => {
     const view = mount(SidePanel, {
       global: {
         plugins: [
-          createI18n({ legacy: false, locale: 'en', missingWarn: false, fallbackWarn: false }),
+          createI18n({ legacy: false, locale: 'en', messages: { en }, missingWarn: false, fallbackWarn: false }),
         ],
       },
       props: {
@@ -65,7 +66,7 @@ describe('Cerbo measurements in dashboard tiles', () => {
     })
     expect(view.text()).toContain('0.5%')
     expect(view.text()).not.toContain('cm')
-    expect(view.find('[aria-label="Pump manual mode"]').exists()).toBe(false)
+    expect(view.find('[aria-label="PUMP manual mode"]').exists()).toBe(false)
     await view.setProps({
       readOnly: false,
       waterControlsAvailable: true,
@@ -74,7 +75,7 @@ describe('Cerbo measurements in dashboard tiles', () => {
       pumpSwitch: true,
       waterValve: false,
     })
-    await view.get('[aria-label="Pump manual mode"]').trigger('click')
+    await view.get('[aria-label="PUMP manual mode"]').trigger('click')
     await view.get('[aria-label="Pump automatic mode"]').trigger('click')
     expect(view.emitted('send')).toEqual([
       ['water_mode', { which: 'pump', mode: 2 }],
@@ -82,10 +83,10 @@ describe('Cerbo measurements in dashboard tiles', () => {
     ])
     const confirm = vi.fn().mockReturnValue(false)
     vi.stubGlobal('confirm', confirm)
-    await view.get('[aria-label="Valve manual mode"]').trigger('click')
+    await view.get('[aria-label="VALVE manual mode"]').trigger('click')
     expect(view.emitted('send')).toHaveLength(2)
     confirm.mockReturnValue(true)
-    await view.get('[aria-label="Valve manual mode"]').trigger('click')
+    await view.get('[aria-label="VALVE manual mode"]').trigger('click')
     expect(view.emitted('send')?.slice(-1)[0]).toEqual(['water_mode', { which: 'valve', mode: 1 }])
     vi.unstubAllGlobals()
   })

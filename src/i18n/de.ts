@@ -31,6 +31,7 @@ export default {
     noData: 'Keine Daten',
   },
   actions: {
+    manualMode: '{name}: manueller Modus',
     dry: 'TROCKNEN',
     settings: 'Einstellungen...',
   },
