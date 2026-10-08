@@ -312,3 +312,9 @@ request bodies; dashboard tokens are only sent in same-origin Authorization
 headers. Public mode and cross-origin notification API bases are unsupported.
 Disabling stops local display immediately; a failed server deletion remains
 explicitly retryable, and the browser subscription is not discarded prematurely.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull requests,
+[SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment trust boundaries,
+and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
