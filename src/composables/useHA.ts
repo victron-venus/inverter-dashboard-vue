@@ -46,6 +46,12 @@ export function appliancePowerActive(value: boolean | number | undefined): boole
   return typeof value === 'number' && Number.isFinite(value) ? value > 1 : undefined
 }
 
+// These compatibility hooks do not depend on a particular HA subscription.
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+function initHa() {}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+function setWindowHidden(_hidden: boolean) {}
+
 export function useHA() {
   const haSensors = ref<HaSensorDisplay[]>([])
   const haNumbers = ref<HaNumberDisplay[]>([])
@@ -141,13 +147,9 @@ export function useHA() {
     { immediate: true, deep: true }
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  function initHa() {}
   function cleanupHa() {
     stopFilteredWatch()
   }
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  function setWindowHidden(_hidden: boolean) {}
 
   return {
     haEnabled,
