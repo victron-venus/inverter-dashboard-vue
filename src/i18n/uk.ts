@@ -31,6 +31,7 @@ export default {
     noData: 'Немає даних',
   },
   actions: {
+    manualMode: '{name}: ручний режим',
     dry: 'СУШКА',
     settings: 'Налаштування...',
   },
