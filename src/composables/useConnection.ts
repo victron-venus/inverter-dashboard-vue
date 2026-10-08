@@ -116,7 +116,7 @@ export function useConnection() {
   async function pollHttpState() {
     if (disposed || privateRequest) return
     // Fallback when WS is down or silent: /api/state carries live tiles (1.8.17+).
-    if (ws && ws.readyState === WebSocket.OPEN && Date.now() - lastMessageTime < 8000) {
+    if (ws?.readyState === WebSocket.OPEN && Date.now() - lastMessageTime < 8000) {
       return
     }
     const request = new AbortController()
@@ -283,7 +283,7 @@ export function useConnection() {
 
   function send(action: string, payload: Record<string, unknown> = {}): boolean {
     if (publicMode || disposed) return false
-    if (ws && ws.readyState === WebSocket.OPEN) {
+    if (ws?.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action, ...payload }))
       return true
     }

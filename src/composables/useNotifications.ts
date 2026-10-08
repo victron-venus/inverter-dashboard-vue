@@ -218,7 +218,7 @@ watch(
 
     for (const n of incoming) upsertBanner(normalize(n))
     // Server dropped ids (alarm cleared / ring eviction) -> close their banners.
-    for (const b of [...bannerNotifications.value]) {
+    for (const b of bannerNotifications.value) {
       if (!ids.has(b.id)) clearBanner(b.id)
     }
 

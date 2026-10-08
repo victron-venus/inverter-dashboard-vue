@@ -95,3 +95,11 @@ describe('snapshotToState', () => {
     expect(state.solar_total).toBeUndefined()
   })
 })
+
+
+it('never guesses a battery when an explicit system selection is missing', () => {
+  const battery = { '512/Connected': 1, '512/Soc': 77 }
+  expect(snapshotToState({ battery }).battery_soc).toBe(77)
+  expect(snapshotToState({ system: { '0/Dc/Battery/Instance': 999 }, battery }).battery_soc).toBeUndefined()
+  expect(snapshotToState({ system: { '0/Dc/Battery/Instance': 512 }, battery }).battery_soc).toBe(77)
+})

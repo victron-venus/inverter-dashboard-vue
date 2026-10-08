@@ -245,6 +245,12 @@ function firstEvPower(section: SnapSection | undefined): number | null {
   return first == null ? null : num(first['Ac/Power'])
 }
 
+function selectSystemBattery(batteries: BatteryEntry[], selectedId: number | null): BatteryEntry | null {
+  if (selectedId != null)
+    return batteries.find((battery) => String(battery.instance) === String(selectedId)) ?? null
+  return batteries.length === 1 ? batteries[0] : null
+}
+
 /** Map inverter-gateway /v1/snapshot → dashboard InverterState (public read-only). */
 export function snapshotToState(
   snap: GatewaySnapshot | null | undefined
@@ -265,12 +271,7 @@ export function snapshotToState(
 
   const batteries = extractBatteries(data.battery)
   const selectedId = num(sys('Dc/Battery/Instance'))
-  const selectedBattery =
-    selectedId != null
-      ? (batteries.find((battery) => String(battery.instance) === String(selectedId)) ?? null)
-      : batteries.length === 1
-        ? batteries[0]
-        : null
+  const selectedBattery = selectSystemBattery(batteries, selectedId)
   const { battV, battI, battP, battSoc } = resolveBatteryMetrics(sys, selectedBattery)
 
   const { chargers: mpptChargers, total: deviceMpptTotal } = extractMppt(data.solarcharger)

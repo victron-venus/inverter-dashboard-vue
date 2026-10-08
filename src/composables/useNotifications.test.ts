@@ -70,6 +70,18 @@ describe('useNotifications', () => {
     expect(historyNotifications.value).toHaveLength(1)
   })
 
+  it('removes consecutive stale banners while retaining current items and their history', async () => {
+    const items = ['snapshot-drop-1', 'snapshot-drop-2', 'snapshot-keep', 'snapshot-drop-3']
+      .map((id) => ({ id, level: 'alarm', title: id }))
+    state.value = { ...state.value, notifications: items }
+    await nextTick()
+    expect(bannerNotifications.value.map((item) => item.id)).toEqual(items.map((item) => item.id))
+    state.value = { ...state.value, notifications: [items[2]] }
+    await nextTick()
+    expect(bannerNotifications.value.map((item) => item.id)).toEqual(['snapshot-keep'])
+    expect(historyNotifications.value.map((item) => item.id).sort()).toEqual(items.map((item) => item.id).sort())
+  })
+
   it('read tracking works', () => {
     historyNotifications.value = [
       { id: 'h1', level: 'info', title: 't', body: '', timestamp: 1, read: false },
