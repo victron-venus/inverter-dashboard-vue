@@ -122,7 +122,7 @@ it('keeps the same live region through import, error, scope reset and removal', 
     await upload(wrapper, csv)
     const remove = wrapper.findAll('button').find((button) => button.text() === 'Remove saved intervals')
     expect(remove).toBeDefined()
-    await remove!.trigger('click')
+    await remove?.trigger('click')
     expect(wrapper.get('[role="status"]').element).toBe(node)
     expect(wrapper.get('[role="status"]').text()).toBe('Saved intervals removed.')
   } finally { wrapper.unmount() }
