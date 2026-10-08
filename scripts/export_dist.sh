@@ -69,8 +69,8 @@ log_info "Working directory: $PROJECT_ROOT"
 
 # Check node_modules
 if [ ! -d "node_modules" ]; then
-  log_warn "node_modules not found, running npm install..."
-  npm install
+  log_warn "node_modules not found, installing dependencies from package-lock.json..."
+  npm ci
 fi
 
 # Build functions
