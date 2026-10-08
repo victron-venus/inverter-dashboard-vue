@@ -176,3 +176,15 @@ describe('seasonal tariffs and billing calendar', () => {
     })
   })
 })
+
+
+it('keeps season errors ahead of optional metadata and preserves season rate context', () => {
+  const invalidMetadata = { ...plan(), billingDay: 0, reference: 42 }
+  const winter = { name: 'Winter', months: [1], rates: rateGrid(0.5) }
+  expect(() => validatePlan({ ...invalidMetadata, seasons: [winter, winter] }))
+    .toThrow('Season months must not overlap or repeat.')
+  expect(() => validatePlan({ ...invalidMetadata, seasons: [{ ...winter, rates: [] }] }))
+    .toThrow('Winter: A weekly tariff needs 48 half-hour rows.')
+  expect(() => validatePlan({ ...invalidMetadata, seasons: [winter] }))
+    .toThrow('Billing start day must be a whole number from 1 to 31, or blank.')
+})
