@@ -30,3 +30,7 @@ Automated tests use mocks or controlled fixtures where available. A passing unit
 - [vite.config.ts](vite.config.ts)
 
 See [README.md](README.md) for acquisition, configuration and usage, and [the evidence index](docs/openssf-evidence.md) for the public development-process references.
+
+## Fuzz regression coverage
+
+Pure ESS command-boundary and telemetry code is exercised by [RC-only Jazzer.js targets](docs/fuzzing.md). Keep synthetic seed inputs and focused unit regressions for fixes. Normal CI runs deterministic tests; request an RC for native coverage-guided mutation and review its retained diagnostics before promotion.

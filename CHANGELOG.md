@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Require bounded, coverage-guided ESS and telemetry fuzzing for public release candidates through the shared toolkit; add synthetic corpora and reproduction documentation.
+- Reject inherited JavaScript object properties as ESS mode aliases.
+- Treat legacy EV charging power that overflows during kW-to-W conversion as unavailable instead of displaying infinity.
+
 ## [2.2.7] - Development line
 
 ### Release overview

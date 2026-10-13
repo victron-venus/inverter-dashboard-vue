@@ -1,5 +1,7 @@
 # inverter-dashboard-vue
 
+[![Fuzzing: RC only](https://img.shields.io/badge/Fuzzing-RC%20only-blue)](docs/fuzzing.md)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml)
 [![Vue.js](https://img.shields.io/badge/vue-3.x-green.svg)](https://vuejs.org/)
@@ -318,3 +320,5 @@ explicitly retryable, and the browser subscription is not discarded prematurely.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull requests,
 [SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment trust boundaries,
 and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
+
+Coverage-guided mutation testing runs only for explicit release candidates in this public repository. See [targets, limits, reproduction and failure handling](docs/fuzzing.md).
