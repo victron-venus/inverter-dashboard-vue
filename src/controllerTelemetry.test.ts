@@ -18,6 +18,11 @@ describe('controller ESS state', () => {
 })
 
 describe('EV backend contract', () => {
+  it('does not display infinite power when finite legacy kW overflows in watts', () => {
+    expect(evTelemetry({ ev_charging_kw: Number.MAX_VALUE }).power).toBeUndefined()
+    expect(evTelemetry({ ev_charging_kw: -Number.MAX_VALUE }).power).toBeUndefined()
+    expect(evTelemetry({ ev_charging_power: 0, ev_charging_kw: Number.MAX_VALUE }).power).toBe(0)
+  })
   it.each(['mqtt', 'igw'])('preserves zero-power discovery over %s', (source) => {
     const data = normalizeTelemetry({
       data_source: source, ha_connected: false, features: { ev: false },

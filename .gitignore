@@ -34,3 +34,11 @@ release-assets/
 __pycache__/
 *.pyc
 *.pyo
+
+# Locally compiled fuzz copies, mutations, and crash reproductions
+fuzz/.build/
+fuzz/.work/
+crash-*
+timeout-*
+leak-*
+oom-*

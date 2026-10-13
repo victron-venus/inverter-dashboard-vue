@@ -6,7 +6,9 @@
       "!**/dist",
       "!**/node_modules",
       "!**/src-tauri/target",
-      "!**/src-tauri/gen"
+      "!**/src-tauri/gen",
+      "!fuzz/.build",
+      "!fuzz/.work"
     ]
   },
   "formatter": {

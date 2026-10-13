@@ -29,7 +29,7 @@ function finite(value: unknown): number | undefined {
 export function evTelemetry(input: InverterState) {
   const legacyChargerKw = finite(input.ev_charging_kw)
   const power = finite(input.ev_charging_power)
-    ?? (legacyChargerKw === undefined ? undefined : legacyChargerKw * 1000)
+    ?? (legacyChargerKw === undefined ? undefined : finite(legacyChargerKw * 1000))
   const carPower = finite(input.car_charging_power) ?? finite(input.ev_power)
   const chargingKw = carPower === undefined ? undefined : carPower / 1000
   const soc = finite(input.car_soc)
