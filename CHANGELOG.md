@@ -23,6 +23,8 @@ Provides the shared Vue dashboard SPA and reusable UI components. The existing R
 
 ### Upgrade
 
+Camera playback now starts muted; use its media controls to enable audio.
+
 Private polling now rejects cross-origin API bases; use a same-origin reverse proxy for private dashboards. Public snapshot mode retains its documented HTTPS proxy support. No data migration is required. Retain local configuration and credentials when using the documented update procedure. Validate the candidate on an isolated system before production use; automated checks do not establish hardware acceptance.
 
 ### Security
