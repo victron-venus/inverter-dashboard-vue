@@ -12,7 +12,11 @@ import { once } from 'node:events'
 import { setTimeout as delay } from 'node:timers/promises'
 
 const directory = await mkdtemp(path.join(os.tmpdir(), 'dashboard-https-'))
-const backend = http.createServer((request, response) => response.end(request.url))
+const backend = http.createServer((request, response) => {
+  response.setHeader('Content-Type', 'text/plain; charset=utf-8')
+  response.setHeader('X-Content-Type-Options', 'nosniff')
+  response.end(request.url)
+})
 backend.listen(0, '127.0.0.1')
 await once(backend, 'listening')
 const reservation = net.createServer().listen(0, '127.0.0.1')
