@@ -10,9 +10,10 @@
         <span class="text-xs font-bold text-red-500 flex items-center gap-1">
           <Video :size="12" /> LIVE: {{ cameraEvent.camera }}
         </span>
+        <!-- biome-ignore lint/a11y/noAutofocus: ModalDialog renders a native modal dialog and restores focus when closed. -->
         <button type="button" aria-label="Close camera" autofocus class="text-slate-400 hover:text-white" @click="close">✕</button>
       </div>
-      <video autoplay controls class="w-full h-full" :src="cameraEvent.url">
+      <video autoplay muted controls class="w-full h-full" :src="cameraEvent.url">
         Your browser does not support the video tag.
       </video>
     </div>

@@ -1,11 +1,12 @@
 # inverter-dashboard-vue
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15476/badge)](https://www.bestpractices.dev/en/projects/15476)
 [![Fuzzing: RC only](https://img.shields.io/badge/Fuzzing-RC%20only-blue)](docs/fuzzing.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml)
 [![Vue.js](https://img.shields.io/badge/vue-3.x-green.svg)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/vite-8.x-646cff.svg)](https://vitejs.dev/)
 
 Shared Vue 3 frontend SPA and reusable UI component library for Victron Venus ecosystem dashboards.
@@ -322,3 +323,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull 
 and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
 
 Coverage-guided mutation testing runs only for explicit release candidates in this public repository. See [targets, limits, reproduction and failure handling](docs/fuzzing.md).
+
+### Standalone HTTPS hosting
+
+Use the [same-origin Caddy deployment profile](deploy/https/README.md) for a standalone hosted dashboard: TLS 1.3, P-256 automatic certificates, a same-origin CSP, and API/WebSocket forwarding to a loopback backend. Private polling rejects cross-origin API bases and redirects so the page token remains attached to its original backend. The component library requires equivalent protection from its host application.

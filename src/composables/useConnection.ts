@@ -25,6 +25,17 @@ function withPageToken(url: string): string {
   return `${url}${join}token=${encodeURIComponent(token)}`
 }
 
+/** The page credential belongs only to the dashboard that served this page. */
+function privateStateUrl(): string {
+  const origin = `${location.protocol}//${location.host}`
+  const target = new URL(apiUrl('/api/state'), origin)
+  if (!['http:', 'https:'].includes(target.protocol) || target.origin !== origin
+      || target.username || target.password || target.search || target.hash) {
+    throw new Error('Private telemetry requires the same-origin dashboard backend.')
+  }
+  return withPageToken(target.href)
+}
+
 export function useConnection() {
   const commandConnected = ref(false)
   const commandError = ref<EssModeCommandError | null>(null)
@@ -125,8 +136,10 @@ export function useConnection() {
       if (privateRequest === request) retireHttpRequest()
     }, 10000)
     try {
-      const resp = await fetch(withPageToken(apiUrl('/api/state')), { cache: 'no-store', signal: request.signal })
-      if (!resp.ok) return
+      const resp = await fetch(privateStateUrl(), {
+        cache: 'no-store', credentials: 'same-origin', redirect: 'error', signal: request.signal,
+      })
+      if (!resp.ok || resp.redirected) return
       const data = (await resp.json()) as InverterState & { ok?: boolean }
       if (disposed || privateRequest !== request || request.signal.aborted || !data || data.ok === false) return
       const normalized = processState(data)

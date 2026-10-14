@@ -3,6 +3,7 @@
     <div class="absolute right-0 top-0 h-full w-72 bg-slate-900 p-3 overflow-y-auto shadow-xl">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-bold text-slate-200">{{ t('config.title') }}</span>
+        <!-- biome-ignore lint/a11y/noAutofocus: ModalDialog renders a native modal dialog and restores focus when closed. -->
         <button type="button" aria-label="Close settings" autofocus class="text-slate-400 hover:text-white" @click="$emit('close')">✕</button>
       </div>
 
@@ -54,6 +55,7 @@
       <p v-if="connectionError" role="alert" class="mt-3 text-xs text-red-300">{{ connectionError }}</p>
 
       <button
+        type="button"
         class="mt-3 w-full rounded bg-blue-600 hover:bg-blue-500 py-1.5 text-xs font-bold text-white"
         @click="save"
       >

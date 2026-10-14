@@ -1,0 +1,29 @@
+{
+	admin off
+	skip_install_trust
+	auto_https disable_redirects
+}
+
+{$DASHBOARD_ADDRESS:localhost:8443} {
+	tls {
+		protocols tls1.3
+		curves x25519 secp256r1
+		key_type p256
+	}
+
+	header {
+		Content-Security-Policy "default-src 'self'; connect-src 'self' wss://{http.request.hostport}; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+		Referrer-Policy "no-referrer"
+		X-Content-Type-Options "nosniff"
+	}
+
+	@backend path /api/* /ws
+	handle @backend {
+		reverse_proxy {$DASHBOARD_BACKEND:127.0.0.1:8080}
+	}
+	handle {
+		root * {$DASHBOARD_ROOT:dist}
+		try_files {path} /index.html
+		file_server
+	}
+}
