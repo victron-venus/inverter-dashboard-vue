@@ -34,3 +34,7 @@ See [README.md](README.md) for acquisition, configuration and usage, and [the ev
 ## Fuzz regression coverage
 
 Pure ESS command-boundary and telemetry code is exercised by [RC-only Jazzer.js targets](docs/fuzzing.md). Keep synthetic seed inputs and focused unit regressions for fixes. Normal CI runs deterministic tests; request an RC for native coverage-guided mutation and review its retained diagnostics before promotion.
+
+## Project responsibilities and roadmap
+
+Follow [community conduct](CODE_OF_CONDUCT.md). [Governance](GOVERNANCE.md) identifies decision and release responsibility, including the current continuity limitation. [Architecture and quality roadmap](docs/project-assurance.md) records security assumptions and remaining evidence gaps.

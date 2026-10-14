@@ -14,12 +14,16 @@ Provides the shared Vue dashboard SPA and reusable UI components. The existing R
 
 ### Maintenance
 
+- Add a tested same-origin Caddy hosting profile with TLS1.3, P-256 keys and a restrictive connection policy.
+
+- Restrict private state polling to the page origin and reject redirects before forwarding a page token.
+
 - Publish reviewed release notes from the exact source commit used to build each candidate, preserving build provenance.
 - Document contribution checks, confidential security reporting and the project-specific trust boundaries.
 
 ### Upgrade
 
-These maintenance changes do not introduce a configuration or data migration. Retain local configuration and credentials when using the documented update procedure. Validate the candidate on an isolated system before production use; automated checks do not establish hardware acceptance.
+Private polling now rejects cross-origin API bases; use a same-origin reverse proxy for private dashboards. Public snapshot mode retains its documented HTTPS proxy support. No data migration is required. Retain local configuration and credentials when using the documented update procedure. Validate the candidate on an isolated system before production use; automated checks do not establish hardware acceptance.
 
 ### Security
 
