@@ -5,7 +5,8 @@ acceptance workflow. A failed browser target fails that reusable CI call and the
 required `CI gate`; browser jobs do not use `continue-on-error`.
 
 Source checks test the current pinned Chromium, Firefox and WebKit on Linux,
-Chromium on Windows and WebKit on macOS. The existing `release-build.yml` also
+Chromium on Windows and WebKit on macOS. Scheduled source audits and manual
+audits without a release channel run all 35 targets. The existing `release-build.yml` also
 qualifies beta and nightly packages on those five targets, and RC packages on
 all 35 targets. Stable promotes the accepted RC bytes without rebuilding.
 The full matrix adds

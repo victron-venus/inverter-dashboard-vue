@@ -25,7 +25,7 @@ class BrowserReleasePolicyTests(unittest.TestCase):
 
     def test_browser_route_remains_required_and_channel_selection_is_explicit(self):
         browser = workflow("ci.yml")["jobs"]["browser-compatibility"]
-        self.assertEqual(browser["with"]["browser-extended"], False)
+        self.assertEqual(browser["with"]["browser-extended"], "${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == '') }}")
         self.assertFalse(browser.get("continue-on-error", False))
         quality = workflow("quality-gate.yml")["jobs"]
         self.assertEqual(quality["check-0"]["uses"], "./.github/workflows/ci.yml")
