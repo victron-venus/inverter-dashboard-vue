@@ -178,8 +178,8 @@ Test files use Vitest + @vue/test-utils + Happy DOM.
 
 The [browser acceptance suite](docs/browser-compatibility.md) also exercises the built SPA
 in pinned Chromium, Firefox and WebKit generations on Linux, Windows and macOS.
-Its compact matrix is required for PRs; scheduled and manual release qualification
-use the full 35-target inventory.
+Its compact matrix is required for PRs; packaged release qualification uses the
+full 35-target inventory against the same built SPA archive.
 
 ## CI/CD
 

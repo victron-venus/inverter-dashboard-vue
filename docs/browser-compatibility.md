@@ -4,13 +4,23 @@ The required `Quality gate` calls `ci.yml`, which includes the shared browser
 acceptance workflow. A failed browser target fails that reusable CI call and the
 required `CI gate`; browser jobs do not use `continue-on-error`.
 
-Pull requests and pushes test the current pinned Chromium, Firefox and WebKit on
-Linux, Chromium on Windows and WebKit on macOS. The existing release pipeline's
-scheduled and manual invocations select all 35 targets, including manual RC
-qualification. These add two previous pinned Playwright generations on all three
-operating systems, Chrome/Edge Stable on each OS, and their Beta channels on Linux.
+Source checks test the current pinned Chromium, Firefox and WebKit on Linux,
+Chromium on Windows and WebKit on macOS. The existing `release-build.yml` also
+qualifies each packaged release, including an RC, on all 35 targets. These add
+two previous pinned Playwright generations on all three operating systems,
+Chrome/Edge Stable on each OS, and their Beta channels on Linux.
 No extra release workflow or runner switch is needed. Hosted runners remain the
 default; only supported Linux targets may use the already configured reserve.
+
+The release job builds once and passes the exact upload artifact ID to the shared
+workflow. Each browser target downloads that artifact from the same workflow run.
+`scripts/prepare_browser_candidate.py` checks its source SHA, archive size and
+SHA-256 against the build receipt, then verifies the complete packaged file
+inventory against `build-info.json`. It rejects traversal, links, duplicate paths
+and an existing destination. The tests serve those unpacked bytes directly;
+there is no application reinstall or rebuild in the 35 release targets. A failed
+target fails `release-build.yml` and therefore the required `Release gate` before
+publication. Browser evidence records the candidate version and archive digest.
 
 `scripts/browser-acceptance.cjs` builds on the actual production SPA, served from
 `dist/` on an ephemeral loopback port. It uses the selected isolated Playwright
@@ -37,7 +47,8 @@ exits unsuccessfully and leaves diagnostics, a screenshot and a trace. The share
 workflow checks actual browser identity, source SHA, run ID/attempt, and nonempty
 unique scenario counts. Evidence from a different version or run cannot satisfy
 the check. Download `browser-compatibility-*` artifacts to inspect an individual
-target; local artifacts under `.compatibility/` are ignored by Git.
+target; packaged-release results use `browser-release-*`. Local artifacts under
+`.compatibility/` and `browser-candidate/` are ignored by Git.
 
 For a local run after building the app:
 

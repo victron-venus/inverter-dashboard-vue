@@ -248,7 +248,10 @@ async function main() {
       schema: 1, target: 'local', channel, playwrightVersion: require(path.join(modulePath, 'package.json')).version,
       platform: process.platform, sourceSha: process.env.GITHUB_SHA || 'local', runId: process.env.GITHUB_RUN_ID || 'local', runAttempt: process.env.GITHUB_RUN_ATTEMPT || '1',
     }
-    fs.writeFileSync(evidence, `${JSON.stringify({ ...runtime, engine: browser.browserType().name(), browserVersion: browser.version(), testsPassed: scenarios.length, testsFailed: 0, scenarios }, null, 2)}\n`)
+    const candidateFile = path.join(diagnostics, 'candidate.json')
+    const candidate = fs.existsSync(candidateFile) ? JSON.parse(fs.readFileSync(candidateFile, 'utf8')) : undefined
+    if (candidate) assert.equal(candidate.sourceSha, runtime.sourceSha, 'Packaged candidate must match the tested source')
+    fs.writeFileSync(evidence, `${JSON.stringify({ ...runtime, engine: browser.browserType().name(), browserVersion: browser.version(), testsPassed: scenarios.length, testsFailed: 0, scenarios, ...(candidate ? { candidate } : {}) }, null, 2)}\n`)
   } catch (error) {
     if (page) await page.screenshot({ path: path.join(diagnostics, 'failure.png'), fullPage: true }).catch(() => {})
     throw error
