@@ -11,7 +11,7 @@ permissions:
 jobs:
   browser-compatibility:
     name: Browser acceptance
-    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/typescript-ci.yml@b071472a0d83cc8d049c4df00451bc291a7c1571
+    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/typescript-ci.yml@843630ee1077b593f9ea33939c22132ab47bb851
     permissions:
       contents: read
     with:
