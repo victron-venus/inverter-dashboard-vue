@@ -70,6 +70,12 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
+      - name: Replay deterministic fuzz target contracts
+        run: |
+          npm ci --prefix fuzz --ignore-scripts --no-audit --no-fund
+          node fuzz/build.mjs
+          node fuzz/replay.mjs
+
       - name: Run tests
         run: npm run test --ignore-scripts
 
