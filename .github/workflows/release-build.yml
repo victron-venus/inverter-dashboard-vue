@@ -78,8 +78,9 @@ jobs:
       node-version: '22'
       run-node-ci: false
       browser-matrix-file: .github/browser-compatibility.json
-      browser-extended: true
+      browser-extended: ${{ inputs.channel == 'rc' }}
       browser-evidence-prefix: browser-release
+      browser-release-channel: ${{ inputs.channel }}
       browser-artifact-id: ${{ needs.web.outputs.browser-artifact-id }}
       browser-artifact-path: browser-candidate
       browser-prepare-command: |

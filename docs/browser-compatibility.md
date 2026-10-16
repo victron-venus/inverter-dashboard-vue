@@ -6,7 +6,9 @@ required `CI gate`; browser jobs do not use `continue-on-error`.
 
 Source checks test the current pinned Chromium, Firefox and WebKit on Linux,
 Chromium on Windows and WebKit on macOS. The existing `release-build.yml` also
-qualifies each packaged release, including an RC, on all 35 targets. These add
+qualifies beta and nightly packages on those five targets, and RC packages on
+all 35 targets. Stable promotes the accepted RC bytes without rebuilding.
+The full matrix adds
 two previous pinned Playwright generations on all three operating systems,
 Chrome/Edge Stable on each OS, and their Beta channels on Linux.
 No extra release workflow or runner switch is needed. Hosted runners remain the
@@ -18,7 +20,7 @@ workflow. Each browser target downloads that artifact from the same workflow run
 SHA-256 against the build receipt, then verifies the complete packaged file
 inventory against `build-info.json`. It rejects traversal, links, duplicate paths
 and an existing destination. The tests serve those unpacked bytes directly;
-there is no application reinstall or rebuild in the 35 release targets. A failed
+there is no application reinstall or rebuild in the release browser targets. A failed
 target fails `release-build.yml` and therefore the required `Release gate` before
 publication. Browser evidence records the candidate version and archive digest.
 
