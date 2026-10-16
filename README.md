@@ -176,6 +176,11 @@ npm run test:coverage  # Generate coverage report
 
 Test files use Vitest + @vue/test-utils + Happy DOM.
 
+The [browser acceptance suite](docs/browser-compatibility.md) also exercises the built SPA
+in pinned Chromium, Firefox and WebKit generations on Linux, Windows and macOS.
+Its compact matrix is required for PRs; packaged release qualification uses the
+full 35-target inventory against the same built SPA archive.
+
 ## CI/CD
 
 - **Lint**: `npm run lint` (Biome)
