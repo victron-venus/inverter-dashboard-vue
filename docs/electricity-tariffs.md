@@ -16,9 +16,12 @@ The web dashboard can edit the shared plan from Settings when the backend and
 controller advertise the matching capability and provide a durable acknowledgement.
 
 Choose **Use a local tariff on this device** explicitly for a standalone local
-copy. In the web dashboard, that choice is saved in browser storage for the
-current installation scope and survives a page reload. Switching installations
-loads that installation's saved choice, defaulting to the controller if none exists.
+copy. In the web dashboard, that choice is saved in browser storage under the
+`dashboard` scope for the current origin and survives a page reload. Changing the
+backend connection on that origin does not create a separate saved choice. Use
+**Use controller tariff** before switching installations if the local plan does
+not apply to the new installation. Desktop additionally scopes local data by
+installation identity.
 Existing local data is preserved for export
 and import; it is never silently uploaded to the controller. **Use controller
 tariff** returns to the shared plan. Tariff editing never changes inverter control
@@ -194,9 +197,11 @@ priced intervals means unavailable, not zero. Complete duration coverage still
 depends on the accuracy of the meter and the selected tariff.
 
 A successful import replaces this dashboard's previous history and persists in
-local device/browser storage, scoped by the same installation identity as its
-tariff. Invalid files or storage errors preserve the previous history. Other
-installations remain separate. **Remove saved intervals** deletes this local
+local device/browser storage under the same scope as its tariff. The web dashboard
+uses the current browser origin's `dashboard` scope; changing its backend connection
+does not isolate the previous readings. Desktop uses installation-specific scopes.
+Invalid files or storage errors preserve the previous history. Review the source
+of saved readings before using them for another installation. **Remove saved intervals** deletes this local
 copy. Readings are not uploaded, written to the controller, included in tariff
 exports or included in desktop configuration backups. Keep the original meter
 export if you need a durable history archive.
