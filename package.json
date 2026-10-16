@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@vitejs/plugin-vue": "^6.0.9",
+    "@vitejs/plugin-vue": "^6.0.10",
     "@vue/test-utils": "^2.5.1",
     "fake-indexeddb": "6.2.5",
     "happy-dom": "^20.14.6",
