@@ -2,6 +2,8 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Українська](README.uk.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Nederlands](README.nl.md)
 
+[Visual guide: process and results](docs/process-and-results.md) explains the implemented behavior, delivery stages, catalog-key coverage and validation limits.
+
 [![CI](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15476/badge)](https://www.bestpractices.dev/en/projects/15476)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

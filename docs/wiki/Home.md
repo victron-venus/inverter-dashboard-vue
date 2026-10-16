@@ -6,6 +6,7 @@ The browser UI is built here and delivered through the Python and Go backends. D
 - [Alerts and system notifications](Notifications.md)
 - [Troubleshooting](Troubleshooting.md)
 - [Development](Development.md)
+- [Process and results](Process-and-results.md)
 - [Localization](../localization.md)
 - [Localized README entry points](../../README.md#languages-and-documentation)
 

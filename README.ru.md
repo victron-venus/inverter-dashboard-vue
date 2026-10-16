@@ -2,6 +2,8 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Українська](README.uk.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Nederlands](README.nl.md)
 
+[Наглядное руководство: процесс и результаты](docs/process-and-results.md) (на английском) описывает реализованное поведение, этапы поставки, полноту ключей переводов и ограничения проверок.
+
 Общий интерфейс Vue для Python- и Go-дашбордов: электроэнергия, предупреждения Victron, управление Home Assistant и тарифы. Для обычного использования установите один из серверов и откройте его адрес. В этом репозитории нет MQTT-брокера или отдельного сервера.
 
 - [Python / FastAPI](https://github.com/victron-venus/inverter-dashboard)
