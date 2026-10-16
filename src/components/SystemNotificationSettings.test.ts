@@ -11,7 +11,7 @@ describe('system notification settings', () => {
   it('exposes opt-in categories and no automatic permission or test action', async () => {
     const view = mount(SystemNotificationSettings)
     await flushPromises()
-    expect(view.text()).toContain('Browser permission: default')
+    expect(view.text()).toContain('Browser permission: Not requested')
     expect(view.text()).toContain('original occurrence time')
     expect(view.findAll('input[type="checkbox"]')).toHaveLength(4)
     expect(methods.enable).not.toHaveBeenCalled()

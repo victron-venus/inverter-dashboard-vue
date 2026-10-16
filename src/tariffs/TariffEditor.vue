@@ -8,68 +8,59 @@
     <div class="tariff-content">
       <header>
         <div>
-          <h2 id="tariff-title">Electricity tariff</h2>
-          <p>
-            Seasonal energy prices per kWh.
-            {{
+          <h2 id="tariff-title"> {{ tr('Electricity tariff') }} </h2>
+          <p> {{ tr('Seasonal energy prices per kWh.') }} {{
               savePlan
-                ? 'Saved on the controller and shared by all connected dashboards.'
+                ? tr('Saved on the controller and shared by all connected dashboards.')
                 : persist
-                  ? 'Saved for this dashboard on this device.'
-                  : 'Apply to the configuration draft, then save the configuration.'
+                  ? tr('Saved for this dashboard on this device.')
+                  : tr('Apply to the configuration draft, then save the configuration.')
             }}
           </p>
         </div>
         <button
           type="button"
-          aria-label="Close tariff editor"
+          :aria-label="tr('Close tariff editor')"
           :disabled="busy"
           @click="emit('close')"
-        >
-          Close
-        </button>
+        > {{ tr('Close') }} </button>
       </header>
       <div class="tariff-fields">
-        <label>Name<input v-model="draft.name" maxlength="120" /></label>
-        <label>Currency<input v-model="draft.currency" maxlength="3" placeholder="USD" /></label>
-        <label>Time zone<input v-model="draft.timeZone" placeholder="America/Los_Angeles" /></label>
+        <label> {{ tr('Name') }} <input v-model="draft.name" maxlength="120" /></label>
+        <label> {{ tr('Currency') }} <input v-model="draft.currency" maxlength="3" placeholder="USD" /></label>
+        <label> {{ tr('Time zone') }} <input v-model="draft.timeZone" placeholder="America/Los_Angeles" /></label>
         <label
-          >Billing period starts on day
-          <input
+          > {{ tr('Billing period starts on day') }} <input
             v-model="billingDay"
             type="number"
             min="1"
             max="31"
             step="1"
-            placeholder="Not set"
+            :placeholder="tr('Not set')"
           />
         </label>
       </div>
       <div class="tariff-schedule">
         <label
-          >Schedule
-          <select :value="selectedSeason" :disabled="busy" @change="switchSeason">
+          > {{ tr('Schedule') }} <select :value="selectedSeason" :disabled="busy" @change="switchSeason">
             <option :value="-1">{{ defaultLabel }}</option>
             <option v-for="(season, index) in draft.seasons" :key="index" :value="index">
               {{ season.name }} · {{ formatMonths(season.months) }}
             </option>
           </select>
         </label>
-        <p>
-          Seasons follow calendar months in the tariff time zone, independently of the billing date.
-          Billing days 29–31 use the last day of shorter months. Leave the day blank if unknown.
-        </p>
+        <p> {{ tr('Seasons follow calendar months in the tariff time zone, independently of the billing date. Billing days 29–31 use the last day of shorter months. Leave the day blank if unknown.') }} </p>
       </div>
       <div v-if="selectedSeason >= 0" class="tariff-season-details">
         <label
-          >Season name<input
+          > {{ tr('Season name') }} <input
             v-model="draft.seasons[selectedSeason].name"
             maxlength="80"
             :disabled="busy"
         /></label>
         <fieldset :disabled="busy">
-          <legend>Calendar months</legend>
-          <label v-for="(month, index) in MONTHS" :key="month">
+          <legend> {{ tr('Calendar months') }} </legend>
+          <label v-for="(month, index) in monthNames" :key="month">
             <input
               v-model="draft.seasons[selectedSeason].months"
               type="checkbox"
@@ -77,54 +68,41 @@
             />{{ month }}
           </label>
         </fieldset>
-        <button type="button" :disabled="busy" @click="removeSeason">Remove this season</button>
+        <button type="button" :disabled="busy" @click="removeSeason"> {{ tr('Remove this season') }} </button>
       </div>
       <div class="tariff-actions">
-        <button type="button" :disabled="busy || draft.seasons.length >= 12" @click="addSeason">
-          Add season
-        </button>
+        <button type="button" :disabled="busy || draft.seasons.length >= 12" @click="addSeason"> {{ tr('Add season') }} </button>
         <label
-          >Flat price / kWh<input v-model="flat" type="number" step="any" placeholder="Enter price"
+          > {{ tr('Flat price / kWh') }} <input v-model="flat" type="number" step="any" :placeholder="tr('Enter price')"
         /></label>
-        <button type="button" :disabled="busy" @click="fill">Fill selected week</button>
+        <button type="button" :disabled="busy" @click="fill"> {{ tr('Fill selected week') }} </button>
         <label class="file-button"
-          >Import tariff<input
+          > {{ tr('Import tariff') }} <input
             type="file"
             accept=".json,application/json"
             :disabled="busy"
             @change="importFile"
         /></label>
-        <button type="button" :disabled="busy" @click="exportFile">Export tariff</button>
+        <button type="button" :disabled="busy" @click="exportFile"> {{ tr('Export tariff') }} </button>
       </div>
       <output v-if="message" class="tariff-note">{{ message }}</output>
-      <p v-if="draft.source === 'emporia'">
-        Source: Emporia{{ draft.reference ? ` · utility plan ${draft.reference}` : '' }}. Review the
-        imported copy against the app.
-      </p>
-      <p class="tariff-help">
-        Rows are half-hour periods in the selected time zone; columns are Monday–Sunday. Paste
-        prices into the grid or fill the week, then adjust peak periods. All cells need a price;
-        zero is allowed.
-      </p>
+      <p v-if="draft.source === 'emporia'"> {{ tr('Source: Emporia') }} {{ draft.reference ? tr(' · utility plan {reference}', { reference: draft.reference }) : '' }} {{ tr('. Review the imported copy against the app.') }} </p>
+      <p class="tariff-help"> {{ tr('Rows are half-hour periods in the selected time zone; columns are Monday–Sunday. Paste prices into the grid or fill the week, then adjust peak periods. All cells need a price; zero is allowed.') }} </p>
       <TariffSheet :key="sheetVersion" ref="sheet" :rates="selectedRates" @error="error = $event" />
-      <p class="tariff-help">
-        This estimate covers energy charges only. Tiers, demand charges, fixed fees and taxes are
-        not included. The billing date sets the period, not an invoice total. Daily time-of-use cost
-        needs interval consumption data.
-      </p>
+      <p class="tariff-help"> {{ tr('This estimate covers energy charges only. Tiers, demand charges, fixed fees and taxes are not included. The billing date sets the period, not an invoice total. Daily time-of-use cost needs interval consumption data.') }} </p>
       <p v-if="error" role="alert" class="tariff-error">{{ error }}</p>
       <footer>
-        <button v-if="plan" type="button" :disabled="busy" @click="clear">{{ clearLabel }}</button
-        ><button type="button" :disabled="busy" @click="emit('close')">Cancel</button
+        <button v-if="plan" type="button" :disabled="busy" @click="clear">{{ tr(clearLabel) }}</button
+        ><button type="button" :disabled="busy" @click="emit('close')"> {{ tr('Cancel') }} </button
         ><button type="button" class="tariff-save" :disabled="busy" @click="save">
           {{
             busy
-              ? 'Working…'
+              ? tr('Working…')
               : savePlan
-                ? 'Save to controller'
+                ? tr('Save to controller')
                 : persist
-                  ? 'Save tariff'
-                  : 'Apply tariff'
+                  ? tr('Save tariff')
+                  : tr('Apply tariff')
           }}
         </button>
       </footer>
@@ -132,6 +110,10 @@
   </dialog>
 </template>
 <script setup lang="ts">
+import { localized, errorText, type DisplayText } from '../i18n/messages'
+
+import { localizedError } from '../i18n/messages'
+import { tr, formatDate } from '../i18n'
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import TariffSheet from './TariffSheet.vue'
 import {
@@ -147,8 +129,9 @@ import {
 } from './model'
 import { clearTariff, saveTariff } from './storage'
 
+const monthNames = computed(() => MONTHS.map((_, month) => formatDate(new Date(Date.UTC(2024, month, 1)), { month: 'short', timeZone: 'UTC' })))
 function formatMonths(months: number[]): string {
-  return months.map((month) => MONTHS[month - 1]).join(', ')
+  return months.map((month) => monthNames.value[month - 1]).join(', ')
 }
 
 const props = withDefaults(
@@ -166,8 +149,8 @@ const draft = ref<TariffDraft>(props.plan ? JSON.parse(JSON.stringify(props.plan
 const dialog = ref<HTMLDialogElement | null>(null)
 const sheet = ref<InstanceType<typeof TariffSheet> | null>(null)
 const sheetVersion = ref(0)
-const error = ref('')
-const message = ref('')
+const error = ref<DisplayText>('')
+const message = ref<DisplayText>('')
 const flat = ref('')
 const billingDay = ref<string | number>(draft.value.billingDay ?? '')
 const selectedSeason = ref(activeSeasonIndex(draft.value))
@@ -175,19 +158,19 @@ const selectedRates = computed(() =>
   selectedSeason.value === -1 ? draft.value.rates : draft.value.seasons[selectedSeason.value].rates
 )
 const defaultLabel = computed(() => {
-  const months = MONTHS.filter(
+  const months = monthNames.value.filter(
     (_, index) => !draft.value.seasons.some((s) => s.months.includes(index + 1))
   )
   return draft.value.seasons.length === 0
-    ? 'All year'
-    : `Default · ${months.join(', ') || 'no active months'}`
+    ? tr('All year')
+    : tr('Default · {months}', { months: months.join(', ') || tr('no active months') })
 })
 function setRates(rates: RateGrid) {
   if (selectedSeason.value === -1) draft.value.rates = rates
   else draft.value.seasons[selectedSeason.value].rates = rates
 }
 async function captureSheet() {
-  if (!sheet.value) throw new Error('The spreadsheet is still loading.')
+  if (!sheet.value) throw localizedError('The spreadsheet is still loading.')
   setRates(await sheet.value.getRates())
 }
 async function switchSeason(event: Event) {
@@ -211,7 +194,7 @@ const busy = ref(false)
 onMounted(() => dialog.value?.showModal())
 onBeforeUnmount(() => dialog.value?.close())
 const fail = (cause: unknown) => {
-  error.value = cause instanceof Error ? cause.message : 'The tariff could not be read.'
+  error.value = errorText(cause, 'The tariff could not be read.')
 }
 
 async function addSeason() {
@@ -220,7 +203,7 @@ async function addSeason() {
   try {
     await captureSheet()
     draft.value.seasons.push({
-      name: 'New season',
+      name: tr('New season'),
       months: [],
       rates: draft.value.rates.map((row) => [...row]),
     })
@@ -243,7 +226,7 @@ function removeSeason() {
 function fill() {
   if (busy.value) return
   if (!String(flat.value).trim() || !Number.isFinite(Number(flat.value))) {
-    error.value = 'Enter a numeric flat price first.'
+    error.value = localized('Enter a numeric flat price first.')
     return
   }
   setRates(rateGrid(Number(flat.value)))
@@ -257,7 +240,7 @@ async function importFile(event: Event) {
   try {
     const file = input.files?.[0]
     if (!file) return
-    if (file.size > 100_000) throw new Error('Choose a tariff JSON file smaller than 100 KB.')
+    if (file.size > 100_000) throw localizedError('Choose a tariff JSON file smaller than 100 KB.')
     const result = importTariff(JSON.parse(await file.text()))
     draft.value = result.draft
     billingDay.value = result.draft.billingDay ?? ''

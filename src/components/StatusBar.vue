@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { formatDate } from '../i18n'
 import { computed } from 'vue'
 import type { InverterState } from '../composables/useInverterState'
 import { formatUptime } from '../utils'
@@ -77,7 +78,7 @@ const telemetryTitle = computed(() => {
   const observed = props.telemetry?.observed_at
   const timestamp = observed == null ? undefined : new Date(observed)
   const received = timestamp && Number.isFinite(timestamp.getTime())
-    ? `${$t('status.receivedAt')}: ${timestamp.toLocaleString()}`
+    ? `${$t('status.receivedAt')}: ${formatDate(timestamp, { dateStyle: 'medium', timeStyle: 'medium' })}`
     : $t('status.telemetryunknown')
   const parts = [source, received]
   if (props.telemetry?.timestamp_source === 'local_receipt') parts.push($t('status.localReceipt'))

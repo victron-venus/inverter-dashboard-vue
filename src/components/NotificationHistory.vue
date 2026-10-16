@@ -1,6 +1,6 @@
 <template>
   <div class="notification-bell relative shrink-0">
-    <button type="button" class="classic-btn relative" @click="showPanel = !showPanel">
+    <button type="button" :aria-label="$t('notifications.title')" :aria-expanded="showPanel" class="classic-btn relative" @click="showPanel = !showPanel">
       🔔
       <span
         v-if="unreadCount > 0"
@@ -69,6 +69,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatDate } from '../i18n'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { exactNotificationTime } from '../notificationTime'
@@ -86,8 +87,7 @@ const unreadCount = computed(() => unreadNotificationCount())
 
 function formatTime(ts: number | null): string {
   if (ts === null) return $t('notifications.timeUnavailable')
-  const d = new Date(ts)
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+  return formatDate(ts, { hour: '2-digit', minute: '2-digit' })
 }
 
 function onClickOutside(e: MouseEvent) {

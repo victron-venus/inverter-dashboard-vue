@@ -42,3 +42,7 @@ export const LIBRARY_NAME = '@victron-venus/dashboard-vue'
 export { default as TariffCost } from './tariffs/TariffCost.vue'
 export { validatePlan, importTariff, estimateDailyCost, currentRate } from './tariffs/model'
 export type { TariffPlan } from './tariffs/model'
+
+// Locale selection is shared by the exported components; document integration is opt-in.
+export { i18n, supportedLocales, localePreference, currentLocale, setLocale, initializeLocale } from './i18n'
+export type { LocaleCode } from './i18n'

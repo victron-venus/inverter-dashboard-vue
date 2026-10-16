@@ -1,3 +1,4 @@
+import { formatDate, tr } from './i18n'
 /** Source event time, never the receipt time of a retained notification. */
 export function notificationTimestampMs(value: string | undefined): number | null {
   if (!value) return null
@@ -20,7 +21,7 @@ export function notificationTimestampMs(value: string | undefined): number | nul
 }
 
 export function exactNotificationTime(ms: number): string {
-  return new Date(ms).toLocaleString(undefined, { timeZoneName: 'short' })
+  return formatDate(ms, { dateStyle: 'medium', timeStyle: 'long' })
 }
 
 /** Relative event age in the same compact form as Victron GUIv2. */
@@ -30,10 +31,10 @@ export function formatNotificationAge(value: string | undefined, now: number): s
   const elapsed = now - ms
   if (elapsed < 0) return exactNotificationTime(ms)
   const minutes = Math.floor(elapsed / 60_000)
-  if (minutes < 1) return 'just now'
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 1) return tr('just now')
+  if (minutes < 60) return tr('{n}m ago', { n: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return minutes % 60 ? `${hours}h ${minutes % 60}m ago` : `${hours}h ago`
+  if (hours < 24) return minutes % 60 ? tr('{n}h {m}m ago', { n: hours, m: minutes % 60 }) : tr('{n}h ago', { n: hours })
   const days = Math.floor(hours / 24)
-  return days < 7 ? `${days}d ago` : exactNotificationTime(ms)
+  return days < 7 ? tr('{n}d ago', { n: days }) : exactNotificationTime(ms)
 }

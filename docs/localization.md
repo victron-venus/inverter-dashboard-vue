@@ -22,7 +22,7 @@ The tariff spreadsheet keeps its selected column headings for the lifetime of an
 
 1. Add a new stable key to `src/i18n/ui/en.json` and the corresponding value to every supported catalog. Keep the English source message unique: `tr()` looks up that exact message before selecting its translated value. Prefer complete sentences with named interpolation over concatenated fragments.
 2. Preserve interpolation and plural parameters. Do not insert HTML to work around layout.
-3. Call `tr('Exact English message', { namedParameter: value })` at the presentation boundary, including accessible labels. Existing nested vue-i18n keys are mapped through the English catalog for compatibility. An unused catalog entry does not localize the UI.
+3. Call `tr('Exact English message', { namedParameter: value })` at the presentation boundary, including accessible labels. For owned messages retained in state or across an async operation, use `localized()` / `localizedError()` from `src/i18n/messages.ts` and preserve their identity with `errorText()` until rendering; storing an already translated string would leave an existing error in the previous language. Ordinary external errors remain literal. Existing nested vue-i18n keys are mapped through the English catalog for compatibility. An unused catalog entry does not localize the UI.
 4. Register new locales in the shared list and README navigation using their native names.
 5. Run type checking, catalog/component tests, lint and both builds. Cover unsupported browser languages and unavailable storage.
 6. Check narrow layouts and long labels. Changing language must not trigger a device operation or change its payload.

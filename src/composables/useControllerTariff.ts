@@ -1,3 +1,5 @@
+import { localized, displayError, type DisplayText } from '../i18n/messages'
+import { localizedError } from '../i18n/messages'
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
 import { createEssRequestId, type EssModeCommandError } from '../essMode'
 import { validatePlan, type TariffPlan } from '../tariffs/model'
@@ -52,70 +54,70 @@ export function useControllerTariff(options: {
   let deadline: ReturnType<typeof setTimeout> | undefined
   const clockTimer = setInterval(() => { clock.value = Date.now() }, 1000)
 
-  function finish(error?: string) {
+  function finish(error?: DisplayText) {
     const request = operation.value
     operation.value = null
     clearTimeout(deadline)
     deadline = undefined
     if (!request) return
-    if (error) request.reject(new Error(error))
+    if (error) request.reject(displayError(error))
     else request.resolve()
   }
   function inspect() {
     const request = operation.value
     if (!request) return
     if (Date.now() >= request.expiresAt) {
-      finish('The controller has not confirmed the tariff. Reload its current tariff before trying again.')
+      finish(localized("The controller has not confirmed the tariff. Reload its current tariff before trying again."))
       return
     }
     if (!isWritable(Date.now()) || request.source !== options.state.value.data_source) {
-      finish('Connection or tariff support changed. The result is unknown; reload the controller tariff before retrying.')
+      finish(localized("Connection or tariff support changed. The result is unknown; reload the controller tariff before retrying."))
       return
     }
     const current = status.value
     if (current?.request_id !== request.id) return
     if (current.error !== null) {
-      finish(current.error || 'The controller did not confirm a successful tariff write.')
+      finish(current.error || localized("The controller did not confirm a successful tariff write."))
       return
     }
     try {
       if (canonicalPlan(options.state.value.ui_config?.electricity_tariff) !== request.expectedPlan) {
-        finish('The controller confirmed a different tariff. Reload its current tariff before retrying.')
+        finish(localized("The controller confirmed a different tariff. Reload its current tariff before retrying."))
         return
       }
     } catch {
-      finish('The controller returned an invalid tariff. Reload its current tariff before retrying.')
+      finish(localized("The controller returned an invalid tariff. Reload its current tariff before retrying."))
       return
     }
     finish()
   }
   async function save(plan: TariffPlan | null, expectedRevision: string): Promise<void> {
-    if (pending.value) throw new Error('A controller tariff write is already pending.')
-    if (!isWritable(Date.now())) throw new Error('Controller tariff editing is unavailable.')
-    if (expectedRevision !== revision.value) throw new Error('The controller tariff changed. Reopen the editor before saving.')
+    if (pending.value) throw localizedError("A controller tariff write is already pending.")
+    if (!isWritable(Date.now())) throw localizedError("Controller tariff editing is unavailable.")
+    if (expectedRevision !== revision.value) throw localizedError("The controller tariff changed. Reopen the editor before saving.")
     const validated = plan === null ? null : validatePlan(plan)
     const id = createEssRequestId()
     const body = { plan: validated, revision: expectedRevision, request_id: id }
     if (new TextEncoder().encode(JSON.stringify(body)).length > 100000)
-      throw new Error('Controller tariff command exceeds 100000 bytes.')
+      throw localizedError("Controller tariff command exceeds 100000 bytes.")
     return new Promise<void>((resolve, reject) => {
       operation.value = { id, source: options.state.value.data_source, expectedPlan: canonicalPlan(validated), expiresAt: Date.now() + 10000, resolve, reject }
-      deadline = setTimeout(() => finish('The controller has not confirmed the tariff. Reload its current tariff before trying again.'), 10000)
+      deadline = setTimeout(() => finish(localized("The controller has not confirmed the tariff. Reload its current tariff before trying again.")), 10000)
       try {
-        if (!options.send('electricity_tariff', body)) finish('Controller connection is unavailable. No change was sent.')
+        if (!options.send('electricity_tariff', body)) finish(localized("Controller connection is unavailable. No change was sent."))
       } catch {
-        finish('The tariff write could not be confirmed. Reload its current value before trying again.')
+        finish(localized("The tariff write could not be confirmed. Reload its current value before trying again."))
       }
     })
   }
   watch([options.state, options.connected, writable], inspect, { flush: 'sync' })
   watch(options.commandError, error => {
     if (operation.value && error?.action === 'electricity_tariff' && error.request_id === operation.value.id)
-      finish(error.error || 'The server rejected the tariff write.')
+      finish(error.error || localized("The server rejected the tariff write."))
   }, { flush: 'sync' })
   onScopeDispose(() => {
     clearInterval(clockTimer)
-    finish('The editor connection closed. The tariff write result is unknown; reload before retrying.')
+    finish(localized("The editor connection closed. The tariff write result is unknown; reload before retrying."))
   })
   return { writable, revision, pending, save }
 }

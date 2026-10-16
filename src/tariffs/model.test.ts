@@ -63,7 +63,7 @@ describe('electricity tariff', () => {
     })
     expect(imported.draft.rates[0][0]).toBeNull()
     expect(() => validatePlan(imported.draft)).toThrow()
-    expect(imported.message).toContain('Copy the rates')
+    expect(String(imported.message)).toContain('Copy the rates')
   })
   it('saves validated tariffs by dashboard scope and rejects corrupt storage', () => {
     saveTariff('site-a', plan())

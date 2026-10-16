@@ -81,4 +81,6 @@ export interface EssModeCommandError {
   action: string
   request_id: string
   error: string
+  /** First-party UI copy only; never populated from incoming command frames. */
+  localMessage?: string
 }

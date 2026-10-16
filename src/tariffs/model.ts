@@ -1,3 +1,6 @@
+import { localized, errorText, displayError, type DisplayText } from '../i18n/messages'
+import { localizedError } from '../i18n/messages'
+import { tr, formatDate } from '../i18n'
 export const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 export const MONTHS = [
   'Jan',
@@ -47,7 +50,7 @@ export function slotLabel(slot: number): string {
 export function newDraft(): TariffDraft {
   return {
     version: 2,
-    name: 'Electricity tariff',
+    name: tr("Electricity tariff"),
     currency: 'USD',
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     rates: rateGrid(),
@@ -57,39 +60,37 @@ export function newDraft(): TariffDraft {
 }
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new Error('Expected a tariff object.')
+    throw localizedError("Expected a tariff object.")
   return value as Record<string, unknown>
 }
 function validateRates(value: unknown): number[][] {
   if (!Array.isArray(value) || value.length !== SLOTS)
-    throw new Error('A weekly tariff needs 48 half-hour rows.')
+    throw localizedError("A weekly tariff needs 48 half-hour rows.")
   return value.map((row: unknown, slot: number) => {
     if (!Array.isArray(row) || row.length !== 7)
-      throw new Error('A tariff needs seven day columns.')
+      throw localizedError("A tariff needs seven day columns.")
     return row.map((rate: unknown, day: number) => {
       if (typeof rate !== 'number' || !Number.isFinite(rate))
-        throw new Error(
-          `Enter a numeric rate for ${DAYS[day]}, ${slotLabel(slot)}. Blank cells are not zero.`
-        )
+        throw localizedError('Enter a numeric rate for {day}, {time}. Blank cells are not zero.', { day: () => formatDate(new Date(Date.UTC(2024, 0, day + 1)), { weekday: 'long', timeZone: 'UTC' }), time: slotLabel(slot) })
       return rate
     })
   })
 }
 function validateSeasons(rawSeasons: unknown): TariffSeason[] {
   if (!Array.isArray(rawSeasons) || rawSeasons.length > 12)
-    throw new Error('A tariff needs a seasons array with at most 12 seasons.')
+    throw localizedError("A tariff needs a seasons array with at most 12 seasons.")
   const usedMonths = new Set<number>()
   return rawSeasons.map((value: unknown) => {
     const season = object(value)
     if (typeof season.name !== 'string' || !season.name.trim() || season.name.length > 80)
-      throw new Error('Enter a season name (up to 80 characters).')
+      throw localizedError("Enter a season name (up to 80 characters).")
     if (!Array.isArray(season.months) || season.months.length === 0)
-      throw new Error('Select at least one month for each season.')
+      throw localizedError("Select at least one month for each season.")
     const months = season.months
       .map((month: unknown) => {
         if (typeof month !== 'number' || !Number.isInteger(month) || month < 1 || month > 12)
-          throw new Error('Season months must be integers from 1 to 12.')
-        if (usedMonths.has(month)) throw new Error('Season months must not overlap or repeat.')
+          throw localizedError("Season months must be integers from 1 to 12.")
+        if (usedMonths.has(month)) throw localizedError("Season months must not overlap or repeat.")
         usedMonths.add(month)
         return month
       })
@@ -101,9 +102,7 @@ function validateSeasons(rawSeasons: unknown): TariffSeason[] {
         rates: validateRates(season.rates),
       }
     } catch (cause) {
-      throw new Error(
-        `${season.name}: ${cause instanceof Error ? cause.message : 'Invalid rates.'}`
-      )
+      throw displayError(localized('{name}: {error}', { name: String(season.name), error: errorText(cause, 'Invalid rates.') }))
     }
   })
 }
@@ -116,33 +115,33 @@ function validateOptionalMetadata(data: Record<string, unknown>): void {
       data.billingDay < 1 ||
       data.billingDay > 31)
   )
-    throw new Error('Billing start day must be a whole number from 1 to 31, or blank.')
+    throw localizedError("Billing start day must be a whole number from 1 to 31, or blank.")
   if (
     data.reference !== undefined &&
     (typeof data.reference !== 'string' || data.reference.length > 200)
   )
-    throw new Error('Invalid tariff reference.')
+    throw localizedError("Invalid tariff reference.")
 }
 
 export function validatePlan(value: unknown): TariffPlan {
   const data = object(value)
-  if (data.version !== 1 && data.version !== 2) throw new Error('Unsupported tariff version.')
+  if (data.version !== 1 && data.version !== 2) throw localizedError("Unsupported tariff version.")
   // Prevent a mislabeled seasonal file being silently treated as a legacy weekly plan.
   if (data.version === 1 && (data.seasons !== undefined || data.billingDay !== undefined))
-    throw new Error('Seasons and billing dates require tariff version 2.')
+    throw localizedError("Seasons and billing dates require tariff version 2.")
   if (typeof data.name !== 'string' || !data.name.trim() || data.name.length > 120)
-    throw new Error('Enter a tariff name (up to 120 characters).')
+    throw localizedError("Enter a tariff name (up to 120 characters).")
   if (typeof data.currency !== 'string' || !/^[A-Z]{3}$/.test(data.currency))
-    throw new Error('Enter a three-letter currency, for example USD.')
+    throw localizedError("Enter a three-letter currency, for example USD.")
   if (typeof data.timeZone !== 'string' || !data.timeZone)
-    throw new Error('Enter the tariff time zone.')
+    throw localizedError("Enter the tariff time zone.")
   try {
     new Intl.DateTimeFormat('en', { timeZone: data.timeZone }).format()
   } catch {
-    throw new Error('Unknown time zone. Use a name such as America/Los_Angeles.')
+    throw localizedError("Unknown time zone. Use a name such as America/Los_Angeles.")
   }
   if (data.source !== 'manual' && data.source !== 'emporia')
-    throw new Error('Invalid tariff source.')
+    throw localizedError("Invalid tariff source.")
   const rates = validateRates(data.rates)
   const rawSeasons = data.version === 1 ? [] : data.seasons
   const seasons = validateSeasons(rawSeasons)
@@ -163,21 +162,21 @@ export function validatePlan(value: unknown): TariffPlan {
 // Import only sanitized tariff data, never credentials or a raw account dump.
 export function importTariff(value: unknown): {
   draft: TariffDraft
-  message: string
+  message: DisplayText
 } {
   const data = object(value)
   if (data.type !== 'emporia-tariff-reference')
     return {
       draft: validatePlan(data),
       message:
-        'Imported tariff, including any seasons and billing start day. Review and save to apply it here.',
+        localized("Imported tariff, including any seasons and billing start day. Review and save to apply it here."),
     }
   if (data.version !== 1 || typeof data.name !== 'string' || data.name.length > 120)
-    throw new Error('Invalid Emporia tariff reference.')
+    throw localizedError("Invalid Emporia tariff reference.")
   const reference = typeof data.utilityRateGid === 'string' ? data.utilityRateGid : ''
   const rate = reference ? null : data.flatRate
   if (rate !== null && (typeof rate !== 'number' || !Number.isFinite(rate)))
-    throw new Error('Invalid Emporia energy rate.')
+    throw localizedError("Invalid Emporia energy rate.")
   const draft: TariffDraft = {
     version: 2,
     name: data.name,
@@ -190,11 +189,11 @@ export function importTariff(value: unknown): {
   }
   validatePlan({ ...draft, rates: rateGrid(0) })
   let message =
-    'Imported the Emporia flat energy rate (cents converted to currency/kWh). Review it before saving.'
+    localized("Imported the Emporia flat energy rate (cents converted to currency/kWh). Review it before saving.")
   if (reference) {
-    message = `Emporia utility plan ${reference}: its time-of-use schedule is not included in the available device properties. Copy the rates from the Emporia app before saving.`
+    message = localized('Emporia utility plan {reference}: its time-of-use schedule is not included in the available device properties. Copy the rates from the Emporia app before saving.', { reference })
   } else if (rate === null) {
-    message = 'Emporia did not supply an energy rate. Enter the rates before saving.'
+    message = localized("Emporia did not supply an energy rate. Enter the rates before saving.")
   }
   return { draft, message }
 }

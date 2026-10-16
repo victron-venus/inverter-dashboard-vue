@@ -1,8 +1,7 @@
 <template>
   <div v-if="rows.length" class="classic-card mb-1 overflow-hidden" data-testid="active-loads">
     <div class="classic-header py-0 px-2 flex items-center gap-1.5 h-[22px]">
-      <Zap :size="10" /> Active Loads
-    </div>
+      <Zap :size="10" /> {{ tr('Active Loads') }} </div>
     <div class="divide-y divide-slate-50 dark:divide-slate-800/30">
       <div
         v-for="load in rows"
@@ -23,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+import { tr } from '../i18n'
 import { Zap } from '@lucide/vue'
 import { computed } from 'vue'
 import type { ActiveLoad } from '../nativeSections'

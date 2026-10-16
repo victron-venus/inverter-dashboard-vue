@@ -4,9 +4,7 @@
     <div class="classic-card p-1.5 flex flex-col items-center justify-center min-h-[75px]">
       <div
         class="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-200 font-bold mb-0.5"
-      >
-        Grid
-        <span v-if="gridBackup?.service" data-testid="grid-backup" class="normal-case tracking-normal font-normal"
+      > {{ tr('Grid') }} <span v-if="gridBackup?.service" data-testid="grid-backup" class="normal-case tracking-normal font-normal"
           :class="backupActive ? 'text-accent' : 'opacity-70'" :title="backupHint">· {{ backupPower }}</span>
       </div>
       <div class="text-3xl font-bold text-grid leading-none tracking-tight">
@@ -22,9 +20,7 @@
     <div class="classic-card p-1.5 flex flex-col items-center justify-center min-h-[75px]">
       <div
         class="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-200 font-bold mb-0.5"
-      >
-        Consumption
-      </div>
+      > {{ tr('Consumption') }} </div>
       <div class="text-3xl font-bold text-consumption leading-none tracking-tight">
         {{ formatPower(tt) }}
       </div>
@@ -38,9 +34,7 @@
     <div class="classic-card p-1.5 flex flex-col items-center justify-center min-h-[75px]">
       <div
         class="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-200 font-bold mb-0.5"
-      >
-        Solar
-      </div>
+      > {{ tr('Solar') }} </div>
       <div class="text-3xl font-bold text-solar leading-none tracking-tight">
         {{ formatPower(solarTotal) }}
       </div>
@@ -54,9 +48,7 @@
     <div class="classic-card p-1.5 flex flex-col items-center justify-center min-h-[75px]">
       <div
         class="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-200 font-bold mb-0.5"
-      >
-        Battery
-      </div>
+      > {{ tr('Battery') }} </div>
       <div class="text-3xl font-bold text-battery leading-none tracking-tight">
         {{ formatMeasurement(batterySoc, 0, '%') }}
       </div>
@@ -73,9 +65,7 @@
     <div class="classic-card p-1.5 flex flex-col items-center justify-center min-h-[75px]">
       <div
         class="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-200 font-bold mb-0.5"
-      >
-        Setpoint
-        <SetpointOverride v-if="!readOnly" :status="overrideStatus" :source="overrideSource" :observedAt="overrideObservedAt"
+      > {{ tr('Setpoint') }} <SetpointOverride v-if="!readOnly" :status="overrideStatus" :source="overrideSource" :observedAt="overrideObservedAt"
           :currentSetpoint="setpoint" :connected="overrideConnected === true" :available="overrideAvailable === true"
           :commandError="commandError" @send="(action, payload) => emit('send', action, payload)" />
       </div>
@@ -85,13 +75,15 @@
       <div
         class="text-[11px] text-slate-500 dark:text-slate-300 font-bold truncate w-full text-center uppercase tracking-tighter"
       >
-        {{ inverterState || '—' }}
+        {{ inverterStateLabel(inverterState) || '—' }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { tr } from '../i18n'
+import { inverterStateLabel } from '../i18n/states'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { GridBackupStatus } from '../composables/useInverterState'
 import type { SetpointOverrideStatus } from '../setpointOverride'
@@ -147,9 +139,9 @@ const backupActive = computed(() => props.gridUsingBackup && backupLive.value &&
 const backupPower = computed(() => backupLive.value && props.gridBackup?.available === true
   ? formatPower(props.gridBackup.power ?? undefined) : '—')
 const backupHint = computed(() => {
-  if (!backupLive.value) return 'Grid submeter status is stale'
-  if (backupActive.value) return 'Submeter is supplying the grid measurement'
-  if (props.gridBackup?.available !== true) return 'Grid submeter unavailable'
-  return props.gridBackup.enabled ? 'Grid submeter ready as backup' : 'Grid submeter detected; backup control disabled'
+  if (!backupLive.value) return tr('Grid submeter status is stale')
+  if (backupActive.value) return tr('Submeter is supplying the grid measurement')
+  if (props.gridBackup?.available !== true) return tr('Grid submeter unavailable')
+  return props.gridBackup.enabled ? tr('Grid submeter ready as backup') : tr('Grid submeter detected; backup control disabled')
 })
 </script>

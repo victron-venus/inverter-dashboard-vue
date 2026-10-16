@@ -3,7 +3,7 @@
     <button type="button"
       class="classic-btn ess-mode-trigger"
       :class="{ 'classic-btn-on': active }"
-      :aria-label="`ESS mode: ${currentLabel}`"
+      :aria-label="tr('ESS mode: {mode}', { mode: currentLabel })"
       aria-haspopup="menu"
       :aria-expanded="open"
       :aria-controls="menuId"
@@ -19,8 +19,8 @@
     </button>
     <Teleport to="body">
       <div v-if="open" ref="panel" class="ess-mode-panel" :style="position">
-        <div class="ess-mode-title">ESS mode</div>
-        <div :id="menuId" role="menu" aria-label="ESS mode" @keydown="navigate">
+        <div class="ess-mode-title"> {{ tr('ESS mode') }} </div>
+        <div :id="menuId" role="menu" :aria-label="tr('ESS mode')" @keydown="navigate">
           <button
             v-for="option in ESS_MODES"
             :key="option.id"
@@ -35,23 +35,22 @@
           >
             <Check v-if="selected === option.id" :size="17" />
             <span v-else class="ess-mode-check-space" />
-            <span>{{ option.label }}</span>
+            <span>{{ tr(option.label) }}</span>
           </button>
         </div>
         <p v-if="error" class="ess-mode-message ess-mode-error" role="alert">{{ error }}</p>
-        <output v-else-if="pending" class="ess-mode-message">
-          Waiting for the controller…
-        </output>
+        <output v-else-if="pending" class="ess-mode-message"> {{ tr('Waiting for the controller…') }} </output>
         <output v-else-if="unavailable" class="ess-mode-message">{{ unavailable }}</output>
-        <p v-else class="ess-mode-message">
-          Off / On changes inverter power. Other choices keep the power switch unchanged.
-        </p>
+        <p v-else class="ess-mode-message"> {{ tr('Off / On changes inverter power. Other choices keep the power switch unchanged.') }} </p>
       </div>
     </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
+import { localized, type DisplayText } from '../i18n/messages'
+
+import { tr } from '../i18n'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { Check, ChevronDown, Loader2, Zap } from '@lucide/vue'
 import { ESS_MODES, createEssRequestId, selectedEssMode, type EssModeId, type EssModeState, type EssModeCommandError } from '../essMode'
@@ -76,18 +75,18 @@ const open = ref(false)
 const menuId = `ess-menu-${useId()}`
 const position = ref<Record<string, string>>({})
 const pending = ref<string | null>(null)
-const error = ref('')
+const error = ref<DisplayText>('')
 let timeout: ReturnType<typeof setTimeout> | undefined
 const selected = computed(() => selectedEssMode(props.mode))
 const currentLabel = computed(
-  () => ESS_MODES.find((option) => option.id === selected.value)?.short ?? props.label
+  () => tr(ESS_MODES.find((option) => option.id === selected.value)?.short ?? props.label)
 )
 const unavailable = computed(() => {
-  if (!props.connected || !props.fresh) return 'Waiting for fresh ESS status.'
-  if (!props.mode?.selection_supported) return 'Update inverter-control to enable mode selection.'
-  if (props.dryRun === undefined) return 'Waiting for controller DRY status.'
-  if (props.dryRun) return 'Mode changes are unavailable in DRY mode.'
-  if (props.controlsAvailable !== true) return 'Mode selection is unavailable on this connection.'
+  if (!props.connected || !props.fresh) return tr('Waiting for fresh ESS status.')
+  if (!props.mode?.selection_supported) return tr('Update inverter-control to enable mode selection.')
+  if (props.dryRun === undefined) return tr('Waiting for controller DRY status.')
+  if (props.dryRun) return tr('Mode changes are unavailable in DRY mode.')
+  if (props.controlsAvailable !== true) return tr('Mode selection is unavailable on this connection.')
   return ''
 })
 function trigger() {
@@ -111,7 +110,7 @@ watch(
 )
 watch(() => props.commandError, (response) => {
   if (pending.value && response?.action === 'set_ess_mode' && response.request_id === pending.value) {
-    error.value = response.error || 'Mode change rejected.'
+    error.value = response.localMessage ? localized(response.localMessage) : response.error || localized('Mode change rejected.')
     finish()
   }
 })
@@ -179,19 +178,19 @@ async function choose(mode: EssModeId) {
   try {
     requestId = createEssRequestId()
   } catch {
-    error.value = 'This browser cannot create a command request. No change was sent.'
+    error.value = localized('This browser cannot create a command request. No change was sent.')
     return
   }
   pending.value = requestId
   timeout = setTimeout(() => {
-    error.value = 'Change unconfirmed. Check the current mode before retrying.'
+    error.value = localized('Change unconfirmed. Check the current mode before retrying.')
     finish()
   }, 20_000)
   try {
     emit('send', 'set_ess_mode', { mode, request_id: requestId })
   } catch (cause) {
     if (pending.value === requestId) {
-      error.value = `Change unconfirmed: ${String(cause)}`
+      error.value = localized('Change unconfirmed: {details}', { details: String(cause) })
       finish()
     }
   }

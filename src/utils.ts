@@ -1,16 +1,17 @@
+import { formatNumber, formatNumeric, tr } from './i18n'
 export function formatPower(w: number | undefined) {
   if (typeof w !== 'number' || !Number.isFinite(w)) return '—'
   const v = Math.abs(Math.floor(w || 0))
   const sign = w && w < 0 ? '-' : ''
-  return v >= 1000 ? sign + (v / 1000).toFixed(1) + 'kW' : sign + v + 'W'
+  return v >= 1000 ? sign + formatNumber(v / 1000, 1) + 'kW' : sign + v + 'W'
 }
 
 export function formatUptime(s: number) {
-  if (s < 60) return s + 's'
-  if (s < 3600) return Math.floor(s / 60) + 'm'
+  if (s < 60) return tr('{n}s', { n: formatNumeric(s) })
+  if (s < 3600) return tr('{n}m', { n: formatNumber(Math.floor(s / 60)) })
   const h = Math.floor(s / 3600),
     m = Math.floor((s % 3600) / 60)
-  return h + 'h ' + m + 'm'
+  return tr('{n}h {m}m', { n: formatNumber(h), m: formatNumber(m) })
 }
 
 export function formatDuration(s: number | undefined) {

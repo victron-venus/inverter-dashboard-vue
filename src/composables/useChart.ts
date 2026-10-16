@@ -1,3 +1,4 @@
+import { tr, currentLocale, formatDate, formatNumber } from '../i18n'
 import { type Ref, ref, watch, getCurrentScope, onScopeDispose } from 'vue'
 
 const MAX_HISTORY_POINTS = 1800
@@ -71,7 +72,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
   // Register callback so addHistoryPoint triggers chart updates
   const onHistory = () => updateChartOption(false)
   setChartUpdateCallback(onHistory)
-  const stopTheme = watch(isDarkRef, () => updateChartOption(true))
+  const stopTheme = watch([isDarkRef, currentLocale], () => updateChartOption(true))
   if (getCurrentScope()) onScopeDispose(() => {
     stopTheme()
     if (chartUpdateCallback === onHistory) chartUpdateCallback = null
@@ -101,7 +102,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
         textStyle: { color: textColor, fontSize: 10 },
         formatter: (params: TooltipParam[]) => {
           const date = new Date(params[0].value[0])
-          const timeStr = date.toLocaleTimeString([], {
+          const timeStr = formatDate(date, {
             hour: '2-digit',
             minute: '2-digit',
           })
@@ -109,7 +110,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           params.forEach((p: TooltipParam) => {
             if (p.value[1] === null) return
             const val = Math.floor(p.value[1])
-            const valStr = Math.abs(val) >= 1000 ? `${(val / 1000).toFixed(1)}kW` : `${val}W`
+            const valStr = Math.abs(val) >= 1000 ? `${formatNumber(val / 1000, 1)}kW` : `${val}W`
             result += `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${p.color};"></span>`
             result += `${p.seriesName}: ${valStr}<br/>`
           })
@@ -117,7 +118,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
         },
       },
       legend: {
-        data: ['Grid', 'Solar', 'Battery', 'Setpoint'],
+        data: ['Grid', 'Solar', 'Battery', 'Setpoint'].map((label) => tr(label)),
         top: 0,
         itemWidth: 12,
         itemHeight: 8,
@@ -130,7 +131,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
         axisLabel: {
           color: textColor,
           fontSize: 10,
-          formatter: '{HH}:{mm}',
+          formatter: (value: number) => formatDate(value, { hour: '2-digit', minute: '2-digit' }),
         },
         splitLine: { show: false },
       },
@@ -140,12 +141,12 @@ export function useChart(isDarkRef: Ref<boolean>) {
         axisLabel: {
           color: textColor,
           fontSize: 10,
-          formatter: (v: number) => (Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : v),
+          formatter: (v: number) => (Math.abs(v) >= 1000 ? `${formatNumber(v / 1000, 1)}k` : v),
         },
       },
       series: [
         {
-          name: 'Grid',
+          name: tr('Grid'),
           type: 'line',
           smooth: true,
           showSymbol: false,
@@ -154,7 +155,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           areaStyle: { color: 'rgba(59,130,246,0.1)' },
         },
         {
-          name: 'Solar',
+          name: tr('Solar'),
           type: 'line',
           smooth: true,
           showSymbol: false,
@@ -163,7 +164,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           areaStyle: { color: 'rgba(245,158,11,0.1)' },
         },
         {
-          name: 'Battery',
+          name: tr('Battery'),
           type: 'line',
           smooth: true,
           showSymbol: false,
@@ -172,7 +173,7 @@ export function useChart(isDarkRef: Ref<boolean>) {
           areaStyle: { color: 'rgba(34,197,94,0.1)' },
         },
         {
-          name: 'Setpoint',
+          name: tr('Setpoint'),
           type: 'line',
           smooth: true,
           showSymbol: false,

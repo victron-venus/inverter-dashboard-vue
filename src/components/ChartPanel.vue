@@ -4,13 +4,12 @@
     <div
       v-if="isEmpty"
       class="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold uppercase tracking-wider text-slate-400"
-    >
-      Waiting for history…
-    </div>
+    > {{ tr('Waiting for history…') }} </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { tr } from '../i18n'
 import { LineChart } from 'echarts/charts'
 import {
   GridComponent,

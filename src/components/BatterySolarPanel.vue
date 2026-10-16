@@ -3,8 +3,7 @@
     <!-- Batteries Section -->
     <div v-if="showBatteries !== false" class="classic-card">
       <div class="classic-header flex items-center gap-1.5">
-        <BatteryMedium :size="10" /> Batteries
-      </div>
+        <BatteryMedium :size="10" /> {{ tr('Batteries') }} </div>
       <div class="p-1 flex flex-wrap gap-x-3 gap-y-1.5">
         <div
           v-for="(bat, index) in batteries"
@@ -23,7 +22,7 @@
             <span
               v-if="bat.current !== undefined"
               class="text-[11px] font-bold text-slate-500 dark:text-slate-300 leading-none"
-              >{{ bat.current.toFixed(1) }}A</span
+              >{{ formatNumber(bat.current, 1) }}A</span
             >
             <span
               v-if="bat.power !== undefined"
@@ -45,7 +44,7 @@
             <span
               class="text-[10px] text-slate-400 font-medium truncate uppercase ml-2 text-right flex-1"
             >
-              {{ bat.state }}<span v-if="bat.timeToGo"> · {{ bat.timeToGo }}</span>
+              {{ tr(bat.state) }}<span v-if="bat.timeToGo"> · {{ bat.timeToGo }}</span>
             </span>
           </div>
         </div>
@@ -55,8 +54,7 @@
     <!-- Solar Production Section -->
     <div v-if="showSolar !== false" class="classic-card">
       <div class="classic-header flex items-center gap-1.5">
-        <SunMedium :size="10" /> Solar Production
-      </div>
+        <SunMedium :size="10" /> {{ tr('Solar Production') }} </div>
       <div class="p-1 flex flex-wrap gap-x-2 gap-y-1.5">
         <div
           v-for="(src, index) in solarSources"
@@ -71,12 +69,12 @@
           <div class="flex flex-col">
             <div class="flex justify-between items-baseline">
               <span v-if="src.pvVoltage != null" class="text-[10px] font-bold text-solar opacity-80"
-                >{{ src.pvVoltage.toFixed(2) }}V</span
+                >{{ formatNumber(src.pvVoltage, 2) }}V</span
               >
               <span
                 v-if="src.current != null"
                 class="text-[10px] font-medium text-slate-500 dark:text-slate-300"
-                >{{ src.current.toFixed(1) }}A</span
+                >{{ formatNumber(src.current, 1) }}A</span
               >
             </div>
             <div class="text-xl font-bold text-solar leading-none mt-0.5">
@@ -90,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import { tr, formatNumber } from '../i18n'
 import { BatteryMedium, SunMedium } from '@lucide/vue'
 import { formatMeasurement } from '../telemetry'
 

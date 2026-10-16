@@ -40,7 +40,7 @@ describe('native transport footer', () => {
       ...props, telemetry: { source: 'igw', observed_at: observed, quality: 'live', timestamp_source: 'local_receipt' },
     }, global: { plugins: [i18n] } })
     const title = wrapper.get('[data-testid="telemetry-quality"]').attributes('title')
-    expect(title).toContain(new Date(observed).toLocaleString())
+    expect(title).toContain(new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(observed)))
     expect(title).toContain('Local receipt time')
     expect(title).not.toContain('Data unknown')
     wrapper.unmount()
