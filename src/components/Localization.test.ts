@@ -92,7 +92,9 @@ it('relocalizes a pending timeout but keeps a literal controller diagnostic unto
   expect(document.querySelector('[role="alert"]')?.textContent).toBe(tr('Change unconfirmed. Check the current mode before retrying.'))
   view.unmount()
   const next = await requestMode()
-  const id = (next.emitted('send')?.[0][1] as { request_id: string }).request_id
+  const sent = next.emitted('send')?.[0]
+  if (!sent) throw new Error('Expected the mode request before its correlated reply')
+  const id = (sent[1] as { request_id: string }).request_id
   await next.setProps({ commandError: { action: 'set_ess_mode', request_id: id, error: 'Off' } })
   setLocale('ru')
   await nextTick()
