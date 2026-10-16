@@ -7,11 +7,12 @@
 - Qualify this release with a bounded RC fuzz campaign, offline target execution, and deterministic seed replay checks.
 - Bind release evidence to the exact source and toolkit revision, validate seed corpora, and retain engine execution counts and diagnostic artifacts.
 - Document the fuzzing scope, resource limits, and the distinction between synthetic checks and target acceptance.
+- Refresh frontend dependencies and their lockfile, including Lucide icons, Univer sheets, Vue type checking, and Vue I18n.
 
 ### Upgrade
 
-Use the existing installation or update procedure. This release changes validation
-and release tooling; existing user configuration and data formats are preserved.
+Use the existing installation or update procedure. Existing user configuration
+and data formats are preserved.
 Keep the previous immutable release for rollback. Test the exact RC package on the
 intended target before accepting a stable promotion.
 
