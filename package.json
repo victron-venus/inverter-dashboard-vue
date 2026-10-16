@@ -1,7 +1,7 @@
 {
   "name": "inverter-dashboard-vue",
   "private": true,
-  "version": "2.2.7",
+  "version": "2.2.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,10 +18,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@lucide/vue": "^1.54.0",
+    "@lucide/vue": "^1.55.0",
     "@tailwindcss/vite": "^4.3.0",
-    "@univerjs/preset-sheets-core": "1.0.3",
-    "@univerjs/presets": "1.0.3",
+    "@univerjs/preset-sheets-core": "1.0.4",
+    "@univerjs/presets": "1.0.4",
     "echarts": "^6.1.0",
     "vue": "^3.5.43",
     "vue-echarts": "^8.3.2",
@@ -37,6 +37,6 @@
     "typescript": "6.0.3",
     "vite": "^8.3.4",
     "vitest": "^5.0.3",
-    "vue-tsc": "3.3.12"
+    "vue-tsc": "3.3.13"
   }
 }

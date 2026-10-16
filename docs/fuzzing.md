@@ -30,3 +30,22 @@ The first corpus directory receives new interesting inputs; the checked-in seed 
 For a failed RC, download the `fuzz-diagnostics-<attempt>` artifact from that workflow attempt. It contains each target's `run.log`, copied and grown corpus, crash input, and machine-readable report. Reproduce an individual crash by replacing the corpus arguments with its file path and using `-- -runs=1`. Keep that exact file when reporting a failure; do not substitute production telemetry containing private identifiers. Add a minimized synthetic seed and a focused unit regression with the fix, run ordinary tests, then request a new RC. A missing target, zero executions, crash, timeout or failed invariant blocks RC publication.
 
 See [the shared runner contract](rc-fuzzing.md) and [release procedure](../RELEASING.md) for policy and evidence details.
+
+## Deterministic target-contract checks
+
+Ordinary CI now replays the real fuzz target exports using the checked-in
+synthetic corpus, fixed malformed inputs and a bounded deterministic byte matrix.
+It awaits asynchronous targets and propagates assertion failures. This catches
+harness/production API drift without starting Jazzer or a mutation campaign.
+The RC preflight repeats this check after its locked setup.
+
+Run locally from the repository root:
+
+```sh
+npm ci --prefix fuzz --ignore-scripts --no-audit --no-fund
+node fuzz/build.mjs
+node fuzz/replay.mjs
+```
+
+The replay preserves the same offline boundaries as the targets above; it does
+not qualify a release or substitute for the RC's isolated campaign.
