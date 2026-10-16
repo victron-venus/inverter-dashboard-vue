@@ -19,3 +19,25 @@ it('retains owned error identity across async capture and preserves literal prov
   expect(view.text()).toBe('Off')
   view.unmount()
 })
+
+it('keeps the public tariff import result serializable while the editor retains localized copy', async () => {
+  const { importTariff, importTariffForEditor, newDraft, rateGrid } = await import('../tariffs/model')
+  const plan = { ...newDraft(), name: 'Solar', rates: rateGrid(0.15) }
+  const publicResult = importTariff(plan)
+  const editorResult = importTariffForEditor(plan)
+  expect(Object.keys(publicResult)).toEqual(['draft', 'message'])
+  expect(typeof publicResult.message).toBe('string')
+  expect(JSON.parse(JSON.stringify(publicResult))).toEqual(publicResult)
+  const original = publicResult.message
+  setLocale('ru')
+  expect(publicResult.message).toBe(original)
+  expect(String(editorResult.message)).toBe(tr('Imported tariff, including any seasons and billing start day. Review and save to apply it here.'))
+  expect(editorResult.draft).toEqual(publicResult.draft)
+})
+
+it('localizes an invalid interval schema while retaining its literal protocol identifier', async () => {
+  const { validateIntervals } = await import('../tariffs/intervals')
+  setLocale('de')
+  expect(() => validateIntervals({ type: 'unknown', version: 1 })).toThrow(tr('Expected grid-import-intervals version 1.'))
+  expect(tr('Expected grid-import-intervals version 1.')).toContain('grid-import-intervals')
+})

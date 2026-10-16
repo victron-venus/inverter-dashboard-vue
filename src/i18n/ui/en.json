@@ -495,5 +495,6 @@
   "m0494": "Could not import interval data.",
   "m0495": "Change unconfirmed: {details}",
   "m0496": "{source}: {name}. Current rate in {zone}.",
-  "m0497": "Billing period: {start} – {end}."
+  "m0497": "Billing period: {start} – {end}.",
+  "m0498": "Expected grid-import-intervals version 1."
 }

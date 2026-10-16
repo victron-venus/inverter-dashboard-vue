@@ -119,7 +119,7 @@ import TariffSheet from './TariffSheet.vue'
 import {
   activeSeasonIndex,
   MONTHS,
-  importTariff,
+  importTariffForEditor as importTariff,
   newDraft,
   rateGrid,
   validatePlan,

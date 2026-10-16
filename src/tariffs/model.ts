@@ -160,7 +160,13 @@ export function validatePlan(value: unknown): TariffPlan {
 }
 
 // Import only sanitized tariff data, never credentials or a raw account dump.
-export function importTariff(value: unknown): {
+export function importTariff(value: unknown): { draft: TariffDraft; message: string } {
+  const result = importTariffForEditor(value)
+  return { draft: result.draft, message: String(result.message) }
+}
+
+/** Internal editor variant retains copy identity across language changes. */
+export function importTariffForEditor(value: unknown): {
   draft: TariffDraft
   message: DisplayText
 } {
