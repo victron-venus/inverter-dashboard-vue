@@ -16,8 +16,10 @@ The web dashboard can edit the shared plan from Settings when the backend and
 controller advertise the matching capability and provide a durable acknowledgement.
 
 Choose **Use a local tariff on this device** explicitly for a standalone local
-copy. That choice is scoped to the current view and returns to the controller
-on reload or installation change. Existing local data is preserved for export
+copy. In the web dashboard, that choice is saved in browser storage for the
+current installation scope and survives a page reload. Switching installations
+loads that installation's saved choice, defaulting to the controller if none exists.
+Existing local data is preserved for export
 and import; it is never silently uploaded to the controller. **Use controller
 tariff** returns to the shared plan. Tariff editing never changes inverter control
 flags, charging policy or Emporia settings.
