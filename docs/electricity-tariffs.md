@@ -12,8 +12,8 @@ Saving waits for a matching controller acknowledgement after atomic persistence;
 a stale revision, validation failure or disk error leaves the previous plan intact.
 Both direct MQTT and the updated authenticated inverter-gateway transport support
 this command. A disconnected/older controller cannot claim successful saving.
-The web dashboard displays the shared plan; use the application or controller's
-installation tools to edit it.
+The web dashboard can edit the shared plan from Settings when the backend and
+controller advertise the matching capability and provide a durable acknowledgement.
 
 Choose **Use a local tariff on this device** explicitly for a standalone local
 copy. That choice is scoped to the current view and returns to the controller
@@ -103,10 +103,10 @@ plan without a utility plan ID, cents are converted to currency/kWh explicitly.
 
 ## Implementation
 
-The tariff model, spreadsheet and display components are mirrored between
-inverter-dashboard-vue and inverter-desktop. Native controller transport lives
-only in the desktop/mobile build. Univer OSS packages are pinned to
-1.0.0; no paid import/export or server plugin is required. The heavy editor is a
+The tariff model, spreadsheet and display components have corresponding implementations
+in inverter-dashboard-vue and inverter-desktop. The web UI submits controller commands
+through its Python or Go backend; Desktop owns its native transport. Univer OSS package
+versions are recorded in the lockfile; no paid import/export or server plugin is required. The heavy editor is a
 separate lazy chunk. JSON is the exchange format; XLSX is not part of this feature.
 The browser stores local overrides per origin; desktop additionally scopes them by
 portal ID (falling back to gateway or MQTT host). No cloud synchronization runs.
@@ -118,7 +118,7 @@ commands after changing the mirrored files.
 
 ## Measured interval energy cost
 
-Open **Interval energy cost** next to **Edit tariff** in the daily energy strip.
+Open **Interval energy cost** in **Settings → Electricity tariff**.
 Import measured grid-import readings as CSV or JSON. The dialog calculates each
 supported interval's kWh multiplied by its applicable price in the selected
 tariff. It applies weekday, half-hour, season and IANA time-zone rules, including

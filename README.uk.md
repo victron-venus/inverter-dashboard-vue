@@ -1,0 +1,64 @@
+# Інтерфейс Inverter Dashboard
+
+[English](README.md) · [Русский](README.ru.md) · [Українська](README.uk.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Nederlands](README.nl.md)
+
+Спільний інтерфейс Vue для дашбордів Python і Go: електроенергія, попередження Victron, керування Home Assistant і тарифи. Для користування встановіть один із серверів та відкрийте його адресу. Цей репозиторій не містить MQTT-брокера або окремого сервера.
+
+- [Python / FastAPI](https://github.com/victron-venus/inverter-dashboard)
+- [Go](https://github.com/victron-venus/inverter-dashboard-go)
+
+## Можливості
+
+Показники мережі, споживання, сонця й батареї розрізняють нуль і відсутність даних. Шість режимів ESS, прапорці контролера, Water і setpoint доступні лише за актуального стану та дозволу сервера. Кнопки Home походять із конфігурації; неактивна техніка прихована. Active Loads, графіки та попередження дотримуються спільних правил Desktop.
+
+![Architecture](docs/assets/architecture.svg)
+
+## Запуск для розробки
+
+Використовуйте версію Node з поточного CI та залежності з lockfile. Vite зазвичай працює на порту 5173. Для даних потрібні сервер і маршрути `/api/*` та `/ws` на тому самому origin; Vite сам не підключає інвертор. Для готового розгортання дивіться інструкції Python або Go.
+
+```sh
+npm ci
+npm run dev
+```
+
+```sh
+npm run typecheck
+npm run lint
+npm test
+npm run build:all
+```
+
+## Налаштування й мови
+
+У Settings обираються мова, видимість секцій, тарифи та сповіщення. Підтримуються English, Русский, Українська, Deutsch, Français і Nederlands. Явний вибір має пріоритет над мовою браузера; резервна мова — англійська. Власні назви пристроїв не перекладаються. Параметри підключення й токени зберігаються на сервері.
+
+## Попередження та історія
+
+Вік банера рахується від часу події, а не отримання після перепідключення. Невідомий час не стає «щойно». Графік залишає розриви для відсутніх даних; буфер сесії обмежений 1800 точками й не є постійним добовим архівом. Системні сповіщення потребують дозволу браузера та серверного Web Push. Прийнятий тест не підтверджує появу банера ОС.
+
+![Event lifecycle](docs/assets/event-lifecycle.svg)
+
+## Розгортання та безпека
+
+Збірка створює `dist/` для застосунку й `dist-lib/` для бібліотеки. Установлені сервери отримують зміну лише після включення перевіреного пакета та оновлення серверної збірки. Desktop має власний код і нативні функції. Особисті сутності Home зберігайте в налаштуваннях, виключених із Git. Не додавайте токени IGW/Cloudflare до `VITE_*` і не вимикайте TLS.
+
+```sh
+VITE_PUBLIC_MODE=true npm run build:spa
+```
+
+## Усунення проблем
+
+Сторінка недоступна: перевірте DNS, VPN, TLS та ingress. Дані застарілі: розділяйте з’єднання браузер → сервер → IGW → Cerbo. Кнопка недоступна: перевірте стан, актуальність і можливості джерела, не видаляючи захист. Для сповіщень перевіряйте підписку та фактичну доставку окремо.
+
+## Документація
+
+- [README (English)](README.md)
+- [Wiki / configuration / troubleshooting (English)](docs/wiki/Home.md)
+- [Localization (English)](docs/localization.md)
+- [Tariffs (English)](docs/electricity-tariffs.md)
+- [HTTPS (English)](deploy/https/README.md)
+- [Contributing (English)](CONTRIBUTING.md)
+- [Security (English)](SECURITY.md)
+- [Release policy (English)](RELEASING.md)
+- [MIT License](LICENSE)
