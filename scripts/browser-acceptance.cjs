@@ -101,6 +101,8 @@ async function main() {
   try {
     browser = await playwright[engine].launch({ headless: true, ...(channel ? { channel } : {}) })
     context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'en-US', serviceWorkers: 'block' })
+    context.setDefaultTimeout(10000)
+    context.setDefaultNavigationTimeout(15000)
     await context.tracing.start({ screenshots: true, snapshots: true, sources: true })
     await context.route('**/*', route => {
       const url = new URL(route.request().url())
