@@ -12,9 +12,21 @@ const engine = process.env.CI_BROWSER_ENGINE || 'chromium'
 const channel = process.env.CI_BROWSER_CHANNEL || ''
 assert(['chromium', 'firefox', 'webkit'].includes(engine), 'Unsupported browser engine')
 const pending = new Map()
+const waitingStates = new Map()
+let reverseStateObserved
+const reverseStateArrival = new Promise(resolve => { reverseStateObserved = resolve })
+function flushState(mode) {
+  if (![...pending.values()].includes(mode)) return
+  for (const [response, waitingMode] of waitingStates) {
+    if (waitingMode !== mode) continue
+    waitingStates.delete(response)
+    response.setHeader('Content-Type', 'application/json')
+    response.end(JSON.stringify({ soc: mode === 'wrong-soc' ? 41 : mode === 'public' || mode === 'missing-public' ? 61 : 42 }))
+  }
+}
 // Request data selects a precomputed page; it is never interpolated into HTML.
 const fixturePages = new Map([
-  'ready', 'missing-js', 'stalled', 'wrong-soc', 'public', 'missing-public', 'disconnected',
+  'ready', 'reverse-arrival', 'missing-js', 'stalled', 'wrong-soc', 'public', 'missing-public', 'disconnected',
 ].map(mode => [mode, `<!doctype html><title>Readiness control</title><script defer src="/app.js?mode=${mode}"></script>`]))
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost')
@@ -23,11 +35,14 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/noncritical' || (url.pathname === '/state' && mode === 'stalled')) {
     pending.set(res, mode)
     res.on('close', () => pending.delete(res))
+    if (url.pathname === '/noncritical') flushState(mode)
     return
   }
   if (url.pathname === '/state') {
-    res.setHeader('Content-Type', 'application/json')
-    res.end(JSON.stringify({ soc: mode === 'wrong-soc' ? 41 : mode === 'public' || mode === 'missing-public' ? 61 : 42 }))
+    waitingStates.set(res, mode)
+    res.on('close', () => waitingStates.delete(res))
+    if (mode === 'reverse-arrival') reverseStateObserved()
+    flushState(mode)
     return
   }
   if (url.pathname === '/app.js') {
@@ -35,7 +50,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
     res.end(`
       const mode = new URL(location.href).searchParams.get('mode');
-      fetch('/noncritical?mode=' + mode);
+      if (mode !== 'reverse-arrival') fetch('/noncritical?mode=' + mode);
       fetch('/state?mode=' + mode).then(response => response.json()).then(state => {
         const soc = document.createElement('span');
         soc.textContent = state.soc + '%';
@@ -68,6 +83,7 @@ async function runReadinessControls() {
     browser = await playwright[engine].launch({ headless: true, ...(channel ? { channel } : {}) })
     const cases = [
       { mode: 'ready', soc: 42 },
+      { mode: 'reverse-arrival', soc: 42 },
       { mode: 'public', soc: 61, publicMode: true },
       { mode: 'missing-js', soc: 42, rejects: true },
       { mode: 'stalled', soc: 42, rejects: true },
@@ -90,6 +106,20 @@ async function runReadinessControls() {
         })
         const page = await context.newPage()
         await page.goto(`http://127.0.0.1:${server.address().port}/?mode=${mode}`, { waitUntil: 'load' })
+        if (mode === 'reverse-arrival') {
+          let timer
+          try {
+            await Promise.race([
+              reverseStateArrival,
+              new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Reverse-order state request did not arrive')), 10000) }),
+            ])
+          } finally {
+            clearTimeout(timer)
+          }
+          assert([...waitingStates.values()].includes(mode), 'State must wait for its own noncritical request')
+          assert(![...pending.values()].includes(mode), 'Reverse-order control must start state first')
+          await page.evaluate(() => { void fetch('/noncritical?mode=reverse-arrival') })
+        }
         if (rejects) {
           await assert.rejects(waitForHydratedDashboard(page, soc, publicMode), { name: 'TimeoutError' })
         } else {
@@ -106,6 +136,7 @@ async function runReadinessControls() {
   } finally {
     if (browser) await browser.close()
     for (const response of pending.keys()) response.destroy()
+    for (const response of waitingStates.keys()) response.destroy()
     server.closeAllConnections()
     await new Promise(resolve => server.close(resolve))
   }

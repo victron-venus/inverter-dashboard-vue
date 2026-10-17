@@ -8,7 +8,7 @@
 - Format dates and numbers for the selected locale, and update existing application-owned errors when the language changes. Keep operator device names and external diagnostics intact.
 - Add six-language operating documentation and illustrated localization, release and validation guides.
 - Update Vitest to 5.0.4, Happy DOM to 21.0.1 and the pinned shared CI workflows. Keep standalone fuzz builds connected to the real production modules, JSON catalogs and lockfile-bound runtime dependencies.
-- Make browser acceptance wait for the current fixture telemetry and connected state after document load, including public read-only telemetry. Retain the existing deadlines and eleven application scenarios; add seven isolated controls that reject incomplete or incorrect readiness.
+- Make browser acceptance wait for the current fixture telemetry and connected state after document load, including public read-only telemetry. Retain the existing deadlines and eleven application scenarios; add eight isolated controls that reject incomplete or incorrect readiness and verify reverse request arrival order.
 
 ### Upgrade
 

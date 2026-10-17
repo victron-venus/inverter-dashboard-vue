@@ -37,10 +37,11 @@ marker and public state of charge. Background polling and canceled requests do
 not have to become idle. The existing 15-second navigation and 10-second
 readiness limits still apply.
 
-Before the application flows, seven isolated browser controls verify this
+Before the application flows, eight isolated browser controls verify this
 readiness rule. Pending noncritical traffic must allow normal and public pages
-to pass; missing JavaScript, stalled telemetry, disconnected transport, the wrong
-state of charge and a missing public marker must fail. Their results are saved
+to pass, including when the state request arrives first. Each state response
+waits until its own noncritical request is pending. Missing JavaScript, stalled
+telemetry, disconnected transport, the wrong state of charge and a missing public marker must fail. Their results are saved
 separately in `readiness-controls.json`, without increasing the eleven
 application-scenario count.
 
