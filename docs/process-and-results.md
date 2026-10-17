@@ -55,11 +55,19 @@ These checks belong to [`ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe`](https://gith
 - Type checking and both SPA and component-library builds passed. Lint and applicable scoped commit hooks passed; existing warnings remain, with no rule suppression.
 - Independent source review confirmed the merged browser-acceptance documentation and theme-button behavior, safe handling of unknown state labels, and retained localized import errors without replacing the tariff draft or saved interval data. This is a source review, not deployed-browser acceptance.
 
-### Current source after dependency integration: 16 October
+### Full-suite source after dependency integration: 16 October
 
 - At [`2b9318be7a22aa68a67dae8e64810f6e959071b2`](https://github.com/victron-venus/inverter-dashboard-vue/commit/2b9318be7a22aa68a67dae8e64810f6e959071b2), **all 489 tests passed across 51 files, with no skips**, using the integrated dependency lockfile. This full local suite includes the service-worker tests that could not run in the initial provisional environment.
 - A fresh `npm ci --ignore-scripts` installed 240 packages from that exact lockfile. Type checking, both SPA and component-library builds, and applicable scoped commit hooks passed.
 - The later main-branch integration at [`edc705284aacd6c6e1c3c1909c50c23a2f1cd95e`](https://github.com/victron-venus/inverter-dashboard-vue/commit/edc705284aacd6c6e1c3c1909c50c23a2f1cd95e) has the same complete Git tree, `c160afe2d3e678180155c357956ef2b9a55fd7e4`. This records identical source files, not a second test run. The preceding 455 and 87 counts describe overlapping historical scopes and must not be added to 489.
+
+### Later standalone fuzz integration: 16 October
+
+The standalone fuzz replay initially failed because its isolated build omitted runtime dependencies introduced by localization. The fix at [`0e9e829d50687de3d8461faf1b610f8b00d7a324`](https://github.com/victron-venus/inverter-dashboard-vue/commit/0e9e829d50687de3d8461faf1b610f8b00d7a324) closes that dependency gap without changing application source or the 500-key catalogs.
+
+- A clean, isolated setup using the declared manifest passed the original **153 deterministic fuzz cases** and real locale-format checks for English, German and Russian.
+- Three negative dependency fixtures covered a missing dependency, a dynamic import and a runtime re-export. Stale build-output removal was also checked.
+- **475 release-contract checks**, workflow-contract checks and applicable commit hooks passed locally. The earlier 489-test application qualification is reused because application source is unchanged; it was not rerun for this integration fix.
 
 These observations describe the named source snapshots, not current hosted CI status. Hosted CI, official artifact verification, backend adoption and deployed-browser acceptance need their own evidence. This report does not claim exhaustive linguistic review, native OS notification delivery, physical-device testing, or a new release or k3s deployment.
 
