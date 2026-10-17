@@ -9,6 +9,7 @@
 - Add six-language operating documentation and illustrated localization, release and validation guides.
 - Update Vitest to 5.0.4, Happy DOM to 21.0.1 and the pinned shared CI workflows. Keep standalone fuzz builds connected to the real production modules, JSON catalogs and lockfile-bound runtime dependencies.
 - Make browser acceptance wait for the current fixture telemetry and connected state after document load, including public read-only telemetry. Retain the existing deadlines and eleven application scenarios; add eight isolated controls that reject incomplete or incorrect readiness and verify reverse request arrival order.
+- Run readiness controls sequentially in fresh browser contexts so deliberately pending requests cannot exhaust another control's shared connection pool. Preserve per-control traffic diagnostics on failure.
 
 ### Upgrade
 
