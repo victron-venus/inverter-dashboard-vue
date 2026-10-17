@@ -1,5 +1,9 @@
 # Release-candidate fuzzing
 
+See the [illustrated RC fuzzing process and verified rollout results](https://github.com/victron-venus/venus-os-ci-toolkit/blob/main/docs/rc-fuzzing-results.md)
+for the shared release flow, evidence requirements and a dated cross-project
+snapshot. The project-specific scope and reproduction guidance below still apply.
+
 This public repository uses native, coverage-guided [Jazzer.js](https://github.com/CodeIntelligenceTesting/jazzer.js) fuzzing as a required part of an explicit release-candidate (`rc`) dispatch through the shared Venus OS CI toolkit. The two targets each receive 60 seconds of mutation time. The release pipeline records the exact source commit, workflow run and attempt, manifest hash, and target results before permitting RC publication.
 
 Mutation campaigns do not run on pull requests, ordinary commits, nightly builds, beta releases, or stable promotion. The common runner checks both the public repository flag and the explicit RC event. The README badge describes this policy; it is not a passing-run badge, security certification, or enrollment in Google's hosted OSS-Fuzz service.
