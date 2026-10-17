@@ -12,6 +12,10 @@ const engine = process.env.CI_BROWSER_ENGINE || 'chromium'
 const channel = process.env.CI_BROWSER_CHANNEL || ''
 assert(['chromium', 'firefox', 'webkit'].includes(engine), 'Unsupported browser engine')
 const pending = new Map()
+// Request data selects a precomputed page; it is never interpolated into HTML.
+const fixturePages = new Map([
+  'ready', 'missing-js', 'stalled', 'wrong-soc', 'public', 'missing-public', 'disconnected',
+].map(mode => [mode, `<!doctype html><title>Readiness control</title><script defer src="/app.js?mode=${mode}"></script>`]))
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost')
   const mode = url.searchParams.get('mode')
@@ -46,11 +50,10 @@ const server = http.createServer((req, res) => {
     return
   }
   if (url.pathname === '/') {
+    const html = fixturePages.get(mode)
+    if (!html) { res.writeHead(404).end(); return }
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    // Mode is selected from the fixed test cases below, never external input.
-    const modes = new Set(['ready', 'missing-js', 'stalled', 'wrong-soc', 'public', 'missing-public', 'disconnected'])
-    assert(modes.has(mode), 'Unknown fixture mode')
-    res.end(`<!doctype html><title>Readiness control</title><script defer src="/app.js?mode=${mode}"></script>`)
+    res.end(html)
     return
   }
   res.writeHead(404).end()
@@ -60,6 +63,8 @@ async function runReadinessControls() {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   let browser
   try {
+    const unknownPage = await fetch(`http://127.0.0.1:${server.address().port}/?mode=%3Cscript%3E`)
+    assert.equal(unknownPage.status, 404, 'Unknown fixture modes must not produce HTML')
     browser = await playwright[engine].launch({ headless: true, ...(channel ? { channel } : {}) })
     const cases = [
       { mode: 'ready', soc: 42 },
