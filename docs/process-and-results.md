@@ -1,6 +1,6 @@
 # Process and results: the shared dashboard UI
 
-This guide explains the localization work and the delivery steps that make a shared UI change visible in the Python and Go dashboards. It records the source snapshot [`ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe`](https://github.com/victron-venus/inverter-dashboard-vue/commit/ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe), dated 16 October 2026. It is a source and local-validation report; it does **not** establish hosted CI completion, a release or deployment of that source. The earlier 15 October validation remains recorded separately below.
+This guide explains the localization work and the delivery steps that make a shared UI change visible in the Python and Go dashboards. It records the source snapshot [`2b9318be7a22aa68a67dae8e64810f6e959071b2`](https://github.com/victron-venus/inverter-dashboard-vue/commit/2b9318be7a22aa68a67dae8e64810f6e959071b2), dated 16 October 2026, after integrating the validated dependency updates. It is a source and local-validation report; it does **not** establish hosted CI completion, a release or deployment of that source. Earlier validation snapshots remain recorded separately below.
 
 ## What changed for the user
 
@@ -46,12 +46,20 @@ The following observations belong to [`6bcfd8d3351dfdddbb44f6c1d61e9f5840303dd5`
 - Direct Vite compilation of the SPA and component library passed with the available shared dependencies. A clean install from the lockfile was blocked by an npm registry network failure. Type checking remained blocked by missing `fake-indexeddb`; no complete type-check pass is claimed. Lint and applicable commit hooks passed, with existing lint warnings retained.
 - An isolated static browser preview checked all six language selections, document language, retained errors and persistence, including a Russian reload. It did not connect to live backends or operate hardware.
 
-### Current source: 16 October
+### Intermediate source: 16 October
+
+These checks belong to [`ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe`](https://github.com/victron-venus/inverter-dashboard-vue/commit/ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe), which integrated the earlier main-branch changes and localization fixes.
 
 - **A clean `npm ci` completed using the merged lockfile** (240 packages), resolving the earlier local dependency-installation blocker.
 - **87 tests passed across 11 files in a scoped local run.** The scope covers localization, state labels, header controls, tariffs and interval imports. Before the production fixes, six regression cases failed: four inherited-state-key cases and two malformed-JSON import cases. These are a subset of the 87 tests, not an additional total or a complete repository test run.
 - Type checking and both SPA and component-library builds passed. Lint and applicable scoped commit hooks passed; existing warnings remain, with no rule suppression.
 - Independent source review confirmed the merged browser-acceptance documentation and theme-button behavior, safe handling of unknown state labels, and retained localized import errors without replacing the tariff draft or saved interval data. This is a source review, not deployed-browser acceptance.
+
+### Current source after dependency integration: 16 October
+
+- At [`2b9318be7a22aa68a67dae8e64810f6e959071b2`](https://github.com/victron-venus/inverter-dashboard-vue/commit/2b9318be7a22aa68a67dae8e64810f6e959071b2), **all 489 tests passed across 51 files, with no skips**, using the integrated dependency lockfile. This full local suite includes the service-worker tests that could not run in the initial provisional environment.
+- A fresh `npm ci --ignore-scripts` installed 240 packages from that exact lockfile. Type checking, both SPA and component-library builds, and applicable scoped commit hooks passed.
+- The later main-branch integration at [`edc705284aacd6c6e1c3c1909c50c23a2f1cd95e`](https://github.com/victron-venus/inverter-dashboard-vue/commit/edc705284aacd6c6e1c3c1909c50c23a2f1cd95e) has the same complete Git tree, `c160afe2d3e678180155c357956ef2b9a55fd7e4`. This records identical source files, not a second test run. The preceding 455 and 87 counts describe overlapping historical scopes and must not be added to 489.
 
 These observations describe the named source snapshots, not current hosted CI status. Hosted CI, official artifact verification, backend adoption and deployed-browser acceptance need their own evidence. This report does not claim exhaustive linguistic review, native OS notification delivery, physical-device testing, or a new release or k3s deployment.
 
