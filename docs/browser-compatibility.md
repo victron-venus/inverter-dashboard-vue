@@ -31,6 +31,20 @@ installation from `CI_PLAYWRIGHT_MODULE`, not an application dependency. HTTP an
 WebSocket fixtures contain synthetic telemetry; requests outside the local
 fixture origin are blocked. Vue components and ECharts are not stubbed.
 
+Navigation waits for the document load and then for the current fixture's state
+of charge and connected transport. Public mode instead requires its read-only
+marker and public state of charge. Background polling and canceled requests do
+not have to become idle. The existing 15-second navigation and 10-second
+readiness limits still apply.
+
+Before the application flows, eight isolated browser controls verify this
+readiness rule. Pending noncritical traffic must allow normal and public pages
+to pass, including when the state request arrives first. Each state response
+waits until its own noncritical request is pending. Missing JavaScript, stalled
+telemetry, disconnected transport, the wrong state of charge and a missing public marker must fail. Their results are saved
+separately in `readiness-controls.json`, without increasing the eleven
+application-scenario count.
+
 Every target asserts these complete user flows:
 
 - Live telemetry, ordered loads, negative generation values and a rendered chart.
