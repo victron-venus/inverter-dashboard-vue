@@ -1,5 +1,34 @@
 # Changelog
 
+## [2.2.9] - Development line
+
+### Changed
+
+- Complete the English, Russian, Ukrainian, German, French and Dutch dashboard catalogs, including settings, validation messages, tariff tools and accessible control labels. Persist the selected language and synchronize it across tabs.
+- Format dates and numbers for the selected locale, and update existing application-owned errors when the language changes. Keep operator device names and external diagnostics intact.
+- Add six-language operating documentation and illustrated localization, release and validation guides.
+- Update Vitest to 5.0.4, Happy DOM to 21.0.1 and the pinned shared CI workflows. Keep standalone fuzz builds connected to the real production modules, JSON catalogs and lockfile-bound runtime dependencies.
+- Make browser acceptance wait for the current fixture telemetry and connected state after document load, including public read-only telemetry. Retain the existing deadlines and eleven application scenarios; add seven isolated controls that reject incomplete or incorrect readiness.
+
+### Upgrade
+
+Use the documented update procedure and retain existing local configuration,
+credentials and data. No configuration or data migration is required. The new
+language preference is stored locally in the browser; system language selection
+remains available. For Python and Go deployments, import the official SPA and
+its release evidence before building the backend image. Keep the previous
+immutable release for rollback and validate the candidate on the intended target.
+
+### Security
+
+Localized label lookup rejects inherited object properties, and malformed JSON
+imports retain safe application-owned validation errors. Browser readiness
+fixtures serve precomputed HTML only; unknown fixture modes return 404, and
+external requests remain blocked. Fuzz replay uses the actual production import
+graph rather than substituted implementations. These synthetic checks do not
+establish deployment authentication, physical hardware acceptance or the safety
+of commands sent to real equipment.
+
 ## [2.2.8] - Development line
 
 ### Changed
