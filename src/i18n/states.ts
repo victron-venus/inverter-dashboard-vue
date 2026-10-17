@@ -11,8 +11,8 @@ const mediaLabels: Record<string, string> = {
   idle: 'Idle', off: 'Off', on: 'On', unavailable: 'Unavailable', unknown: 'Unknown',
 }
 /** Only standard HA states have owned display labels; arbitrary source text is preserved. */
-export function weatherLabel(value: string): string { return weatherLabels[value] ? tr(weatherLabels[value]) : value }
-export function mediaLabel(value: string): string { return mediaLabels[value] ? tr(mediaLabels[value]) : value }
+export function weatherLabel(value: string): string { return Object.prototype.hasOwnProperty.call(weatherLabels, value) ? tr(weatherLabels[value]) : value }
+export function mediaLabel(value: string): string { return Object.prototype.hasOwnProperty.call(mediaLabels, value) ? tr(mediaLabels[value]) : value }
 
 const inverterLabels = new Set(['Off', 'Low Power', 'Fault', 'Bulk', 'Absorption', 'Float', 'Storage', 'Equalize', 'Inverting', 'Power assist', 'Power supply', 'Passthru', 'Charging', 'Charged', 'Charger only', 'External control'])
 export function inverterStateLabel(value: string | undefined): string { return value && inverterLabels.has(value) ? tr(value) : value ?? '' }

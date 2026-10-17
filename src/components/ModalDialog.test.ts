@@ -4,6 +4,30 @@ import { nextTick } from 'vue'
 import ModalDialog from './ModalDialog.vue'
 
 describe('ModalDialog', () => {
+  it('restores the opener after hiding and unmounting the modal', async () => {
+    const opener = document.createElement('button')
+    document.body.append(opener)
+    opener.focus()
+    const wrapper = mount(ModalDialog, {
+      attachTo: document.body,
+      props: { open: false, label: 'Test settings' },
+      slots: { default: '<input aria-label="Setting" />' },
+    })
+    try {
+      await wrapper.setProps({ open: true })
+      ;(wrapper.get('input').element as HTMLInputElement).focus()
+      await wrapper.setProps({ open: false })
+      expect(document.activeElement).toBe(opener)
+      await wrapper.setProps({ open: true })
+      ;(wrapper.get('input').element as HTMLInputElement).focus()
+      wrapper.unmount()
+      expect(document.activeElement).toBe(opener)
+    } finally {
+      wrapper.unmount()
+      opener.remove()
+    }
+  })
+
   it('opens a native modal, dismisses with Escape, and closes when hidden', async () => {
     const wrapper = mount(ModalDialog, {
       attachTo: document.body,

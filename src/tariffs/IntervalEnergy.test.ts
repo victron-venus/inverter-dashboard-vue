@@ -1,6 +1,8 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import IntervalEnergy from './IntervalEnergy.vue'
+import { nextTick } from 'vue'
+import { setLocale, tr } from '../i18n'
 import { intervalKey } from './intervals'
 import { newDraft, rateGrid, validatePlan } from './model'
 const csv = 'start,end,import_kwh\n2026-09-24T00:00:00-07:00,2026-09-24T00:30:00-07:00,2'
@@ -20,7 +22,7 @@ beforeEach(() => {
   })
   HTMLDialogElement.prototype.showModal = vi.fn()
 })
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => { vi.unstubAllGlobals(); setLocale('en') })
 async function upload(wrapper: ReturnType<typeof mount>, text: string) {
   const input = wrapper.get('input[type="file"]')
   Object.defineProperty(input.element, 'files', {
@@ -126,4 +128,18 @@ it('keeps the same live region through import, error, scope reset and removal', 
     expect(wrapper.get('[role="status"]').element).toBe(node)
     expect(wrapper.get('[role="status"]').text()).toBe('Saved intervals removed.')
   } finally { wrapper.unmount() }
+})
+
+it('localizes malformed JSON on import and after a language change without replacing saved intervals', async () => {
+  const wrapper = mount(IntervalEnergy, { props: { plan: tariff, tariffScope: 'site' } })
+  await upload(wrapper, csv)
+  const saved = values.get(intervalKey('site'))
+  setLocale('de')
+  await upload(wrapper, '{"intervals":')
+  expect(wrapper.get('[role="alert"]').text()).toBe(tr('Could not import interval data.'))
+  setLocale('ru')
+  await nextTick()
+  expect(wrapper.get('[role="alert"]').text()).toBe(tr('Could not import interval data.'))
+  expect(values.get(intervalKey('site'))).toBe(saved)
+  wrapper.unmount()
 })

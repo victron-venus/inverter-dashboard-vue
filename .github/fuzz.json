@@ -43,5 +43,11 @@
       "corpus": "fuzz/corpus/telemetry",
       "seconds": 60
     }
+  ],
+  "preflight": [
+    [
+      "node",
+      "fuzz/replay.mjs"
+    ]
   ]
 }

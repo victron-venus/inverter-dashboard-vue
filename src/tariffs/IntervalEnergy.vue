@@ -143,7 +143,9 @@ async function importFile(event: Event) {
       localized('Imported and saved measured intervals. Review the date range and coverage below.')
   } catch (cause) {
     if (current === generation)
-      error.value = errorText(cause, 'Could not import interval data.')
+      error.value = cause instanceof SyntaxError
+        ? localized('Could not import interval data.')
+        : errorText(cause, 'Could not import interval data.')
   } finally {
     busy.value = false
     input.value = ''

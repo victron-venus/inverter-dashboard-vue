@@ -4,6 +4,7 @@ import { useHA } from '../composables/useHA'
 import { state } from '../composables/useInverterState'
 import { DEFAULT_INVERTER_CONTROLS } from '../utils'
 import AppHeader from './AppHeader.vue'
+import { setLocale, supportedLocales, tr } from '../i18n'
 
 const props = {
   dryRun: false, essClass: 'on', essText: 'External', isDark: false,
@@ -11,7 +12,7 @@ const props = {
   toggleStates: { only_charging: 'on', no_feed: 'off' },
 }
 const global = { stubs: { NotificationHistory: true } }
-afterEach(() => { state.value = {} })
+afterEach(() => { state.value = {}; setLocale('en') })
 
 describe('controller header without Home Assistant', () => {
   it('shows all seven controls with HA absent and disables unknown flags', () => {
@@ -71,4 +72,15 @@ describe('controller header without Home Assistant', () => {
     expect(ha.headerToggles.value).toEqual([])
     ha.cleanupHa()
   })
+})
+
+it.each(supportedLocales.map((locale) => locale.code))('describes the target theme in %s without changing the theme event', async (locale) => {
+  setLocale(locale)
+  const wrapper = mount(AppHeader, { props, global })
+  const button = wrapper.get(`[aria-label="${tr('Switch to dark theme')}"]`)
+  await button.trigger('click')
+  expect(wrapper.emitted('toggle-theme')).toEqual([[]])
+  await wrapper.setProps({ isDark: true })
+  expect(button.attributes('aria-label')).toBe(tr('Switch to light theme'))
+  wrapper.unmount()
 })
