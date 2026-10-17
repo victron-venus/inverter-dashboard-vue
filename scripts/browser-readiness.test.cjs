@@ -91,11 +91,13 @@ async function runReadinessControls() {
       { mode: 'wrong-soc', soc: 42, rejects: true },
       { mode: 'missing-public', soc: 61, publicMode: true, rejects: true },
     ]
-    // Each control uses a fresh browser context, so storage or stale DOM cannot satisfy readiness.
-    await Promise.all(cases.map(async ({ mode, soc, publicMode = false, rejects = false }) => {
+    // Isolate held requests as well as DOM/storage: some browser network stacks
+    // share a per-origin connection limit across otherwise fresh contexts.
+    for (const { mode, soc, publicMode = false, rejects = false } of cases) {
       const context = await browser.newContext({ serviceWorkers: 'block' })
       context.setDefaultTimeout(10000)
       context.setDefaultNavigationTimeout(15000)
+      const traffic = { mode, requested: [], completed: [], failed: [], browserErrors: [] }
       try {
         const blocked = []
         await context.route('**/*', route => {
@@ -105,6 +107,10 @@ async function runReadinessControls() {
           return route.abort('blockedbyclient')
         })
         const page = await context.newPage()
+        page.on('request', request => traffic.requested.push(new URL(request.url()).pathname))
+        page.on('requestfinished', request => traffic.completed.push(new URL(request.url()).pathname))
+        page.on('requestfailed', request => traffic.failed.push({ path: new URL(request.url()).pathname, error: request.failure()?.errorText }))
+        page.on('pageerror', error => traffic.browserErrors.push(error.message))
         await page.goto(`http://127.0.0.1:${server.address().port}/?mode=${mode}`, { waitUntil: 'load' })
         if (mode === 'reverse-arrival') {
           let timer
@@ -128,10 +134,20 @@ async function runReadinessControls() {
         }
         assert.deepEqual(blocked, [], 'Control fixtures must remain local')
         console.log(`PASS readiness ${mode}${rejects ? ' rejected' : ' with pending traffic'}`)
+      } catch (error) {
+        console.error('FAIL readiness control', JSON.stringify({ ...traffic, pending: [...pending.values()], waitingStates: [...waitingStates.values()] }))
+        throw error
       } finally {
         await context.close()
+        for (const responses of [pending, waitingStates]) {
+          for (const [response, responseMode] of responses) {
+            if (responseMode !== mode) continue
+            responses.delete(response)
+            response.destroy()
+          }
+        }
       }
-    }))
+    }
     return cases.map(({ mode, rejects = false }) => ({ mode, expectedRejection: rejects, passed: true }))
   } finally {
     if (browser) await browser.close()

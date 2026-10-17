@@ -38,7 +38,11 @@ not have to become idle. The existing 15-second navigation and 10-second
 readiness limits still apply.
 
 Before the application flows, eight isolated browser controls verify this
-readiness rule. Pending noncritical traffic must allow normal and public pages
+readiness rule. They run sequentially in fresh contexts, closing each context
+and its held responses before starting the next, so shared browser connection
+limits cannot make one control starve another. Failures include the control's
+request paths, completed and failed requests, and pending response modes.
+Pending noncritical traffic must allow normal and public pages
 to pass, including when the state request arrives first. Each state response
 waits until its own noncritical request is pending. Missing JavaScript, stalled
 telemetry, disconnected transport, the wrong state of charge and a missing public marker must fail. Their results are saved
