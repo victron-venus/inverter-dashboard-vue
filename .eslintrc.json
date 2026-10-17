@@ -2,6 +2,12 @@
   "root": true,
   "overrides": [
     {
+      "files": ["fuzz/**/*.mjs"],
+      "env": { "node": true, "es2022": true },
+      "extends": ["eslint:recommended"],
+      "parserOptions": { "ecmaVersion": 2022, "sourceType": "module" }
+    },
+    {
       "files": ["public/notifications-sw.js"],
       "env": { "serviceworker": true, "es2021": true },
       "extends": ["eslint:recommended"],
