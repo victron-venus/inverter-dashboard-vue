@@ -496,5 +496,7 @@
   "m0495": "Modification non confirmée : {details}",
   "m0496": "{source} : {name}. Tarif actuel dans {zone}.",
   "m0497": "Période de facturation : {start} – {end}.",
-  "m0498": "Le format grid-import-intervals version 1 est attendu."
+  "m0498": "Le format grid-import-intervals version 1 est attendu.",
+  "m0499": "Passer au thème clair",
+  "m0500": "Passer au thème sombre"
 }

@@ -6,7 +6,7 @@ Check DNS, VPN routes, TLS and ingress before changing the application. A privat
 
 ## Stale data
 
-The browser-to-backend WebSocket, backend-to-IGW HTTP connection and IGW-to-Cerbo MQTT connection are separate. Inspect the selected source and freshness indicator, then the failing hop. `Host is unreachable` or HTTP503 upstream is not evidence that rebuilding browser assets will help. Missing measurements correctly produce unavailable values and chart gaps.
+The browser-to-backend WebSocket, backend-to-IGW HTTP connection and IGW-to-Cerbo MQTT connection are separate. Inspect the selected source and freshness indicator, then the failing hop. `Host is unreachable` or HTTP 503 upstream response is not evidence that rebuilding browser assets will help. Missing measurements correctly produce unavailable values and chart gaps.
 
 ## Disabled controls
 

@@ -42,3 +42,7 @@ crash-*
 timeout-*
 leak-*
 oom-*
+
+# Browser acceptance traces, screenshots and runtime identity receipts
+.compatibility/
+browser-candidate/

@@ -496,5 +496,7 @@
   "m0495": "Änderung unbestätigt: {details}",
   "m0496": "{source}: {name}. Aktueller Tarif in {zone}.",
   "m0497": "Abrechnungszeitraum: {start} – {end}.",
-  "m0498": "grid-import-intervals Version 1 wird erwartet."
+  "m0498": "grid-import-intervals Version 1 wird erwartet.",
+  "m0499": "Zum hellen Design wechseln",
+  "m0500": "Zum dunklen Design wechseln"
 }

@@ -496,5 +496,7 @@
   "m0495": "Wijziging niet bevestigd: {details}",
   "m0496": "{source}: {name}. Huidig tarief in {zone}.",
   "m0497": "Factuurperiode: {start} – {end}.",
-  "m0498": "grid-import-intervals versie 1 wordt verwacht."
+  "m0498": "grid-import-intervals versie 1 wordt verwacht.",
+  "m0499": "Overschakelen naar licht thema",
+  "m0500": "Overschakelen naar donker thema"
 }

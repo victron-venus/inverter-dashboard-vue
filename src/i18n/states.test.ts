@@ -24,3 +24,9 @@ it('translates standard inverter states but preserves an arbitrary diagnostic', 
   expect(inverterStateLabel('External control')).toBe(tr('External control'))
   expect(inverterStateLabel('vendor error')).toBe('vendor error')
 })
+
+it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])('preserves inherited object key %s as literal source text', (value) => {
+  setLocale('ru')
+  expect(weatherLabel(value)).toBe(value)
+  expect(mediaLabel(value)).toBe(value)
+})

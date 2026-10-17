@@ -249,7 +249,8 @@ async function importFile(event: Event) {
     sheetVersion.value++
     error.value = ''
   } catch (cause) {
-    fail(cause)
+    if (cause instanceof SyntaxError) error.value = localized('The tariff could not be read.')
+    else fail(cause)
   } finally {
     input.value = ''
     busy.value = false

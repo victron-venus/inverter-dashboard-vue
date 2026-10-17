@@ -18,12 +18,24 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 defineProps<{ open: boolean; label: string }>()
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
+let opener: HTMLElement | null = null
 
-// Native modal dialogs contain keyboard focus, make the background inert,
-// and restore focus to the opener when closed.
+function closeDialog(previous: HTMLDialogElement | null) {
+  previous?.close()
+  // v-if removes the dialog before the post-flush watcher runs, so browsers
+  // cannot reliably restore focus through the native close algorithm alone.
+  const target = opener
+  opener = null
+  if (target?.isConnected) target.focus({ preventScroll: true })
+}
+
+// Native modal dialogs contain keyboard focus and make the background inert.
 watch(dialog, (current, previous) => {
-  if (previous?.open) previous.close()
-  if (current && !current.open) current.showModal()
+  if (previous) closeDialog(previous)
+  if (current && !current.open) {
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    current.showModal()
+  }
 }, { flush: 'post' })
-onBeforeUnmount(() => dialog.value?.close())
+onBeforeUnmount(() => closeDialog(dialog.value))
 </script>

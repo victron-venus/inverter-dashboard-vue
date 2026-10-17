@@ -43,6 +43,8 @@ npm test
 npm run build:all
 ```
 
+The [browser acceptance suite](docs/browser-compatibility.md) exercises the built SPA in pinned Chromium, Firefox and WebKit generations on Linux, Windows and macOS. Its compact matrix is required for PRs; packaged release qualification uses the full 35-target inventory against the same built SPA archive.
+
 Outputs: `dist/` is the SPA; `dist-lib/` is the component library. [src/lib.ts](src/lib.ts) defines exports. Library hosts supply Vue, vue-i18n, ECharts, vue-echarts and a translation context. This is not a claim that a corresponding public npm package is published.
 
 ## Configuration

@@ -14,7 +14,7 @@
     "npm run build:all"
   ],
   "notes": [
-    "SPA and library tarballs are promoted unchanged. Browser/device acceptance remains a release operator check."
+    "SPA and library tarballs are promoted unchanged. Required CI exercises the built SPA and the release gate qualifies the exact packaged archive across desktop browser engines and operating systems; native device and physical controller acceptance remains a release operator check."
   ],
   "repository": "victron-venus/inverter-dashboard-vue",
   "mode": "release",
@@ -59,6 +59,6 @@
   "release_notes": "CHANGELOG.md",
   "toolkit_revision": "5e413f80a4353d328b4529eae57992ac3987e2dd",
   "fuzzing": {
-    "toolkit_ref": "5e413f80a4353d328b4529eae57992ac3987e2dd"
+    "toolkit_ref": "dad8abd50a1c6bc2d5caf37507117968ab13fcad"
   }
 }

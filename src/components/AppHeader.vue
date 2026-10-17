@@ -65,7 +65,9 @@
     >
       <Settings :size="8" />
     </button>
-    <button type="button" class="classic-btn min-w-[20px]" :aria-label="tr('Toggle theme')" @click="$emit('toggle-theme')">
+    <button type="button" class="classic-btn min-w-[20px]"
+      :aria-label="isDark ? tr('Switch to light theme') : tr('Switch to dark theme')"
+      @click="$emit('toggle-theme')">
       <Sun v-if="isDark" :size="8" />
       <Moon v-else :size="8" />
     </button>
