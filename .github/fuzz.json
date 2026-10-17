@@ -5,6 +5,14 @@
     [
       "npm",
       "ci",
+      "--omit=dev",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    [
+      "npm",
+      "ci",
       "--prefix",
       "fuzz",
       "--ignore-scripts",

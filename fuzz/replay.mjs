@@ -28,4 +28,18 @@ for (const target of manifest.targets) {
     cases++
   }
 }
+// Exercise the real transitive i18n/JSON/runtime imports in standalone Node,
+// where Vite cannot fill in a missing module or rewrite an extensionless path.
+const { formatMeasurement } = await import('./.build/telemetry.js')
+const { i18n } = await import('./.build/i18n/index.js')
+const initialLocale = i18n.global.locale.value
+try {
+  for (const [locale, expected] of [['en', '1234.5 W'], ['de', '1234,5 W'], ['ru', '1234,5 W']]) {
+    i18n.global.locale.value = locale
+    assert.equal(formatMeasurement(1234.5, 1, ' W'), expected)
+    assert.equal(formatMeasurement(undefined, 1, ' W'), '—')
+  }
+} finally {
+  i18n.global.locale.value = initialLocale
+}
 console.log(`Replayed ${cases} deterministic target-contract cases; no mutation campaign`)
