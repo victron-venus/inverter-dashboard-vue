@@ -1,6 +1,6 @@
 # Process and results: the shared dashboard UI
 
-This guide explains the localization work and the delivery steps that make a shared UI change visible in the Python and Go dashboards. It records the source snapshot [`6bcfd8d3351dfdddbb44f6c1d61e9f5840303dd5`](https://github.com/victron-venus/inverter-dashboard-vue/commit/6bcfd8d3351dfdddbb44f6c1d61e9f5840303dd5), dated 15 October 2026. It is a source and local-validation report; it does **not** record a completed release or deployment of that source.
+This guide explains the localization work and the delivery steps that make a shared UI change visible in the Python and Go dashboards. It records the source snapshot [`ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe`](https://github.com/victron-venus/inverter-dashboard-vue/commit/ad9a64c42c7e8b4b7ad18f0e5f3f1a175772bdbe), dated 16 October 2026. It is a source and local-validation report; it does **not** establish hosted CI completion, a release or deployment of that source. The earlier 15 October validation remains recorded separately below.
 
 ## What changed for the user
 
@@ -9,6 +9,8 @@ Settings offers English, Russian, Ukrainian, German, French and Dutch. An explic
 Application-owned headings, controls, empty states, accessible labels and validation messages use the selected language. This includes ESS and setpoint controls, Home and Water sections, notification settings, alert-age labels and tariff tools. Dates and numeric presentation respect the locale without changing measurement precision, installation time zone or command values. Date-only forecasts retain their calendar day.
 
 Existing application errors update when the language changes, including errors retained across asynchronous work. Configured device names, native alarm text and raw provider diagnostics stay intact. Changing the presentation does not change entity IDs, wire enums, command guards or tariff arithmetic. See the [localization contract](localization.md) for these boundaries and contributor guidance.
+
+The 16 October update also covers malformed JSON imports: tariff and interval errors follow later language changes while preserving the existing tariff draft or saved interval history. Unknown Home Assistant state labels remain literal, including names inherited by JavaScript objects. The theme button describes the destination theme in all six languages.
 
 An open tariff spreadsheet retains its column headings until closed and reopened, preserving unsaved numeric cells. Application-owned editor text supports all six languages. Bundled vendor chrome supports English, Russian, German and French; Ukrainian and Dutch fall back to English there.
 
@@ -27,19 +29,30 @@ The diagram is a process map, not a checklist marked complete. Neither a source 
 
 ## What the catalog measurement establishes
 
-![Catalog-key parity: English, Russian, Ukrainian, German, French and Dutch each contain the same 498 keys. This is not a translation-quality metric.](assets/locale-coverage.svg)
+![Catalog-key parity: English, Russian, Ukrainian, German, French and Dutch each contain the same 500 keys. This is not a translation-quality metric.](assets/locale-coverage.svg)
 
-At this source, every catalog in [`src/i18n/ui`](../src/i18n/ui) contains **498 keys**, and all six key sets exactly match the English baseline. Values are nonempty. The bars measure catalog-key parity only: adding a key does not prove that a screen uses it, that its wording is correct or that a long label fits. Key and interpolation tests complement, rather than replace, component checks and visual review.
+At this source, every catalog in [`src/i18n/ui`](../src/i18n/ui) contains **500 keys**, and all six key sets exactly match the English baseline. Values are nonempty. The two new theme-destination labels extend the earlier 498-key snapshot. The bars measure catalog-key parity only: adding a key does not prove that a screen uses it, that its wording is correct or that a long label fits. Key and interpolation tests complement, rather than replace, component checks and visual review.
 
 Useful source checks include [locale selection and persistence](../src/i18n/locale.test.ts), [retained messages and catalog interpolation](../src/i18n/messages.test.ts), [localized component behavior](../src/components/Localization.test.ts) and the [public tariff import contract](../src/tariffs/model.test.ts).
 
 ## Observed validation and its limits
+
+### Historical snapshot: 15 October
+
+The following observations belong to [`6bcfd8d3351dfdddbb44f6c1d61e9f5840303dd5`](https://github.com/victron-venus/inverter-dashboard-vue/commit/6bcfd8d3351dfdddbb44f6c1d61e9f5840303dd5), before the main-branch integration and import fixes. They are retained as history, not reassigned to the current source.
 
 - **455 tests passed across 50 files in a provisional local run.** The unchanged service-worker test file was excluded because `fake-indexeddb` was unavailable in the shared local dependency environment. This was not a complete locked-dependency test run.
 - Subsequent focused checks covered the final public-API and schema-message changes: runs of 19, 2 and 30 tests passed. These scopes overlap; their counts must not be added to the earlier total.
 - Direct Vite compilation of the SPA and component library passed with the available shared dependencies. A clean install from the lockfile was blocked by an npm registry network failure. Type checking remained blocked by missing `fake-indexeddb`; no complete type-check pass is claimed. Lint and applicable commit hooks passed, with existing lint warnings retained.
 - An isolated static browser preview checked all six language selections, document language, retained errors and persistence, including a Russian reload. It did not connect to live backends or operate hardware.
 
-These observations describe the recorded source work, not current hosted CI status. Exact-lock CI, official artifact verification, backend adoption and deployed-browser acceptance need their own evidence. This report does not claim exhaustive linguistic review, native OS notification delivery, physical-device testing, or a new release or k3s deployment.
+### Current source: 16 October
+
+- **A clean `npm ci` completed using the merged lockfile** (240 packages), resolving the earlier local dependency-installation blocker.
+- **87 tests passed across 11 files in a scoped local run.** The scope covers localization, state labels, header controls, tariffs and interval imports. Before the production fixes, six regression cases failed: four inherited-state-key cases and two malformed-JSON import cases. These are a subset of the 87 tests, not an additional total or a complete repository test run.
+- Type checking and both SPA and component-library builds passed. Lint and applicable scoped commit hooks passed; existing warnings remain, with no rule suppression.
+- Independent source review confirmed the merged browser-acceptance documentation and theme-button behavior, safe handling of unknown state labels, and retained localized import errors without replacing the tariff draft or saved interval data. This is a source review, not deployed-browser acceptance.
+
+These observations describe the named source snapshots, not current hosted CI status. Hosted CI, official artifact verification, backend adoption and deployed-browser acceptance need their own evidence. This report does not claim exhaustive linguistic review, native OS notification delivery, physical-device testing, or a new release or k3s deployment.
 
 For setup, choose a language in the [README navigation](../README.md#languages-and-documentation). For operational troubleshooting, use the [wiki guide](wiki/Troubleshooting.md).
