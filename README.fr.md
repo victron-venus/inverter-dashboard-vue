@@ -2,6 +2,8 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Українська](README.uk.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Nederlands](README.nl.md)
 
+Le [guide visuel du processus et des résultats](docs/process-and-results.md) (en anglais) présente le comportement implémenté, les étapes de livraison, la couverture des clés de traduction et les limites des vérifications.
+
 Interface Vue commune aux tableaux de bord Python et Go : énergie, alertes Victron, commandes Home Assistant et tarifs électriques. Pour une utilisation normale, installez un backend et ouvrez son adresse. Ce dépôt ne contient ni courtier MQTT ni serveur autonome.
 
 - [Python / FastAPI](https://github.com/victron-venus/inverter-dashboard)
