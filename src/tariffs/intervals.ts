@@ -1,3 +1,4 @@
+import { localizedError } from '../i18n/messages'
 import { billingPeriod, currentRate, type TariffPlan } from './model'
 
 export const MAX_INTERVAL_BYTES = 2_000_000
@@ -23,7 +24,7 @@ function timestamp(value: unknown): number {
     typeof value !== 'string' ||
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00(?:Z|[+-]\d{2}:\d{2})$/.test(value)
   )
-    throw new Error('Use ISO timestamps with an explicit UTC offset and whole minutes.')
+    throw localizedError("Use ISO timestamps with an explicit UTC offset and whole minutes.")
   const time = Date.parse(value)
   const date = value.slice(0, 10)
   if (
@@ -33,25 +34,25 @@ function timestamp(value: unknown): number {
     new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date ||
     Number(value.slice(11, 13)) > 23
   )
-    throw new Error('Invalid interval timestamp; supported years are 2000–2099.')
+    throw localizedError("Invalid interval timestamp; supported years are 2000–2099.")
   return time
 }
 
 export function validateIntervals(value: unknown): IntervalHistory {
   const data = value as Partial<IntervalHistory> | null
   if (data?.type !== 'grid-import-intervals' || data.version !== 1)
-    throw new Error('Expected grid-import-intervals version 1.')
+    throw localizedError('Expected grid-import-intervals version 1.')
   if (!Array.isArray(data.intervals) || !data.intervals.length || data.intervals.length > 20_000)
-    throw new Error('Import between 1 and 20,000 measured intervals.')
+    throw localizedError("Import between 1 and 20,000 measured intervals.")
   const intervals = data.intervals
     .map((row) => {
-      if (!row || typeof row !== 'object') throw new Error('Invalid interval row.')
+      if (!row || typeof row !== 'object') throw localizedError("Invalid interval row.")
       const start = timestamp(row.start)
       const end = timestamp(row.end)
       if (end <= start || end - start > 60 * MINUTE)
-        throw new Error('Intervals must be positive and no longer than one hour.')
+        throw localizedError("Intervals must be positive and no longer than one hour.")
       if (typeof row.importKwh !== 'number' || !Number.isFinite(row.importKwh) || row.importKwh < 0)
-        throw new Error('Import kWh must be a finite nonnegative number; blank is not zero.')
+        throw localizedError("Import kWh must be a finite nonnegative number; blank is not zero.")
       return {
         start: new Date(start).toISOString().replace('.000Z', 'Z'),
         end: new Date(end).toISOString().replace('.000Z', 'Z'),
@@ -61,16 +62,16 @@ export function validateIntervals(value: unknown): IntervalHistory {
     .sort((a, b) => a.start.localeCompare(b.start))
   for (let i = 1; i < intervals.length; i++) {
     if (intervals[i].start < intervals[i - 1].end)
-      throw new Error('Overlapping or duplicate intervals would count energy twice.')
+      throw localizedError("Overlapping or duplicate intervals would count energy twice.")
   }
   if (Date.parse(intervals[intervals.length - 1].end) - Date.parse(intervals[0].start) > 366 * DAY)
-    throw new Error('Import at most 366 days per file.')
+    throw localizedError("Import at most 366 days per file.")
   return { type: 'grid-import-intervals', version: 1, intervals }
 }
 
 export function parseIntervals(text: string): IntervalHistory {
   if (new TextEncoder().encode(text).length > MAX_INTERVAL_BYTES)
-    throw new Error('Interval files must be no larger than 2 MB.')
+    throw localizedError("Interval files must be no larger than 2 MB.")
   const trimmed = text.replace(/^\uFEFF/, '').trim()
   if (trimmed.startsWith('{')) return validateIntervals(JSON.parse(trimmed))
   const lines = trimmed.split(/\r?\n/)
@@ -81,13 +82,11 @@ export function parseIntervals(text: string): IntervalHistory {
       return /^"[^"]*"$/.test(value) ? value.slice(1, -1) : value
     })
   if (cells(lines.shift() ?? '').join(',') !== 'start,end,import_kwh')
-    throw new Error(
-      'CSV header must be start,end,import_kwh. Export and net energy are not import energy.'
-    )
+    throw localizedError('CSV header must be start,end,import_kwh. Export and net energy are not import energy.')
   const intervals = lines.map((line) => {
     const row = cells(line)
     if (row.length !== 3 || !row[2] || !/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(row[2]))
-      throw new Error('Each CSV row needs start, end and nonnegative import kWh.')
+      throw localizedError('Each CSV row needs start, end and nonnegative import kWh.')
     return { start: row[0], end: row[1], importKwh: Number(row[2]) }
   })
   return validateIntervals({
@@ -123,7 +122,7 @@ export function dayStart(date: string, timeZone: string): number {
     !Number.isFinite(utc) ||
     new Date(utc).toISOString().slice(0, 10) !== date
   )
-    throw new Error('Select a valid start and end date.')
+    throw localizedError("Select a valid start and end date.")
   let low = (utc - 36 * 3_600_000) / MINUTE
   let high = (utc + 36 * 3_600_000) / MINUTE
   while (low < high) {
@@ -132,7 +131,7 @@ export function dayStart(date: string, timeZone: string): number {
     else high = mid
   }
   if (localDate(low * MINUTE, timeZone) !== date)
-    throw new Error('This calendar date does not exist in the tariff time zone.')
+    throw localizedError("This calendar date does not exist in the tariff time zone.")
   return low * MINUTE
 }
 export function defaultRange(
@@ -150,7 +149,7 @@ export function intervalCost(plan: TariffPlan, history: IntervalHistory, range: 
   dayStart(range.end, plan.timeZone) // Validate before Date.parse can normalize invalid dates.
   const nextDay = new Date(Date.parse(`${range.end}T00:00:00Z`) + DAY).toISOString().slice(0, 10)
   const end = dayStart(nextDay, plan.timeZone)
-  if (end <= start || end - start > 367 * DAY) throw new Error('Select a period of 1–366 days.')
+  if (end <= start || end - start > 367 * DAY) throw localizedError("Select a period of 1–366 days.")
   let cost = 0
   let importKwh = 0
   let pricedMinutes = 0
@@ -183,7 +182,7 @@ export function intervalCost(plan: TariffPlan, history: IntervalHistory, range: 
     pricedMinutes += (b - a) / MINUTE
   }
   if (!Number.isFinite(cost) || !Number.isFinite(importKwh))
-    throw new Error('Energy or cost exceeds the supported numeric range.')
+    throw localizedError("Energy or cost exceeds the supported numeric range.")
   const expectedMinutes = (end - start) / MINUTE
   return {
     cost: pricedMinutes ? cost : null,
@@ -208,10 +207,10 @@ export function saveIntervals(scope: string, history: IntervalHistory): void {
   const normalized = validateIntervals(history)
   const text = JSON.stringify(normalized)
   if (new TextEncoder().encode(text).length > MAX_INTERVAL_BYTES)
-    throw new Error('Normalized history exceeds 2 MB.')
+    throw localizedError("Normalized history exceeds 2 MB.")
   try {
     localStorage.setItem(intervalKey(scope), text)
   } catch {
-    throw new Error('Could not save intervals on this device. The previous history is unchanged.')
+    throw localizedError("Could not save intervals on this device. The previous history is unchanged.")
   }
 }

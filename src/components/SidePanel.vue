@@ -85,11 +85,11 @@
               {{ $t('sections.valve') }}{{ typeof waterValve === 'boolean' ? '' : ' —' }}
             </button>
             <button v-if="pumpMode === 1 || pumpMode === 2" type="button" class="classic-btn"
-              aria-label="Pump automatic mode" :disabled="!canControlPump"
-              @click="sendWaterMode('pump', 0)">Auto</button>
+              :aria-label="tr('Pump automatic mode')" :disabled="!canControlPump"
+              @click="sendWaterMode('pump', 0)"> {{ tr('Auto') }} </button>
             <button v-if="waterValveMode === 1 || waterValveMode === 2" type="button" class="classic-btn"
-              aria-label="Valve automatic mode" :disabled="!canControlValve"
-              @click="sendWaterMode('valve', 0)">Auto</button>
+              :aria-label="tr('Valve automatic mode')" :disabled="!canControlValve"
+              @click="sendWaterMode('valve', 0)"> {{ tr('Auto') }} </button>
           </template>
         </div>
       </div>
@@ -134,9 +134,9 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1">
             <span class="text-lg font-bold text-slate-700 dark:text-slate-300">
-              {{ haWeather.temperature }}{{ haWeather.unit }}
+              {{ formatNumeric(haWeather.temperature) }}{{ haWeather.unit }}
             </span>
-            <span class="text-[10px] text-slate-500 capitalize">{{ haWeather.state }}</span>
+            <span class="text-[10px] text-slate-500 capitalize">{{ weatherLabel(haWeather.state) }}</span>
           </div>
         </div>
         <!-- Forecast -->
@@ -147,11 +147,11 @@
             class="flex flex-col items-center min-w-[40px] px-1 py-0.5 rounded bg-slate-50 dark:bg-slate-800/50"
           >
             <span class="text-[8px] text-slate-400">{{
-              (day.datetime as string)?.slice(5, 10) || ''
+              forecastDate(day.datetime)
             }}</span>
-            <span class="text-[10px] font-bold">{{ day.temperature }}{{ haWeather.unit }}</span>
+            <span class="text-[10px] font-bold">{{ formatNumeric(day.temperature) }}{{ haWeather.unit }}</span>
             <span class="text-[8px] text-slate-500 capitalize truncate max-w-[36px]">{{
-              day.condition as string
+              weatherLabel(day.condition as string)
             }}</span>
           </div>
         </div>
@@ -206,7 +206,7 @@
               {{ num.name }}
             </span>
             <span class="text-[10px] font-bold text-slate-600 dark:text-slate-400">
-              {{ num.value }}{{ num.unit }}
+              {{ formatNumeric(num.value) }}{{ num.unit }}
             </span>
           </div>
           <input
@@ -294,14 +294,14 @@
         >
           <div class="flex flex-col min-w-0 mr-2">
             <span class="text-[10px] font-medium text-slate-500 truncate">{{ mp.name }}</span>
-            <span class="text-[9px] text-slate-400 truncate">{{ mp.state }}</span>
+            <span class="text-[9px] text-slate-400 truncate">{{ mediaLabel(mp.state) }}</span>
           </div>
           <div class="flex gap-0.5 shrink-0">
             <button
               type="button"
               class="classic-btn !px-1.5 !py-0.5 !text-[9px]"
               :disabled="!canControlHa"
-              @click="$emit('media-control', mp.entity_id, 'play')"
+              :aria-label="tr('Play {name}', { name: mp.name })" @click="$emit('media-control', mp.entity_id, 'play')"
             >
               ▶
             </button>
@@ -309,7 +309,7 @@
               type="button"
               class="classic-btn !px-1.5 !py-0.5 !text-[9px]"
               :disabled="!canControlHa"
-              @click="$emit('media-control', mp.entity_id, 'pause')"
+              :aria-label="tr('Pause {name}', { name: mp.name })" @click="$emit('media-control', mp.entity_id, 'pause')"
             >
               ⏸
             </button>
@@ -317,7 +317,7 @@
               type="button"
               class="classic-btn !px-1.5 !py-0.5 !text-[9px]"
               :disabled="!canControlHa"
-              @click="$emit('media-control', mp.entity_id, 'stop')"
+              :aria-label="tr('Stop {name}', { name: mp.name })" @click="$emit('media-control', mp.entity_id, 'stop')"
             >
               ⏹
             </button>
@@ -344,7 +344,7 @@
           <span
             class="text-[10px] font-bold uppercase tracking-tighter"
             :class="dishwasherRunning ? 'text-green-600' : 'text-slate-400'"
-            >{{ dishwasherRunning === undefined ? '—' : dishwasherRunning ? $t('sections.running') : 'Idle' }}</span
+            >{{ dishwasherRunning === undefined ? '—' : dishwasherRunning ? $t('sections.running') : tr('Idle') }}</span
           >
           <span
             v-if="dishwasherDuration"
@@ -366,7 +366,7 @@
           <span
             class="text-[10px] font-bold uppercase tracking-tighter"
             :class="washerRunning ? 'text-green-600' : 'text-slate-400'"
-            >{{ washerRunning === undefined ? '—' : washerRunning ? $t('sections.running') : 'Idle' }}</span
+            >{{ washerRunning === undefined ? '—' : washerRunning ? $t('sections.running') : tr('Idle') }}</span
           >
           <span
             v-if="washerTime"
@@ -393,7 +393,7 @@
           <span
             class="text-[10px] font-bold uppercase tracking-tighter"
             :class="dryerRunning ? 'text-green-600' : 'text-slate-400'"
-            >{{ dryerRunning === undefined ? '—' : dryerRunning ? $t('sections.running') : 'Idle' }}</span
+            >{{ dryerRunning === undefined ? '—' : dryerRunning ? $t('sections.running') : tr('Idle') }}</span
           >
           <span v-if="dryerTime" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">{{
             formatDuration(dryerTime)
@@ -435,6 +435,8 @@
 </template>
 
 <script setup lang="ts">
+import { weatherLabel, mediaLabel, forecastDate } from '../i18n/states'
+import { tr, formatNumeric } from '../i18n'
 import { formatMeasurement } from '../telemetry'
 import {
   Blinds,
@@ -539,7 +541,7 @@ const emit = defineEmits<{
 
 function onValveClick() {
   if (!canControlValve.value || typeof props.waterValve !== 'boolean') return
-  if (props.waterValve === false && !window.confirm('Open city water valve?')) return
+  if (props.waterValve === false && !window.confirm(tr('Open city water valve?'))) return
   sendWaterMode('valve', props.waterValve ? 2 : 1)
 }
 

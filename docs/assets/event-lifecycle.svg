@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 650" role="img" aria-labelledby="title desc">
+  <title id="title">Source occurrence time survives reconnection</title>
+  <desc id="desc">Illustrative sequence: an alarm occurs at eleven, the connection is unavailable, and a snapshot arrives at twelve fifteen. The displayed event age is seventy-five minutes, not just now. A separate schematic chart leaves a gap during missing measurements. Retired source callbacks are rejected rather than applied to the new connection.</desc>
+  <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9Z" fill="#475569"/></marker></defs>
+  <rect width="1160" height="650" rx="24" fill="#f8fafc"/>
+  <g font-family="system-ui, sans-serif" fill="#0f172a">
+    <text x="42" y="53" font-size="27" font-weight="700">Occurrence time and receipt time are different</text>
+    <text x="42" y="83" font-size="16" fill="#475569">Illustrative timeline • times and curve are explanatory examples</text>
+    <path d="M92 202 H1071" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="327" y="150" width="340" height="103" rx="14" fill="#e2e8f0"/>
+    <text x="356" y="190" font-size="19" font-weight="650">Connection unavailable</text>
+    <text x="356" y="222" font-size="16">No fresh measurements</text>
+    <circle cx="164" cy="202" r="10" fill="#dc2626"/>
+    <text x="62" y="143" font-size="21" font-weight="700">11:00 · Event</text>
+    <text x="62" y="287" font-size="16">Source timestamp retained</text>
+    <circle cx="762" cy="202" r="10" fill="#2563eb"/>
+    <text x="703" y="143" font-size="21" font-weight="700">12:15 · Receipt</text>
+    <text x="704" y="287" font-size="16">Reconnected snapshot</text>
+    <rect x="908" y="165" width="211" height="86" rx="12" fill="#fef2f2" stroke="#fca5a5"/>
+    <text x="925" y="199" font-size="20" font-weight="650">Alert: 1 h 15 min</text>
+    <text x="925" y="227" font-size="15">Original event age</text>
+    <rect x="42" y="328" width="1076" height="90" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="62" y="364" font-size="18" font-weight="650">A source switch retires earlier callbacks and pending work.</text>
+    <text x="62" y="392" font-size="16">Current source + fresh observation + matching result are checked independently.</text>
+    <text x="62" y="461" font-size="19" font-weight="650">Missing measurements remain a gap</text>
+    <path d="M83 588 H1091 M83 492 V588" fill="none" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M88 560 L145 529 L199 548 L246 515 L309 545" fill="none" stroke="#2563eb" stroke-width="4"/>
+    <rect x="326" y="489" width="340" height="96" fill="#e2e8f0" opacity="0.8"/>
+    <text x="378" y="543" font-size="16" fill="#475569">Unavailable interval</text>
+    <path d="M704 547 L760 535 L818 564 L883 520 L951 541 L1080 523" fill="none" stroke="#2563eb" stroke-width="4"/>
+    <text x="839" y="621" font-size="15" fill="#475569">Session history; no invented continuity</text>
+  </g>
+</svg>

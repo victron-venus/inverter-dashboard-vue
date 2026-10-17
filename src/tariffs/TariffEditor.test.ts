@@ -1,5 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
+import { setLocale, tr } from '../i18n'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { newDraft, rateGrid, validatePlan, type RateGrid } from './model'
 import { loadTariff } from './storage'
@@ -37,6 +38,7 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  setLocale('en')
 })
 const tariff = () =>
   validatePlan({
@@ -107,5 +109,25 @@ it('creates a manual season and applies a configuration draft without writing lo
     rates: rateGrid(0.3),
   })
   expect(localStorage.setItem).not.toHaveBeenCalled()
+  wrapper.unmount()
+})
+
+it('localizes malformed JSON on import and after a language change without replacing the tariff draft', async () => {
+  const wrapper = mount(TariffEditor, { props: { plan: tariff(), tariffScope: 'editor-site' } })
+  const input = wrapper.get('input[type="file"]')
+  Object.defineProperty(input.element, 'files', {
+    configurable: true,
+    value: [{ size: 8, text: async () => '{"name":' }],
+  })
+  setLocale('de')
+  await input.trigger('change')
+  await flushPromises()
+  expect(wrapper.get('[role="alert"]').text()).toBe(tr('The tariff could not be read.'))
+  setLocale('ru')
+  await nextTick()
+  expect(wrapper.get('[role="alert"]').text()).toBe(tr('The tariff could not be read.'))
+  expect(wrapper.get('[data-testid="sheet"]').text()).toBe('0.5')
+  expect(wrapper.emitted('saved')).toBeUndefined()
+  expect(loadTariff('editor-site').plan).toBeNull()
   wrapper.unmount()
 })

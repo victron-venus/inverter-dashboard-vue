@@ -4,22 +4,30 @@
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-bold text-slate-200">{{ t('config.title') }}</span>
         <!-- biome-ignore lint/a11y/noAutofocus: ModalDialog renders a native modal dialog and restores focus when closed. -->
-        <button type="button" aria-label="Close settings" autofocus class="text-slate-400 hover:text-white" @click="$emit('close')">✕</button>
+        <button type="button" :aria-label="tr('Close settings')" autofocus class="text-slate-400 hover:text-white" @click="$emit('close')">✕</button>
       </div>
 
       <label class="block mb-2">
-        <span class="text-[10px] uppercase text-slate-400">Camera topic</span>
+        <span class="text-[10px] uppercase text-slate-400">{{ tr('Language') }}</span>
+        <select data-testid="locale-select" :value="localePreference" class="mt-0.5 w-full bg-slate-800 rounded px-2 py-1 text-xs text-slate-200" @change="changeLocale">
+          <option value="system">{{ tr('System default') }}</option>
+          <option v-for="locale in supportedLocales" :key="locale.code" :value="locale.code">{{ locale.name }}</option>
+        </select>
+      </label>
+      <p v-if="localeStorageFailed" role="status" class="mb-2 text-xs text-amber-300">{{ tr('Language preference could not be saved. This tab will use your selection until it closes.') }}</p>
+      <label class="block mb-2">
+        <span class="text-[10px] uppercase text-slate-400"> {{ tr('Camera topic') }} </span>
         <input
           v-model="cameraTopic"
           class="mt-0.5 w-full bg-slate-800 rounded px-2 py-1 text-xs text-slate-200"
-          placeholder="(disabled)"
+          :placeholder="tr('(disabled)')"
         />
       </label>
 
       <div class="mt-3 border-t border-slate-800 pt-2 space-y-1">
-        <span class="text-[10px] uppercase text-slate-400">Connection</span>
+        <span class="text-[10px] uppercase text-slate-400"> {{ tr('Connection') }} </span>
         <label v-for="f in supportedConnections" :key="f.key" class="block">
-          <span class="text-[10px] uppercase text-slate-400">{{ f.label }}</span>
+          <span class="text-[10px] uppercase text-slate-400">{{ tr(f.label) }}</span>
           <input
             v-model="conn[f.key]"
             :type="'secret' in f && f.secret ? 'password' : 'text'"
@@ -29,13 +37,13 @@
         </label>
       </div>
 
-      <fieldset aria-label="Dashboard sections" class="m-0 min-w-0 border-0 p-0 space-y-1">
+      <fieldset :aria-label="tr('Dashboard sections')" class="m-0 min-w-0 border-0 p-0 space-y-1">
         <label
           v-for="opt in VISIBILITY"
           :key="opt.key"
           class="flex items-center justify-between text-xs text-slate-300 py-0.5"
         >
-          {{ t(opt.label, opt.fallback) }}
+          {{ tr(opt.fallback) }}
           <input
             type="checkbox"
             :checked="visibility[opt.key] !== false"
@@ -66,6 +74,9 @@
 </template>
 
 <script setup lang="ts">
+import { localized, type DisplayText } from '../i18n/messages'
+
+import { tr, supportedLocales, localePreference, setLocale, type LocaleCode } from '../i18n'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TariffPlan } from '../tariffs/model'
@@ -104,6 +115,10 @@ const VISIBILITY = [
   { key: 'show_ha_numbers', label: 'sections.numbers', fallback: 'Numbers' },
 ] as const
 
+const localeStorageFailed = ref(false)
+function changeLocale(event: Event) {
+  localeStorageFailed.value = !setLocale((event.target as HTMLSelectElement).value as LocaleCode | 'system')
+}
 const settings = computed(() => state.value.ui_config?.settings ?? {})
 const visibility = computed<Record<string, boolean | undefined>>(() => {
   const out: Record<string, boolean | undefined> = {}
@@ -127,7 +142,7 @@ const CONNECTION = [
 const supportedConnections = computed(() => CONNECTION.filter((field) => Object.keys(settings.value).includes(field.key)))
 const conn = ref<Record<string, string>>({})
 let connectionBaseline: Record<string, string> = {}
-const connectionError = ref('')
+const connectionError = ref<DisplayText>('')
 
 // Local edit buffers, seeded from the server state when the drawer opens.
 const cameraTopic = ref('')
@@ -162,7 +177,7 @@ function save() {
     if (f.key === 'mqtt_port') {
       const port = Number(raw)
       if (raw === '' || !Number.isInteger(port) || port < 1 || port > 65535) {
-        connectionError.value = 'MQTT port must be an integer from 1 to 65535.'
+        connectionError.value = localized('MQTT port must be an integer from 1 to 65535.')
         return
       }
       patch[f.key] = port

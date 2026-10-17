@@ -4,10 +4,11 @@
       <span v-if="cost !== null">≈ {{ money(cost) }} ·</span>
       <span>{{ rateNow }} {{ plan.currency }}/kWh</span>
     </template>
-    <span v-else role="alert">Tariff unavailable</span>
+    <span v-else role="alert"> {{ tr('Tariff unavailable') }} </span>
   </span>
 </template>
 <script setup lang="ts">
+import { tr, currentLocale, formatNumber } from '../i18n'
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { billingPeriod, currentRate, estimateDailyCost, flatRate, validatePlan } from './model'
 import { useLocalTariff } from './useLocalTariff'
@@ -25,7 +26,7 @@ const configured = computed(() => {
   try {
     return { plan: validatePlan(props.configuredTariff), error: '' }
   } catch {
-    return { plan: null, error: 'The controller tariff is invalid. Correct its configuration.' }
+    return { plan: null, error: tr('The controller tariff is invalid. Correct its configuration.') }
   }
 })
 const plan = computed(() => localMode.value ? local.plan.value : configured.value.plan)
@@ -37,20 +38,20 @@ onMounted(() => {
 })
 onBeforeUnmount(() => { clearInterval(timer) })
 const cost = computed(() => estimateDailyCost(plan.value, props.kwh))
-const rateNow = computed(() => plan.value ? currentRate(plan.value, now.value).toFixed(4) : '')
+const rateNow = computed(() => plan.value ? formatNumber(currentRate(plan.value, now.value), 4) : '')
 const details = computed(() => {
-  if (!plan.value) return error.value
-  const source = localMode.value ? 'Local tariff · this device only' : 'Controller tariff'
+  if (!plan.value) return String(error.value)
+  const source = localMode.value ? tr('Local tariff · this device only') : tr('Controller tariff')
   const period = billingPeriod(plan.value, now.value)
   return [
-    `${source}: ${plan.value.name}. Current rate in ${plan.value.timeZone}.`,
+    tr('{source}: {name}. Current rate in {zone}.', { source, name: plan.value.name, zone: plan.value.timeZone }),
     flatRate(plan.value) === null
-      ? 'Daily cost needs interval consumption; today’s total alone is insufficient for time-of-use prices.'
-      : 'Estimated energy cost when daily consumption is available; excludes taxes and other charges.',
-    period ? `Billing period: ${period.start} – ${period.end}.` : '',
+      ? tr('Daily cost needs interval consumption; today’s total alone is insufficient for time-of-use prices.')
+      : tr('Estimated energy cost when daily consumption is available; excludes taxes and other charges.'),
+    period ? tr('Billing period: {start} – {end}.', { start: period.start, end: period.end }) : '',
   ].filter(Boolean).join(' ')
 })
-const money = (value: number) => new Intl.NumberFormat(undefined, {
+const money = (value: number) => new Intl.NumberFormat(currentLocale.value, {
   style: 'currency', currency: plan.value?.currency ?? 'USD',
 }).format(value)
 </script>

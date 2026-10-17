@@ -1,15 +1,85 @@
-# inverter-dashboard-vue
+# Inverter Dashboard UI
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15476/badge)](https://www.bestpractices.dev/en/projects/15476)
-[![Fuzzing: RC only](https://img.shields.io/badge/Fuzzing-RC%20only-blue)](docs/fuzzing.md)
+[English](README.md) · [Русский](README.ru.md) · [Українська](README.uk.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Nederlands](README.nl.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/victron-venus/inverter-dashboard-vue/actions/workflows/ci.yml)
-[![Vue.js](https://img.shields.io/badge/vue-3.x-green.svg)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-6.0-blue.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/vite-8.x-646cff.svg)](https://vitejs.dev/)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15476/badge)](https://www.bestpractices.dev/en/projects/15476)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Shared Vue 3 frontend SPA and reusable UI component library for Victron Venus ecosystem dashboards.
+One Vue interface for the [Python dashboard](https://github.com/victron-venus/inverter-dashboard) and [Go dashboard](https://github.com/victron-venus/inverter-dashboard-go): energy readings, native Victron warnings, Home Assistant controls and electricity tariffs. This repository builds the browser application and an optional component library. It does not contain an MQTT broker or a standalone backend.
+
+**Start here:** install a backend using its README, then open that backend's URL. Use this repository to develop the interface, build a custom integration or maintain translations.
+
+## Features and data ownership
+
+- Grid, consumption, solar, battery, phase, backup and daily energy readings preserve unavailable values and source freshness.
+- Six ESS choices, seven controller header flags and a persistent setpoint override require current backend capabilities and authoritative results. An open browser connection alone cannot authorize a write.
+- Native Victron banners and history use the event's occurrence time. Receiving a replay does not make the event new.
+- Home buttons come from operator configuration. Device names are not hardcoded. Disabled/inactive appliances stay hidden; unknown state stays unavailable.
+- Water, EV, batteries, solar sources and Active Loads have configurable visibility and availability-aware readings.
+- The daily strip stays compact. Tariff editing and interval-cost analysis live in Settings; estimates are not utility invoices.
+- Optional server-backed Web Push requires explicit consent. Registration and a queued test do not prove OS delivery.
+- English, Russian, Ukrainian, German, French and Dutch interface translations include language selection. Configured device labels and raw external diagnostics retain their original language.
+
+![Data ownership and browser trust boundary](docs/assets/architecture.svg)
+
+[Inverter Desktop](https://github.com/victron-venus/inverter-desktop) is the reference for shared behavior, but maintains its own native application and source tree. Building this SPA does not automatically update Desktop. Installers, tray integration, biometrics and native plugin execution are separate features.
+
+## Development quick start
+
+Use the Node toolchain declared by current CI and the checked-in npm lockfile. [package.json](package.json) and [scripts/ci.sh](scripts/ci.sh) are authoritative for commands and versions.
+
+```sh
+npm ci
+npm run dev
+```
+
+Vite normally uses port 5173. Private mode expects `/ws` and `/api/*` on the **same origin**. Vite alone has no live data or command backend: use a local reverse proxy or serve the built SPA through a development Python/Go backend. See [the HTTPS profile](deploy/https/README.md). Never put gateway credentials in `VITE_*` variables.
+
+```sh
+npm run typecheck
+npm run lint
+npm test
+npm run build:all
+```
+
+The [browser acceptance suite](docs/browser-compatibility.md) exercises the built SPA in pinned Chromium, Firefox and WebKit generations on Linux, Windows and macOS. Its compact matrix is required for PRs; packaged release qualification uses the full 35-target inventory against the same built SPA archive.
+
+Outputs: `dist/` is the SPA; `dist-lib/` is the component library. [src/lib.ts](src/lib.ts) defines exports. Library hosts supply Vue, vue-i18n, ECharts, vue-echarts and a translation context. This is not a claim that a corresponding public npm package is published.
+
+## Configuration
+
+The backend owns connections, credentials, discovery and allowed Home entities. Settings provides language, visibility, tariff tools and notification preferences. Installation-specific Home entries belong in ignored local/private backend configuration. A privacy helper should expose a normal `switch.*` entity with its semantics defined once in Home Assistant; do not invert it again in the UI.
+
+Read [the controller contract](docs/controller-contract.md), [tariff guide](docs/electricity-tariffs.md) and [configuration guide](docs/wiki/Configuration.md). No documentation or translation test should operate physical equipment.
+
+## Alerts, reconnects and history
+
+![Event occurrence and display sequence](docs/assets/event-lifecycle.svg)
+
+Banner ages use source occurrence time. Missing time is unavailable; future time is explicit rather than clamped to “just now”. The OS may separately label notification delivery time. Connection changes retire earlier asynchronous work. Source identity, freshness and acknowledgements are separate checks. An HTTP fallback replaces removed devices as well as adding current ones.
+
+Charts show gaps for missing measurements. History is a session buffer capped at 1800 points, not a durable 24-hour archive. Notification history/replay suppression is also bounded; it is not a permanent alarm audit log.
+
+## Languages and documentation
+
+[Localization](docs/localization.md) covers selection, fallback, interpolation and tests. Six localized READMEs provide setup and operating guidance; detailed developer references remain in English. Entity IDs, command values and operator labels must not be translated into different wire values.
+
+The [documentation hub](docs/wiki/Home.md) links configuration, notifications, troubleshooting and development. `docs/wiki/` is the reviewable source for the GitHub wiki. See [CONTRIBUTING](CONTRIBUTING.md) and [SECURITY](SECURITY.md) for contributions and private reports.
+
+## Public read-only mode
+
+```sh
+VITE_PUBLIC_MODE=true npm run build:spa
+```
+
+Public mode polls a sanitized proxy at `/api/gateway/snapshot` by default and has no private command channel. [Configuration](docs/wiki/Configuration.md) describes HTML/runtime alternatives. IGW bearer and Cloudflare Access credentials stay on the proxy. Remote proxies require HTTPS; redirects and URL credentials are rejected. A public view still needs a reachable data source.
+
+## Delivering a UI update
+
+Both backends embed a particular built SPA. A merged UI change reaches users only after reviewed asset adoption, backend rebuilding and deployment. Record frontend source, artifact identity and backend release together; verify served assets and actual browser behavior.
+
+[scripts/export_dist.sh](scripts/export_dist.sh) assumes canonical sibling checkouts. Do not run it from an isolated worktree or overwrite another project's assets with an unreviewed local build. Follow the backend's official asset procedure.
 
 <!-- ci-release-process:start -->
 ## Release process
@@ -17,318 +87,16 @@ Shared Vue 3 frontend SPA and reusable UI component library for Victron Venus ec
 See the [release strategy](RELEASING.md) for validation, nightly, beta, RC and stable promotion rules, and the [operator runbook](docs/release-workflow.md) for local commands.
 <!-- ci-release-process:end -->
 
-## Overview
+## Troubleshooting
 
-This project provides a modern, reactive web UI that can be embedded into multiple backend implementations:
+- **Page unavailable:** check DNS, VPN routes, TLS, ingress and service endpoints. A Ready Pod does not prove browser reachability.
+- **Stale readings:** distinguish browser-to-backend connectivity from backend-to-IGW and IGW-to-Cerbo connectivity.
+- **Disabled control:** inspect current state, capability and source freshness; Home additionally requires direct HA availability. Do not remove the guard.
+- **Missing system banner:** verify permission, subscription, server availability and actual OS delivery separately.
+- **Wrong language:** reselect it in Settings, check browser storage restrictions and report the exact locale, screen and build.
 
-| Backend | Technology | Repository |
-|---------|------------|------------|
-| [inverter-dashboard](https://github.com/victron-venus/inverter-dashboard) | Python / FastAPI | Docker, NAS |
-| [inverter-dashboard-go](https://github.com/victron-venus/inverter-dashboard-go) | Go / MQTT | Cerbo GX |
-
-The Vue SPA (`dist/`) can be served by any backend that provides MQTT data via WebSocket.
-
----
-
-## Project Role
-
-**Shared Vue 3 component library used by inverter-desktop and available for custom dashboard builds.** Includes ECharts widgets, MQTT hooks, Tailwind UI components.
-
-| Use Case | Recommended |
-|----------|-------------|
-| Cerbo GX / embedded | [inverter-dashboard-go](https://github.com/victron-venus/inverter-dashboard-go) — single binary, minimal footprint |
-| Docker / NAS | [inverter-dashboard](https://github.com/victron-venus/inverter-dashboard) — Python/FastAPI (`alvit/inverter-dashboard`) |
-| Native desktop/mobile | [inverter-desktop](https://github.com/victron-venus/inverter-desktop) — Rust/Tauri app with offline support |
-| Building custom dashboards | **inverter-dashboard-vue** (this) — shared Vue 3 component library |
-
-## Consumers
-
-This repository is the shared SPA / component library consumed by:
-
-- **[inverter-desktop](https://github.com/victron-venus/inverter-desktop)** — Tauri desktop/mobile app bundles the built SPA (`dist/`) via Tauri's webview and uses exported Vue components from `build.lib/`.
-- **[inverter-dashboard](https://github.com/victron-venus/inverter-dashboard)** — Python/FastAPI dashboard mounts `dist/` as static files.
-- **[inverter-dashboard-go](https://github.com/victron-venus/inverter-dashboard-go)** — Go/MQTT binary embeds `dist/` via `//go:embed` and serves the SPA.
-
-Build artifacts consumed by downstream projects:
-- `dist/` — production SPA bundle (HTML/JS/CSS)
-- `build.lib/` — Vue component library for embedding in custom dashboards
-
-Updates flow: changes here → PR → CI builds `dist/` + `build.lib/` → consumers pull updated artifacts via release tags or submodule sync.
-
-## Features
-
-- **Real-time dashboard** with live MQTT data via WebSocket
-- **Interactive ECharts** charts for solar, battery, and grid data
-- **Multi-language support**: English, German, Dutch, French, Ukrainian
-- **Responsive design** with Tailwind CSS v4
-- **Mobile-friendly** viewport and touch support
-
-## Keyboard access
-
-Use Tab to reach section headers and notification entries, then Enter or Space to expand a section or mark a notification as read. Settings and camera popups keep keyboard focus inside the open dialog; press Escape or activate the labelled close button to dismiss them and return to the opener. Public mode continues to hide command controls.
-
-## Tech Stack
-
-- Vue 3 (Composition API + `<script setup>`)
-- TypeScript 5.9.3 (pinned for the JavaScript compiler API used by `vue-tsc`)
-- Vite 8 (with Library Mode for component exports)
-- Tailwind CSS v4
-- ECharts (via vue-echarts)
-- vue-i18n for localization
-- Vitest for unit testing
-
-ESS status, the seven inverter-control header flags, and EV discovery work with
-either backend's direct Cerbo MQTT or IGW source without Home Assistant. Unknown
-states remain unavailable, measured EV zero remains visible, and controller
-writes require a live command connection. See the
-[controller and EV contract](docs/controller-contract.md) for fields and commands.
-The locked TypeScript 5.9.3 dependency keeps `vue-tsc` checks functional; TypeScript
-7's native compiler no longer exposes the JavaScript compiler entry point that
-the current `vue-tsc` uses.
-
-## Scripts
-
-```bash
-# Development
-npm run dev          # Start dev server
-
-# Build
-npm run build:spa    # Build SPA (dist/)
-npm run build:lib    # Build component library (build.lib/)
-npm run build:all     # Build both
-
-# Testing
-npm run test         # Run tests once
-npm run test:watch   # Watch mode
-npm run test:coverage # With coverage
-
-# Type checking
-npm run typecheck    # TypeScript check
-
-# Linting (Biome)
-npm run lint         # Lint all source files
-npm run lint:fix     # Lint and auto-fix
-```
-
-## Architecture
-
-```
-src/
-├── components/       # Vue components (BatterySolarPanel, SidePanel, etc.)
-├── composables/     # Composables (useMqtt, useChart, useConnection, useHA)
-├── i18n/            # Translations (en, de, nl, fr, uk)
-├── types/           # TypeScript types
-├── App.vue          # Main application
-└── static/         # Static assets (dist/ after build)
-```
-
-### Component Hierarchy
-
-```
-App.vue
-├── AppHeader.vue
-├── ChartPanel.vue
-│   ├── LineChart.ts (ECharts wrapper)
-│   └── DailyStats.vue
-├── SidePanel.vue
-│   ├── BatteryDisplay.vue
-│   ├── LoadsTable.vue
-│   └── StatusBar.vue
-└── ConsoleLog.vue
-```
-
-## Embedding
-
-### inverter-dashboard (Python)
-
-The compiled `dist/` is mounted at `/static`:
-
-```python
-from fastapi.staticfiles import StaticFiles
-
-app.mount("/static", StaticFiles(directory="inverter_dashboard/static/dist"))
-```
-
-### inverter-dashboard-go (Go)
-
-The `dist/` is embedded via `//go:embed`:
-
-```go
-//go:embed internal/html/vue-ui
-var vueFS embed.FS
-```
-
-## i18n
-
-Translations are in `src/i18n/`. To add a new language:
-
-1. Create `src/i18n/{lang}.ts`
-2. Export a messages object
-3. Add to `src/i18n/index.ts`
-
-## Testing
-
-```bash
-npm run test          # Run all tests
-npm run test:watch     # Watch for changes
-npm run test:coverage  # Generate coverage report
-```
-
-Test files use Vitest + @vue/test-utils + Happy DOM.
-
-The [browser acceptance suite](docs/browser-compatibility.md) also exercises the built SPA
-in pinned Chromium, Firefox and WebKit generations on Linux, Windows and macOS.
-Its compact matrix is required for PRs; packaged release qualification uses the
-full 35-target inventory against the same built SPA archive.
-
-## CI/CD
-
-- **Lint**: `npm run lint` (Biome)
-- **TypeScript check**: `npm run typecheck`
-- **Tests**: `npm run test`
-- **Build**: `npm run build:all`
-- **Release**: Qualified RC artifacts are promoted through the [release process](RELEASING.md).
-
-## Completed Features
-
-- ✅ **Dual Build Targets**: Vite config supports both SPA build (`dist/`) and library mode (`build.lib/`) for reusable Vue components
-- ✅ **Automated Asset Export**: `scripts/export_dist.sh` compiles Vue assets and copies to `inverter-dashboard-go/internal/html/vue-ui` and `inverter-dashboard/src/inverter_dashboard/static`
-- ✅ **Vitest Unit Test Suite**: Tests for composables (`useMqtt`, `useChart`, `useConnection`, `useHA`) and components (`BatterySolarPanel`, `SidePanel`)
-- ✅ **i18n Localization Expansion**: Complete translations for English, German, Dutch, French, Ukrainian
-- ✅ **CI & Package Publishing**: Candidate builds and verified promotion use `.github/workflows/release-pipeline.yml`.
-
-## Related Projects
-
-- [inverter-dashboard-go](https://github.com/victron-venus/inverter-dashboard-go) — Go backend that serves this frontend.
-- [inverter-dashboard](https://github.com/victron-venus/inverter-dashboard) — Python backend that serves this frontend in Docker/NAS deployments.
-- [inverter-desktop](https://github.com/victron-venus/inverter-desktop) — Tauri client using the shared interface and native integrations.
-- [inverter-control](https://github.com/victron-venus/inverter-control) — controller state and command contract used by dashboard backends.
-- [dbus-ev](https://github.com/victron-venus/dbus-ev) — vehicle and optional Mercedes charger telemetry exposed through Cerbo.
-- [dbus-pump](https://github.com/victron-venus/dbus-pump) — water telemetry and service controls exposed through Cerbo.
-- [dbus-emporia-vue](https://github.com/victron-venus/dbus-emporia-vue) — per-channel AC-load measurements and tariff data.
-
-Browse the [public project catalog](https://victron-venus.github.io/.github/projects.html)
-for other Venus OS packages and companion tools. Each project documents its own
-installation, compatibility and release requirements.
-
-
-## Public / here.now mode
-
-Read-only hosting (e.g. [here.now](https://here.now)) can drive tiles from **inverter-gateway** without the Python/Go MQTT backend and without an injected `public-adapter.js`.
-
-Enable any of:
-
-1. Build: `VITE_PUBLIC_MODE=true npm run build:spa`
-2. HTML meta: `<meta name="inverter-public-mode" content="true" />`
-3. Runtime: `window.__INVERTER_PUBLIC__ = true`
-
-Snapshot URL defaults to same-origin `/api/gateway/snapshot` (override with `VITE_GATEWAY_SNAPSHOT_PATH` or meta `inverter-gateway-snapshot`). Optional `VITE_API_BASE` prefixes API paths.
-
-Proxy that path to gateway `GET /v1/snapshot` (plus health). Writes / WebSocket MQTT are disabled in public mode; the SPA polls the snapshot every ~3s. The connection indicator turns offline after 15 seconds without a valid telemetry snapshot, including HTTP failures, invalid responses, and stalled requests. Last-known tiles remain visible while offline; the next valid snapshot restores the live indicator. Requests time out after 10 seconds so polling can recover.
-
-The browser talks to the dashboard backend or a snapshot proxy; it must never
-contain IGW bearer tokens or Cloudflare Access service credentials. Configure the
-LAN backend/proxy with `GATEWAY_URL=https://gateway.example.com:9151`, using the
-hostname covered by the IGW certificate. Cloud-hosted proxies must use the public
-HTTPS gateway URL reachable from their hosting environment. Keep certificate
-verification enabled and disable upstream redirects in the proxy.
-
-Public snapshot requests reject redirects. `VITE_GATEWAY_SNAPSHOT_PATH` remains a
-route such as `/api/gateway/snapshot`; use an HTTPS `VITE_API_BASE` for a remote
-proxy. Relative same-origin routes remain supported, including local development.
-HTTP remote proxy URLs, URL credentials, and protocol-relative URLs are rejected.
+More: [troubleshooting](docs/wiki/Troubleshooting.md), [notifications](docs/wiki/Notifications.md), [development](docs/wiki/Development.md).
 
 ## License
 
-MIT
-
-## Cerbo telemetry contract
-
-The Python and Go backends serve the same complete state over WebSocket and
-`/api/state`. HTTP fallback replaces the previous snapshot, including removed
-devices. Embedded SPA assets in both backends are built from this source.
-
-- `g1`/`g2`/`g3` and `t1`/`t2`/`t3` are phase powers in W; totals include all
-  available phases. Battery SoC is measured, never inferred from pack voltage.
-- `telemetry_available[field] = false` means unknown, even if a typed backend
-  serializes a numeric zero. Device entries can carry the same availability map.
-  The UI preserves measured zero and renders unavailable readings as a dash.
-- `mqtt_connected`, or `gateway_connected` when `data_source` is `igw`, describes
-  the upstream connection. Receipt of a WebSocket frame alone is not proof that
-  Cerbo is connected. Missing power readings create gaps in chart history.
-- `ev_power` is vehicle power in W; `ev_charging_kw` is charger power in kW.
-  `water_level` is the Victron tank percentage, including readings below 1%.
-- Water overrides use `water_mode` with `which: "pump" | "valve"` and
-  `mode: 0 | 1 | 2` (auto/on/off). They require `water_controls_available`, a
-  known Mode on the configured device, and readback from Cerbo. Public and
-  gateway-only views cannot issue water overrides.
-- Control flags, daily statistics and forecasts remain controller-owned.
-  Appliance states and configured rich Home Assistant controls use the direct
-  HA integration; HA overlays cannot replace native Cerbo measurements.
-
-Build with `npm ci`, then `npm run build` and `npm test`. The checked-in backend
-assets must be refreshed from this `dist/` when changing the wire contract.
-
-## Notification event time
-
-Native notifications use the source event's `ts` (RFC3339 with a timezone), not
-when the browser received a replay. Banner ages refresh every 15 seconds and on
-focus/visibility changes. Hovering the age shows the full local date, time and
-timezone. Missing or invalid times stay unavailable; a future source time is
-shown as an absolute date rather than “just now”.
-
-History keeps up to 100 entries. A late timestamp completes the existing entry
-without changing its read status. Replay suppression remembers the last 4096
-observed event identities (ID and source timestamp) in the current tab, including
-cleared entries. Older identities can appear again after that bounded window or
-a page reload; timestamps are not assumed to be monotonic. An unknown-time entry
-that was cleared can reappear once its source timestamp first becomes known.
-
-## Electricity tariffs
-
-The daily strip includes a weekly Univer tariff editor with Emporia reference
-import and local persistence. See [tariff editing](docs/electricity-tariffs.md).
-
-Tariffs can also be entered during SetupHelper configuration or first-run desktop
-setup and provisioned with deployment files. Seasons and billing start dates
-survive configuration backups and updates. See [installation defaults and tariff
-configuration](docs/electricity-tariffs.md#installation-defaults-and-configuration-backups).
-
-## System notifications
-
-Settings → System notifications provides an explicit browser opt-in, four category
-preferences, status, Disable, and Send test. Web Push must also be enabled on the
-Python or Go dashboard server. The UI confirms the server registration before it
-reports Enabled. A queued test is not proof of delivery: check the system banner or
-notification center. Browser permission and OS background-delivery policy still
-apply. On iPhone/iPad, install the dashboard on the Home Screen and enable from
-that app; see [WebKit’s Web Push documentation](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/).
-
-One server-push route handles native Victron warnings, EV charging transitions,
-water pump/valve transitions, and low-battery crossings, whether tabs are open or
-closed. The old local telemetry watcher is removed: near-zero grid watts do not
-prove an outage. Backend source baselines and freshness checks prevent historical
-snapshot storms. The notification body includes the source occurrence time;
-OS chrome may independently label when delivery happened.
-
-`/notifications-sw.js` only handles notifications; it never intercepts requests
-or caches application assets. The server must serve that stable root path as
-JavaScript with no-cache, along with the manifest and icon. IndexedDB holds only
-opt-in state and at most 4096 event hashes for deduplication across tabs/reloads.
-Native subscription credentials remain in PushManager and server registration
-request bodies; dashboard tokens are only sent in same-origin Authorization
-headers. Public mode and cross-origin notification API bases are unsupported.
-Disabling stops local display immediately; a failed server deletion remains
-explicitly retryable, and the browser subscription is not discarded prematurely.
-
-## Contributing and security
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull requests,
-[SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment trust boundaries,
-and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
-
-Coverage-guided mutation testing runs only for explicit release candidates in this public repository. See [targets, limits, reproduction and failure handling](docs/fuzzing.md).
-
-### Standalone HTTPS hosting
-
-Use the [same-origin Caddy deployment profile](deploy/https/README.md) for a standalone hosted dashboard: TLS 1.3, P-256 automatic certificates, a same-origin CSP, and API/WebSocket forwarding to a loopback backend. Private polling rejects cross-origin API bases and redirects so the page token remains attached to its original backend. The component library requires equivalent protection from its host application.
+[MIT](LICENSE). Third-party dependencies retain their own licenses.

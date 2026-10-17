@@ -29,7 +29,7 @@ describe('NotificationHistory', () => {
     try {
       await wrapper.get('button.classic-btn').trigger('click')
       expect(wrapper.text()).toContain('Event time unavailable')
-      const expected = new Date(eventTime).toLocaleString(undefined, { timeZoneName: 'short' })
+      const expected = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'long' }).format(eventTime)
       expect(wrapper.findAll('[title]').map((element) => element.attributes('title'))).toContain(
         expected
       )

@@ -3,30 +3,30 @@
     class="p-0 mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-medium leading-tight text-slate-700 dark:text-slate-300"
   >
     <div v-if="hasSolar" class="flex items-center gap-1.5 mr-1">
-      <span class="text-solar font-bold flex items-center gap-1">☀️ {{ prod }}kWh</span>
+      <span class="text-solar font-bold flex items-center gap-1">☀️ {{ formatNumber(Number(prod), 2) }}kWh</span>
       <span
         v-if="fcToday"
         class="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-tighter"
-        >[{{ fcToday }}]</span
+        >[{{ formatNumber(Number(fcToday), 1) }}]</span
       >
       <span class="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-tighter"
-        >({{ prodY }})</span
+        >({{ formatNumber(Number(prodY), 1) }})</span
       >
       <span
         v-if="fcTomorrow"
         class="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-tighter"
-        >[{{ fcTomorrow }}]</span
+        >[{{ formatNumber(Number(fcTomorrow), 1) }}]</span
       >
       <span class="text-slate-600 dark:text-slate-400 font-medium text-[11px] tracking-tighter">{{
         solarStr
       }}</span>
-      <span v-if="hasDollars" class="text-green-600 font-bold">(${{ dollars }})</span>
+      <span v-if="hasDollars" class="text-green-600 font-bold">(${{ formatNumber(Number(dollars), 2) }})</span>
     </div>
 
     <div v-if="hasGrid" class="flex items-center gap-1.5 mr-1">
       <div v-if="hasSolar" class="w-px h-3 bg-slate-300"></div>
       <Zap :size="14" class="text-slate-400 dark:text-slate-500" />
-      <span class="font-bold text-slate-600 dark:text-white">{{ grid }}kWh</span>
+      <span class="font-bold text-slate-600 dark:text-white">{{ formatNumber(Number(grid), 2) }}kWh</span>
     </div>
 
     <DailyGridEnergy :energy="ds.grid_energy" />
@@ -41,16 +41,16 @@
           class="text-slate-400 dark:text-slate-500 uppercase text-[10px] font-bold tracking-tighter"
           >I:</span
         >
-        <span class="font-bold text-slate-600 dark:text-white">{{ batIn }}kWh</span>
-        <span class="text-slate-400 dark:text-slate-500 text-[10px] font-bold">({{ batInY }})</span>
+        <span class="font-bold text-slate-600 dark:text-white">{{ formatNumber(Number(batIn), 2) }}kWh</span>
+        <span class="text-slate-400 dark:text-slate-500 text-[10px] font-bold">({{ formatNumber(Number(batInY), 1) }})</span>
 
         <span
           class="text-slate-400 dark:text-slate-500 uppercase text-[10px] font-bold tracking-tighter ml-0.5"
           >O:</span
         >
-        <span class="font-bold text-slate-600 dark:text-white">{{ batOut }}kWh</span>
+        <span class="font-bold text-slate-600 dark:text-white">{{ formatNumber(Number(batOut), 2) }}kWh</span>
         <span class="text-slate-400 dark:text-slate-500 text-[10px] font-bold"
-          >({{ batOutY }})</span
+          >({{ formatNumber(Number(batOutY), 1) }})</span
         >
 
         <span
@@ -60,10 +60,10 @@
         <span
           class="font-bold"
           :class="parseFloat(batDelta) >= 0 ? 'text-green-600' : 'text-red-600'"
-          >{{ batDelta }}kWh</span
+          >{{ formatNumber(Number(batDelta), 2) }}kWh</span
         >
         <span class="text-slate-400 dark:text-slate-500 text-[10px] font-bold"
-          >({{ batDeltaY }})</span
+          >({{ formatNumber(Number(batDeltaY), 1) }})</span
         >
       </div>
     </div>
@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
 import { Battery as BatteryIcon, Zap } from '@lucide/vue'
+import { formatNumber } from '../i18n'
 import { computed } from 'vue'
 import { state } from '../composables/useInverterState'
 
@@ -111,11 +112,11 @@ const mpptTotalDaily = computed(() => mpptDaily.value.reduce((sum, value) => sum
 const solarStr = computed(() => {
   const parts: string[] = []
   pvDaily.value.forEach((v) => {
-    if (v > 0) parts.push(v.toFixed(2))
+    if (v > 0) parts.push(formatNumber(v, 2))
   })
   const mpptPart =
-    mpptDaily.value.length > 0 ? mpptDaily.value.map((v) => v.toFixed(2)).join('+') : '0.00'
-  parts.push(mpptTotalDaily.value.toFixed(2) + '(' + mpptPart + ')')
+    mpptDaily.value.length > 0 ? mpptDaily.value.map((v) => formatNumber(v, 2)).join('+') : formatNumber(0, 2)
+  parts.push(formatNumber(mpptTotalDaily.value, 2) + '(' + mpptPart + ')')
   return parts.join('+')
 })
 

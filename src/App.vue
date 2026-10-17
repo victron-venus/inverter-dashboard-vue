@@ -28,7 +28,7 @@
       <!-- Dashboard Content -->
       <div class="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1 scrollbar-hide">
         <NotificationBanner />
-        <output v-if="commandMessage" class="text-xs px-2 py-1" :class="commandFailed ? 'text-red-600' : 'text-slate-600 dark:text-slate-300'" aria-live="polite">{{ commandMessage }}</output>
+        <output v-if="commandMessage" class="text-xs px-2 py-1" :class="commandFailed ? 'text-red-600' : 'text-slate-600 dark:text-slate-300'" aria-live="polite">{{ tr(commandMessage) }}</output>
 
         <CameraPopup />
 
@@ -159,6 +159,7 @@
 </template>
 
 <script setup lang="ts">
+import { tr, formatNumber } from './i18n'
 import { computed, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import BatterySolarPanel from './components/BatterySolarPanel.vue'
@@ -328,6 +329,7 @@ function refuseSelection(action: string, payload: Record<string, unknown>) {
   commandError.value = {
     action, request_id: payload.request_id,
     error: 'Control is unavailable. No change was sent.',
+    localMessage: 'Control is unavailable. No change was sent.',
   }
 }
 
@@ -375,7 +377,7 @@ const pvInvertersTotal = computed(() =>
 )
 
 const ev = computed(() => evTelemetry(state.value))
-const evCharging = computed(() => ev.value.chargingKw === undefined ? '—' : `${ev.value.chargingKw.toFixed(1)}kW`)
+const evCharging = computed(() => ev.value.chargingKw === undefined ? '—' : `${formatNumber(ev.value.chargingKw, 1)}kW`)
 const evPower = computed(() => formatPower(ev.value.power))
 const evPowerWatts = computed(() => ev.value.power)
 const evChargingKw = computed(() => ev.value.chargingKw)
@@ -408,7 +410,7 @@ const batteries = computed(() => {
       current: b.current,
       power: b.power,
       soc: b.soc,
-      state: b.state || 'Unknown',
+      state: b.state || tr('Unknown'),
       timeToGo: b.time_to_go || '',
     })
   }

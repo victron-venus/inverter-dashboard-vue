@@ -1,3 +1,4 @@
+import { formatNumber } from './i18n'
 import type { InverterState } from './composables/useInverterState'
 
 /** Go emits numeric zero with availability=false; Python may emit null.
@@ -33,5 +34,5 @@ export function connectionStatus(input: InverterState): boolean | undefined {
 }
 
 export function formatMeasurement(value: number | undefined, digits: number, unit: string): string {
-  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) + unit : '—'
+  return typeof value === 'number' && Number.isFinite(value) ? formatNumber(value, digits) + unit : '—'
 }

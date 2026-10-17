@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 680" role="img" aria-labelledby="title desc">
+  <title id="title">Inverter Dashboard: data ownership and trust boundaries</title>
+  <desc id="desc">Cerbo native measurements and controller commands enter a Python or Go backend through MQTT or an authenticated gateway. Home Assistant owns configured household controls. The same-origin browser renders state and submits capability-checked commands. Upstream credentials stay on the backend. Optional Web Push reaches the operating system through a service worker.</desc>
+  <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto-start-reverse"><path d="M0 0 L9 4.5 L0 9Z" fill="#475569"/></marker></defs>
+  <rect width="1160" height="680" rx="24" fill="#f8fafc"/>
+  <g font-family="system-ui, sans-serif" fill="#0f172a">
+    <text x="42" y="52" font-size="27" font-weight="700">One interface, explicit data owners</text>
+    <text x="42" y="82" font-size="16" fill="#475569">Architecture schematic • no installation credentials or measured performance data</text>
+    <rect x="30" y="112" width="690" height="430" rx="20" fill="#eff6ff" stroke="#93c5fd" stroke-dasharray="7 5"/>
+    <text x="50" y="141" font-size="16" font-weight="650" fill="#1d4ed8">Trusted installation / backend</text>
+    <rect x="54" y="171" width="250" height="109" rx="14" fill="#fff" stroke="#94a3b8"/>
+    <text x="72" y="201" font-size="21" font-weight="650">Cerbo GX</text>
+    <text x="72" y="229" font-size="14">Native measurements &amp; alarms</text>
+    <text x="72" y="253" font-size="14">inverter-control / device state</text>
+    <rect x="54" y="351" width="250" height="116" rx="14" fill="#fff" stroke="#94a3b8"/>
+    <text x="72" y="382" font-size="21" font-weight="650">Home Assistant</text>
+    <text x="72" y="411" font-size="16">Configured Home entities</text>
+    <text x="72" y="437" font-size="14">Household devices &amp; controls</text>
+    <rect x="437" y="208" width="254" height="238" rx="16" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+    <text x="459" y="242" font-size="18" font-weight="700">Python or Go backend</text>
+    <text x="459" y="281" font-size="14">Connection / source identity</text>
+    <text x="459" y="310" font-size="16">Freshness &amp; capabilities</text>
+    <text x="459" y="339" font-size="14">Command / result correlation</text>
+    <text x="459" y="368" font-size="16">Private configuration</text>
+    <text x="459" y="405" font-size="15" fill="#1d4ed8">MQTT / IGW / HA credentials</text>
+    <path d="M305 225 H435" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="321" y="190" font-size="14">MQTT or</text><text x="315" y="210" font-size="14">IGW HTTPS</text>
+    <path d="M305 410 H435" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="326" y="393" font-size="14">HA API</text>
+    <rect x="801" y="184" width="319" height="291" rx="16" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+    <text x="825" y="223" font-size="23" font-weight="700">Browser · Vue SPA</text>
+    <text x="825" y="264" font-size="17">Measurements / charts / alerts</text>
+    <text x="825" y="295" font-size="17">Configured device controls</text>
+    <text x="825" y="326" font-size="17">Language / visibility / tariffs</text>
+    <text x="825" y="369" font-size="15" fill="#065f46">Only current capability-checked</text>
+    <text x="825" y="392" font-size="15" fill="#065f46">operations become commands</text>
+    <text x="825" y="442" font-size="15">Same-origin /api/* and /ws</text>
+    <path d="M692 286 H797" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="724" y="271" font-size="14">State</text>
+    <path d="M797 363 H695" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="724" y="347" font-size="14">Intent</text>
+    <text x="52" y="509" font-size="16" fill="#334155">Source time and missing values remain explicit at every boundary.</text>
+    <rect x="30" y="563" width="1090" height="84" rx="16" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="52" y="596" font-size="18" font-weight="650">Optional Web Push</text>
+    <text x="52" y="624" font-size="16">Backend → push service → browser service worker → OS banner · registration ≠ confirmed display</text>
+  </g>
+</svg>

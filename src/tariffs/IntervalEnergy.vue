@@ -6,95 +6,71 @@
     @cancel.prevent="emit('close')"
   >
     <header>
-      <h2 id="interval-title">Interval energy cost</h2>
-      <button type="button" @click="emit('close')">Close</button>
+      <h2 id="interval-title"> {{ tr('Interval energy cost') }} </h2>
+      <button type="button" @click="emit('close')"> {{ tr('Close') }} </button>
     </header>
     <p>
-      Measured grid import × the selected tariff:
+      {{ tr('Measured grid import × the selected tariff:') }}
       <strong>{{ plan.name }}</strong> ({{ plan.timeZone }}).
     </p>
-    <p>
-      Energy charges only. Excludes export credits, taxes and fees. Confirm this tariff applied
-      throughout the selected dates; changing it recalculates the entire period.
-    </p>
+    <p> {{ tr('Energy charges only. Excludes export credits, taxes and fees. Confirm this tariff applied throughout the selected dates; changing it recalculates the entire period.') }} </p>
     <label class="file-label"
-      >Import measured intervals (CSV or JSON)
-      <input
+      > {{ tr('Import measured intervals (CSV or JSON)') }} <input
         type="file"
         accept=".csv,.json,text/csv,application/json"
         :disabled="busy"
         @change="importFile"
       />
     </label>
-    <p>
-      CSV columns: <code>start,end,import_kwh</code>. Use timestamps with Z or an explicit offset,
-      and separate grid-import kWh. Do not use net energy, power, cumulative meters or daily totals.
-      Import replaces this dashboard’s saved intervals.
+    <p> {{ tr('CSV columns:') }} <code>start,end,import_kwh</code>. {{ tr('Use timestamps with Z or an explicit offset, and separate grid-import kWh. Do not use net energy, power, cumulative meters or daily totals. Import replaces this dashboard’s saved intervals.') }}
     </p>
     <details>
-      <summary>CSV example and data requirements</summary>
+      <summary> {{ tr('CSV example and data requirements') }} </summary>
       <pre>
 start,end,import_kwh
 2026-09-24T00:00:00-07:00,2026-09-24T00:30:00-07:00,0.25
 2026-09-24T00:30:00-07:00,2026-09-24T01:00:00-07:00,0</pre>
-      <p>
-        Example values are illustrative. Map your utility’s separate import/consumption export to
-        these columns. Blank or absent readings are gaps; measured zero is valid. Intervals last at
-        most one hour. Split at price boundaries using actual finer readings; never divide an
-        aggregate arbitrarily.
-      </p>
-      <p>
-        Emporia’s chart API currently omits MainsFromGrid history; net mains data cannot recover
-        gross import. Automatic history synchronization is not available.
-      </p>
+      <p> {{ tr('Example values are illustrative. Map your utility’s separate import/consumption export to these columns. Blank or absent readings are gaps; measured zero is valid. Intervals last at most one hour. Split at price boundaries using actual finer readings; never divide an aggregate arbitrarily.') }} </p>
+      <p> {{ tr('Emporia’s chart API currently omits MainsFromGrid history; net mains data cannot recover gross import. Automatic history synchronization is not available.') }} </p>
     </details>
     <p v-if="error" role="alert">{{ error }}</p>
     <div role="status" aria-atomic="true"><p v-if="message">{{ message }}</p></div>
     <template v-if="history">
       <div class="range">
-        <label>First local date<input v-model="range.start" type="date" /></label>
-        <label>Last local date (inclusive)<input v-model="range.end" type="date" /></label>
+        <label> {{ tr('First local date') }} <input v-model="range.start" type="date" /></label>
+        <label> {{ tr('Last local date (inclusive)') }} <input v-model="range.end" type="date" /></label>
         <button type="button" @click="resetRange">
-          {{ plan.billingDay ? 'Billing period of latest reading' : 'Day of latest reading' }}
+          {{ plan.billingDay ? tr('Billing period of latest reading') : tr('Day of latest reading') }}
         </button>
       </div>
       <p>
-        {{ history.intervals.length }} intervals saved on this device for this dashboard. They are
-        not uploaded or included in configuration backups.
-      </p>
+        {{ tr('{n} intervals saved on this device for this dashboard. They are not uploaded or included in configuration backups.', { n: history.intervals.length }) }} </p>
       <p v-if="result.error" role="alert">{{ result.error }}</p>
-      <section v-if="result.value" class="result" aria-label="Interval cost result">
+      <section v-if="result.value" class="result" :aria-label="tr('Interval cost result')">
         <h3>
-          {{ result.value.complete ? 'Period energy charge' : 'Partial energy charge' }}
+          {{ result.value.complete ? tr('Period energy charge') : tr('Partial energy charge') }}
         </h3>
         <strong class="amount">{{
-          result.value.cost === null ? 'Unavailable' : money(result.value.cost)
+          result.value.cost === null ? tr('Unavailable') : money(result.value.cost)
         }}</strong>
         <p>
-          {{ result.value.importKwh.toFixed(3) }} kWh priced ·
-          {{ ((100 * result.value.pricedMinutes) / result.value.expectedMinutes).toFixed(1) }}% of
-          period duration priced
-        </p>
+          {{ formatNumber(result.value.importKwh, 3) }} {{ tr('kWh priced ·') }} {{ formatNumber((100 * result.value.pricedMinutes) / result.value.expectedMinutes, 1) }} {{ tr('% of period duration priced') }} </p>
         <p v-if="result.value.missingMinutes > 0">
-          {{ duration(result.value.missingMinutes) }} without readings, including any dates that
-          have not elapsed. Missing consumption is not zero.
-        </p>
+          {{ duration(result.value.missingMinutes) }} {{ tr('without readings, including any dates that have not elapsed. Missing consumption is not zero.') }} </p>
         <p v-if="result.value.unpricedIntervals">
-          {{ result.value.unpricedIntervals }} intervals excluded because they cross a price or
-          selected-period boundary. Import finer measured intervals to price them.
-        </p>
-        <p v-if="!result.value.complete">
-          This is a subtotal of supported readings, not the complete period cost.
-        </p>
-        <p v-else>
-          Complete time coverage; accuracy still depends on the meter data and selected tariff.
-        </p>
+          {{ result.value.unpricedIntervals }} {{ tr('intervals excluded because they cross a price or selected-period boundary. Import finer measured intervals to price them.') }} </p>
+        <p v-if="!result.value.complete"> {{ tr('This is a subtotal of supported readings, not the complete period cost.') }} </p>
+        <p v-else> {{ tr('Complete time coverage; accuracy still depends on the meter data and selected tariff.') }} </p>
       </section>
-      <button type="button" class="remove" @click="clear">Remove saved intervals</button>
+      <button type="button" class="remove" @click="clear"> {{ tr('Remove saved intervals') }} </button>
     </template>
   </dialog>
 </template>
 <script setup lang="ts">
+import { localized, errorText, type DisplayText } from '../i18n/messages'
+
+import { localizedError } from '../i18n/messages'
+import { tr, currentLocale, formatNumber } from '../i18n'
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import type { TariffPlan } from './model'
 import {
@@ -112,8 +88,8 @@ const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const history = ref<IntervalHistory | null>(null)
 const range = ref({ start: '', end: '' })
-const error = ref('')
-const message = ref('')
+const error = ref<DisplayText>('')
+const message = ref<DisplayText>('')
 const busy = ref(false)
 let generation = 0
 function resetRange() {
@@ -128,7 +104,7 @@ function load() {
     history.value = loadIntervals(props.tariffScope)
     resetRange()
   } catch {
-    error.value = 'Saved intervals could not be read. Import a valid file to replace them.'
+    error.value = localized('Saved intervals could not be read. Import a valid file to replace them.')
   }
 }
 watch(() => props.tariffScope, load, { immediate: true })
@@ -157,17 +133,19 @@ async function importFile(event: Event) {
   message.value = ''
   try {
     if (file.size > MAX_INTERVAL_BYTES)
-      throw new Error('Interval files must be no larger than 2 MB.')
+      throw localizedError('Interval files must be no larger than 2 MB.')
     const parsed = parseIntervals(await file.text())
     if (current !== generation || scope !== props.tariffScope) return
     saveIntervals(scope, parsed)
     history.value = parsed
     resetRange()
     message.value =
-      'Imported and saved measured intervals. Review the date range and coverage below.'
+      localized('Imported and saved measured intervals. Review the date range and coverage below.')
   } catch (cause) {
     if (current === generation)
-      error.value = cause instanceof Error ? cause.message : 'Could not import interval data.'
+      error.value = cause instanceof SyntaxError
+        ? localized('Could not import interval data.')
+        : errorText(cause, 'Could not import interval data.')
   } finally {
     busy.value = false
     input.value = ''
@@ -179,9 +157,9 @@ function clear() {
     generation++
     history.value = null
     error.value = ''
-    message.value = 'Saved intervals removed.'
+    message.value = localized('Saved intervals removed.')
   } catch {
-    error.value = 'Could not remove saved intervals on this device.'
+    error.value = localized('Could not remove saved intervals on this device.')
   }
 }
 const result = computed(() => {
@@ -194,16 +172,16 @@ const result = computed(() => {
   } catch (cause) {
     return {
       value: null,
-      error: cause instanceof Error ? cause.message : 'Invalid period.',
+      error: errorText(cause, 'Invalid period.'),
     }
   }
 })
 const money = (value: number) =>
-  new Intl.NumberFormat(undefined, {
+  new Intl.NumberFormat(currentLocale.value, {
     style: 'currency',
     currency: props.plan.currency,
   }).format(value)
-const duration = (minutes: number) => `${(minutes / 60).toFixed(2)} hours`
+const duration = (minutes: number) => tr('{n} hours', { n: formatNumber(minutes / 60, 2) })
 </script>
 <style scoped>
 .interval-dialog {

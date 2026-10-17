@@ -5,7 +5,7 @@
       class="w-full flex items-center justify-between px-2 py-0.5 text-xs font-mono opacity-70 hover:opacity-100 transition-opacity"
       @click="expanded = !expanded"
     >
-      <span>Console ({{ lines.length }})</span>
+      <span>{{ tr('Console ({n})', { n: lines.length }) }}</span>
       <span>{{ expanded ? '▼' : '▶' }}</span>
     </button>
     <div
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { tr } from '../i18n'
 import { nextTick, ref, watch } from 'vue'
 
 const props = defineProps<{

@@ -1,3 +1,5 @@
+import { localized, type DisplayText } from '../i18n/messages'
+import { localizedError } from '../i18n/messages'
 import { validatePlan, type TariffPlan } from './model'
 
 export const LOCAL_TARIFF_EVENT = 'local-tariff-changed'
@@ -6,7 +8,7 @@ export function tariffKey(scope: string): string {
   return `victron.energy-tariff.v1:${scope}`
 }
 
-export function loadTariff(scope: string): { plan: TariffPlan | null; error: string } {
+export function loadTariff(scope: string): { plan: TariffPlan | null; error: DisplayText } {
   try {
     const raw = localStorage.getItem(tariffKey(scope))
     return { plan: raw === null ? null : validatePlan(JSON.parse(raw)), error: '' }
@@ -14,7 +16,7 @@ export function loadTariff(scope: string): { plan: TariffPlan | null; error: str
     return {
       plan: null,
       error:
-        'The saved tariff could not be loaded. Import or save a valid tariff to restore the estimate.',
+        localized("The saved tariff could not be loaded. Import or save a valid tariff to restore the estimate."),
     }
   }
 }
@@ -25,9 +27,7 @@ export function saveTariff(scope: string, plan: TariffPlan): void {
     localStorage.setItem(tariffKey(scope), JSON.stringify(validated))
     window.dispatchEvent(new CustomEvent(LOCAL_TARIFF_EVENT, { detail: scope }))
   } catch {
-    throw new Error(
-      'The tariff could not be saved on this device. Your previous tariff is unchanged.'
-    )
+    throw localizedError("The tariff could not be saved on this device. Your previous tariff is unchanged.")
   }
 }
 
@@ -36,6 +36,6 @@ export function clearTariff(scope: string): void {
     localStorage.removeItem(tariffKey(scope))
     window.dispatchEvent(new CustomEvent(LOCAL_TARIFF_EVENT, { detail: scope }))
   } catch {
-    throw new Error('The saved tariff could not be removed on this device.')
+    throw localizedError("The saved tariff could not be removed on this device.")
   }
 }

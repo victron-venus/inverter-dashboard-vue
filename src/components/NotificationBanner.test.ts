@@ -2,6 +2,7 @@ import { enableAutoUnmount, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import NotificationBanner from './NotificationBanner.vue'
+import { setLocale } from '../i18n'
 import { state } from '../composables/useInverterState'
 import { bannerNotifications, upsertBanner } from '../composables/useNotifications'
 
@@ -24,7 +25,7 @@ beforeEach(() => {
   vi.setSystemTime(now)
   bannerNotifications.value = []
 })
-afterEach(() => vi.useRealTimers())
+afterEach(() => { vi.useRealTimers(); setLocale('en') })
 
 describe('notification event time', () => {
   it('shows the source event age on receipt, including timezone offsets and exact time', () => {
@@ -33,8 +34,22 @@ describe('notification event time', () => {
     expect(wrapper.text()).toContain('1h 15m ago')
     expect(wrapper.get('time').attributes('datetime')).toBe(eventTime)
     expect(wrapper.get('time').attributes('title')).toBe(
-      new Date(eventTime).toLocaleString(undefined, { timeZoneName: 'short' })
+      new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'long' }).format(new Date(eventTime))
     )
+  })
+
+  it('switches the displayed source time without changing the event or configured name', async () => {
+    upsertBanner({ ...alarm(), title: 'Solar', body: 'Grid' })
+    const wrapper = render()
+    setLocale('fr')
+    await nextTick()
+    const time = wrapper.get('time')
+    expect(time.attributes('datetime')).toBe(eventTime)
+    expect(time.attributes('title')).toBe(new Intl.DateTimeFormat('fr', { dateStyle: 'medium', timeStyle: 'long' }).format(new Date(eventTime)))
+    expect(wrapper.text()).toContain('Solar')
+    expect(wrapper.text()).toContain('Grid')
+    expect(time.text()).not.toBe('1h 15m ago')
+    expect(bannerNotifications.value[0].ts).toBe(eventTime)
   })
 
   it('ages a banner without any subsequent MQTT messages', async () => {

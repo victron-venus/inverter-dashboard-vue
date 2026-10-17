@@ -1,3 +1,5 @@
+import { localized, type DisplayText } from '../i18n/messages'
+import { localizedError } from '../i18n/messages'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadTariff, tariffKey, LOCAL_TARIFF_EVENT } from './storage'
 import type { TariffPlan } from './model'
@@ -9,7 +11,7 @@ export function setTariffMode(scope: string, mode: TariffMode) {
   try {
     localStorage.setItem(tariffModeKey(scope), mode)
   } catch {
-    throw new Error('The tariff preference could not be saved on this device.')
+    throw localizedError("The tariff preference could not be saved on this device.")
   }
   window.dispatchEvent(new CustomEvent(LOCAL_TARIFF_EVENT, { detail: scope }))
 }
@@ -18,11 +20,11 @@ export function setTariffMode(scope: string, mode: TariffMode) {
 export function useLocalTariff(scope: () => string) {
   const mode = ref<TariffMode>('controller')
   const plan = ref<TariffPlan | null>(null)
-  const error = ref('')
+  const error = ref<DisplayText>('')
   function load() {
     try {
       const saved = localStorage.getItem(tariffModeKey(scope()))
-      if (saved !== null && saved !== 'controller' && saved !== 'local') throw new Error('Invalid saved tariff preference.')
+      if (saved !== null && saved !== 'controller' && saved !== 'local') throw localizedError("Invalid saved tariff preference.")
       mode.value = saved === 'local' ? 'local' : 'controller'
       const value = loadTariff(scope())
       plan.value = value.plan
@@ -30,7 +32,7 @@ export function useLocalTariff(scope: () => string) {
     } catch {
       mode.value = 'controller'
       plan.value = null
-      error.value = 'The tariff preference could not be loaded on this device.'
+      error.value = localized("The tariff preference could not be loaded on this device.")
     }
   }
   function storageChanged(event: StorageEvent) {
