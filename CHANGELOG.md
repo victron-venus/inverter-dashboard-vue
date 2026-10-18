@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.2.10] - 2026-10-18
+
+### Fixed
+
+- Limit tariff cost intervals to 1–366 inclusive calendar dates. Reject a 367th date consistently across leap years and daylight-saving transitions while retaining local-day pricing.
+- Cover invalid, reversed and skipped calendar dates in the tariff regression tests.
+
+### Changed
+
+- Refresh the documented dashboard preview and pinned shared CI workflows.
+
+### Upgrade
+
+Use the existing update procedure and preserve configuration. Python and Go deployments must import the official SPA and its release evidence before rebuilding their backend image. No data migration is required.
+
+### Security
+
+This maintenance release changes date-range validation and CI dependencies. It introduces no new authentication behavior or claim of physical-device acceptance.
+
 ## [2.2.9] - Development line
 
 ### Changed
