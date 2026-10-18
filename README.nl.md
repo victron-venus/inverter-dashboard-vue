@@ -9,6 +9,12 @@ Gedeelde Vue-interface voor de Python- en Go-dashboards: energiegegevens, Victro
 - [Python / FastAPI](https://github.com/victron-venus/inverter-dashboard)
 - [Go](https://github.com/victron-venus/inverter-dashboard-go)
 
+[![Gedeelde Vue-interface v2.2.9 met synthetische demonstratiegegevens. Klik op de afbeelding voor de oorspronkelijke schermafbeelding.](docs/images/app-hero.png)](docs/images/vue-demo.jpg)
+
+*Gedeelde Vue-interface v2.2.9 met synthetische demonstratiegegevens. Klik op de afbeelding voor de oorspronkelijke schermafbeelding.*
+
+[Afbeeldingsbron en opnieuw genereren (Engels)](docs/images/README.md).
+
 ## Functies
 
 Net-, verbruiks-, zonne- en batterijmetingen onderscheiden gemeten nul van ontbrekende gegevens. De zes ESS-modi, controllerknoppen, Water-bediening en setpoint vereisen actuele gegevens en ondersteuning van de backend. Home-knoppen komen uit de configuratie; inactieve apparaten blijven verborgen. Active Loads, grafieken en waarschuwingen volgen de gedeelde Desktop-regels.

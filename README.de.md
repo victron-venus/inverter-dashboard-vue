@@ -9,6 +9,12 @@ Gemeinsame Vue-Oberfläche für die Python- und Go-Dashboards: Energiedaten, Vic
 - [Python / FastAPI](https://github.com/victron-venus/inverter-dashboard)
 - [Go](https://github.com/victron-venus/inverter-dashboard-go)
 
+[![Gemeinsame Vue-Oberfläche v2.2.9 mit synthetischen Demodaten. Klicken Sie auf das Bild, um den ursprünglichen Screenshot zu öffnen.](docs/images/app-hero.png)](docs/images/vue-demo.jpg)
+
+*Gemeinsame Vue-Oberfläche v2.2.9 mit synthetischen Demodaten. Klicken Sie auf das Bild, um den ursprünglichen Screenshot zu öffnen.*
+
+[Bildquelle und erneute Erstellung (Englisch)](docs/images/README.md).
+
 ## Funktionen
 
 Netz-, Verbrauchs-, Solar- und Batteriewerte unterscheiden gemessene Nullwerte von fehlenden Daten. Die sechs ESS-Modi, Controller-Schalter, Water-Steuerung und Sollwertvorgabe erfordern aktuelle Daten und passende Backend-Fähigkeiten. Home-Schaltflächen stammen aus der Konfiguration; inaktive Geräte bleiben ausgeblendet. Active Loads, Diagramme und Warnungen folgen den gemeinsamen Desktop-Regeln.
