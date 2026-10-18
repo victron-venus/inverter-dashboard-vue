@@ -138,11 +138,43 @@ describe('measured interval import and costing', () => {
   })
 })
 
-it('rejects an invalid selected end date instead of normalizing it', () => {
+it.each([
+  { start: '2026-02-30', end: '2026-03-01' },
+  { start: '2026-02-01', end: '2026-02-30' },
+])('rejects invalid selected dates instead of normalizing them: %j', (range) => {
   expect(() =>
-    intervalCost(plan(), parseIntervals(csv), {
-      start: '2026-02-01',
-      end: '2026-02-30',
-    })
+    intervalCost(plan(), parseIntervals(csv), range)
   ).toThrow('valid start and end')
+})
+
+it.each(['UTC', 'America/Los_Angeles', 'Europe/Berlin', 'Asia/Kathmandu'])(
+  'accepts exactly 366 calendar dates and rejects 367 in %s',
+  (timeZone) => {
+    const tariff = plan(timeZone)
+    const data = parseIntervals(csv)
+    // Ordinary-year and leap-year ranges, plus endpoints straddling DST changes.
+    for (const [start, lastAllowed, firstRejected] of [
+      ['2026-01-01', '2027-01-01', '2027-01-02'],
+      ['2024-01-01', '2024-12-31', '2025-01-01'],
+      ['2026-03-08', '2027-03-08', '2027-03-09'],
+      ['2026-11-01', '2027-11-01', '2027-11-02'],
+    ]) {
+      expect(() => intervalCost(tariff, data, { start, end: lastAllowed })).not.toThrow()
+      expect(() => intervalCost(tariff, data, { start, end: firstRejected })).toThrow(
+        '1–366 days'
+      )
+    }
+  }
+)
+
+it('rejects a reversed date range', () => {
+  expect(() => intervalCost(plan(), parseIntervals(csv), {
+    start: '2026-09-25', end: '2026-09-24',
+  })).toThrow('1–366 days')
+})
+
+it('rejects a selected calendar date missing from the tariff time zone', () => {
+  expect(() => intervalCost(plan('Pacific/Apia'), parseIntervals(csv), {
+    start: '2011-12-30', end: '2011-12-31',
+  })).toThrow('does not exist')
 })
