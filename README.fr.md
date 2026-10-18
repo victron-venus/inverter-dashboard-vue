@@ -9,6 +9,12 @@ Interface Vue commune aux tableaux de bord Python et Go : énergie, alertes Vict
 - [Python / FastAPI](https://github.com/victron-venus/inverter-dashboard)
 - [Go](https://github.com/victron-venus/inverter-dashboard-go)
 
+[![Interface Vue commune v2.2.9 avec des données de démonstration synthétiques. Cliquez sur l’image pour ouvrir la capture originale.](docs/images/app-hero.png)](docs/images/vue-demo.jpg)
+
+*Interface Vue commune v2.2.9 avec des données de démonstration synthétiques. Cliquez sur l’image pour ouvrir la capture originale.*
+
+[Source de l’image et régénération (en anglais)](docs/images/README.md).
+
 ## Fonctionnalités
 
 Les mesures du réseau, de la consommation, du solaire et de la batterie distinguent zéro mesuré et donnée absente. Les six modes ESS, les commandes du contrôleur, Water et la consigne exigent un état récent et les capacités du backend. Les boutons Home viennent de la configuration ; les appareils inactifs sont masqués. Active Loads, graphiques et alertes suivent les règles communes avec Desktop.
