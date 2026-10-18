@@ -12,6 +12,12 @@ One Vue interface for the [Python dashboard](https://github.com/victron-venus/in
 
 **Start here:** install a backend using its README, then open that backend's URL. Use this repository to develop the interface, build a custom integration or maintain translations.
 
+[![Shared Vue interface v2.2.9 with synthetic demonstration data](docs/images/app-hero.png)](docs/images/vue-demo.jpg)
+
+*Shared Vue interface v2.2.9 with synthetic demonstration data. Click for the original screenshot.*
+
+[Artwork source and regeneration](docs/images/README.md).
+
 ## Features and data ownership
 
 - Grid, consumption, solar, battery, phase, backup and daily energy readings preserve unavailable values and source freshness.
