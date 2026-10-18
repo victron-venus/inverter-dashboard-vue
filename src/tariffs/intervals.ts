@@ -147,9 +147,13 @@ export function defaultRange(
 export function intervalCost(plan: TariffPlan, history: IntervalHistory, range: DateRange) {
   const start = dayStart(range.start, plan.timeZone)
   dayStart(range.end, plan.timeZone) // Validate before Date.parse can normalize invalid dates.
+  // Count inclusive calendar dates; elapsed time changes across DST transitions.
+  const calendarDays =
+    (Date.parse(`${range.end}T00:00:00Z`) - Date.parse(`${range.start}T00:00:00Z`)) / DAY + 1
+  if (calendarDays < 1 || calendarDays > 366)
+    throw localizedError("Select a period of 1–366 days.")
   const nextDay = new Date(Date.parse(`${range.end}T00:00:00Z`) + DAY).toISOString().slice(0, 10)
   const end = dayStart(nextDay, plan.timeZone)
-  if (end <= start || end - start > 367 * DAY) throw localizedError("Select a period of 1–366 days.")
   let cost = 0
   let importKwh = 0
   let pricedMinutes = 0
