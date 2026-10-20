@@ -5,7 +5,7 @@
 ### Fixed
 
 - Recover a silent WebSocket even when HTTP fallback continues to deliver live dashboard data. HTTP responses no longer reset the socket heartbeat, so the existing reconnect path can restore the command channel after a network interruption.
-- Add regressions for silent-socket recovery and uninterrupted WebSocket telemetry, retaining the current deadlines and connection-lifetime guards.
+- Preserve fresh HTTP telemetry when the command socket closes or errors. An independent 15-second deadline disconnects expired fallback data; newer WebSocket telemetry and cleanup cancel that deadline. Regression tests cover recovery, expiry and retired callbacks.
 
 ### Changed
 

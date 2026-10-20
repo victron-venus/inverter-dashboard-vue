@@ -287,7 +287,11 @@ describe('private connection lifetime', () => {
     expect(mqttConnected.value).toBe(true)
     expect(state.value.gt).toBe(1)
 
-    await vi.advanceTimersByTimeAsync(10002)
+    vi.mocked(addHistoryPoint).mockClear()
+    await vi.advanceTimersByTimeAsync(8001)
+    expect(mqttConnected.value).toBe(true)
+    expect(addHistoryPoint).not.toHaveBeenCalledWith({})
+    await vi.advanceTimersByTimeAsync(2001)
     expect(socket.closeCalls).toBe(1)
     expect(FakeWebSocket.instances).toHaveLength(2)
     expect(connection.commandConnected.value).toBe(false)
@@ -299,6 +303,98 @@ describe('private connection lifetime', () => {
     expect(replacement.sent).toEqual([JSON.stringify({ action: 'set_settings', show_ev: false })])
     expect(socket.sent).toEqual([])
     expect(state.value.gt).toBe(42)
+  })
+
+  it('preserves live fallback through socket errors, then expires it if HTTP also stops', async () => {
+    connection.connectMqtt()
+    await vi.advanceTimersByTimeAsync(0)
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    expect(mqttConnected.value).toBe(true)
+    fetchMock.mockRejectedValue(new Error('Network offline'))
+    vi.mocked(addHistoryPoint).mockClear()
+
+    socket.onerror?.()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(connection.commandConnected.value).toBe(false)
+    expect(mqttConnected.value).toBe(true)
+    expect(addHistoryPoint).not.toHaveBeenCalledWith({})
+    await vi.advanceTimersByTimeAsync(14998)
+    expect(mqttConnected.value).toBe(true)
+    await vi.advanceTimersByTimeAsync(2)
+    expect(mqttConnected.value).toBe(false)
+    expect(addHistoryPoint).toHaveBeenCalledTimes(1)
+    expect(addHistoryPoint).toHaveBeenCalledWith({})
+  })
+
+  it.each([
+    { mqtt_connected: false },
+    { mqtt_connected: true, telemetry: { quality: 'stale' } },
+  ])('revokes live fallback for a newer unavailable snapshot: %j', async (extra) => {
+    connection.connectMqtt()
+    await vi.advanceTimersByTimeAsync(0)
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ gt: 1, ...extra }),
+    })
+    await vi.advanceTimersByTimeAsync(9000)
+    expect(addHistoryPoint).toHaveBeenCalledWith({})
+    socket.close()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(mqttConnected.value).toBe(false)
+    expect(addHistoryPoint).toHaveBeenCalledWith({})
+  })
+
+  it('does not revive expired fallback with a retired HTTP response', async () => {
+    const pending: { finish: (value: unknown) => void; signal: AbortSignal }[] = []
+    connection.connectMqtt()
+    await vi.advanceTimersByTimeAsync(0)
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    fetchMock.mockImplementation((_url, options) => new Promise((finish) => {
+      pending.push({ finish, signal: options.signal })
+    }))
+    socket.onerror?.()
+    await vi.advanceTimersByTimeAsync(15001)
+    expect(mqttConnected.value).toBe(false)
+    expect(pending[0].signal.aborted).toBe(true)
+    pending[0].finish({ ok: true, json: async () => ({ gt: 999, mqtt_connected: true }) })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(mqttConnected.value).toBe(false)
+    expect(state.value.gt).toBe(1)
+  })
+
+  it('clears and fences a live HTTP expiry during cleanup', async () => {
+    const timeouts = vi.spyOn(globalThis, 'setTimeout')
+    connection.connectMqtt()
+    await vi.advanceTimersByTimeAsync(0)
+    const oldExpiry = timeouts.mock.calls.find(([, delay]) => delay === 15000)?.[0]
+    expect(oldExpiry).toEqual(expect.any(Function))
+    connection.cleanup()
+    vi.mocked(addHistoryPoint).mockClear()
+    ;(oldExpiry as () => void)()
+    await vi.advanceTimersByTimeAsync(15001)
+    expect(vi.getTimerCount()).toBe(0)
+    expect(addHistoryPoint).not.toHaveBeenCalled()
+    expect(mqttConnected.value).toBe(false)
+  })
+
+  it('fences an old HTTP expiry after a newer WebSocket snapshot arrives', async () => {
+    const timeouts = vi.spyOn(globalThis, 'setTimeout')
+    connection.connectMqtt()
+    await vi.advanceTimersByTimeAsync(0)
+    const oldExpiry = timeouts.mock.calls.find(([, delay]) => delay === 15000)?.[0]
+    expect(oldExpiry).toEqual(expect.any(Function))
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    socket.onmessage?.({ data: JSON.stringify({ gt: 42, mqtt_connected: true }) })
+    vi.mocked(addHistoryPoint).mockClear()
+    ;(oldExpiry as () => void)()
+    expect(mqttConnected.value).toBe(true)
+    expect(state.value.gt).toBe(42)
+    expect(addHistoryPoint).not.toHaveBeenCalled()
   })
 
   it('keeps a socket with regular telemetry and does not start fallback polling', async () => {

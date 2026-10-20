@@ -53,10 +53,38 @@ export function useConnection() {
   let privateRequest: AbortController | null = null
   let privateRequestTimer: ReturnType<typeof setTimeout> | null = null
   let publicExpiryTimer: ReturnType<typeof setTimeout> | null = null
+  let privateExpiryTimer: ReturnType<typeof setTimeout> | null = null
+  let lastHttpTelemetryTime: number | null = null
 
   function markDisconnected() {
     if (mqttConnected.value) addHistoryPoint({})
     mqttConnected.value = false
+  }
+
+  function clearHttpFreshness() {
+    if (privateExpiryTimer) clearTimeout(privateExpiryTimer)
+    privateExpiryTimer = null
+    lastHttpTelemetryTime = null
+  }
+
+  function recordHttpFreshness(live: boolean) {
+    clearHttpFreshness()
+    if (!live) {
+      markDisconnected()
+      return
+    }
+    lastHttpTelemetryTime = Date.now()
+    const expiry = setTimeout(() => {
+      if (privateExpiryTimer !== expiry) return
+      clearHttpFreshness()
+      markDisconnected()
+    }, 15000)
+    privateExpiryTimer = expiry
+  }
+
+  function disconnectWithoutFreshHttp() {
+    const age = lastHttpTelemetryTime === null ? Infinity : Date.now() - lastHttpTelemetryTime
+    if (age < 0 || age >= 15000) markDisconnected()
   }
 
   function processState(newState: InverterState) {
@@ -149,8 +177,10 @@ export function useConnection() {
       } else if (typeof normalized.gt === 'number' || typeof normalized.battery_soc === 'number') {
         mqttConnected.value = true
       }
-      // HTTP can keep telemetry live while the command socket is silent.
-      // Only WebSocket activity may postpone that socket's reconnect deadline.
+      // HTTP telemetry has its own expiry and cannot postpone socket recovery.
+      recordHttpFreshness(mqttConnected.value
+        && (connected === true || typeof normalized.gt === 'number' || typeof normalized.battery_soc === 'number')
+        && (!normalized.telemetry?.quality || normalized.telemetry.quality === 'live'))
     } catch {
       // ignore — WS reconnect path owns hard failures
     } finally {
@@ -209,7 +239,7 @@ export function useConnection() {
       ws = socket
     } catch (e) {
       logger.error('WebSocket connection failed:', e)
-      markDisconnected()
+      disconnectWithoutFreshHttp()
       reconnectTimer = setTimeout(connectMqtt, 2000)
       return
     }
@@ -231,7 +261,7 @@ export function useConnection() {
       ws = null
       retireHttpRequest()
       commandConnected.value = false
-      markDisconnected()
+      disconnectWithoutFreshHttp()
       stopHeartbeat()
       reconnectTimer = setTimeout(connectMqtt, 2000)
     }
@@ -241,7 +271,7 @@ export function useConnection() {
       commandConnected.value = false
       retireHttpRequest()
       logger.error('WebSocket error')
-      markDisconnected()
+      disconnectWithoutFreshHttp()
       socket.close()
     }
 
@@ -264,6 +294,7 @@ export function useConnection() {
         if (!data || typeof data !== 'object' || Array.isArray(data)) return
         lastSocketMessageTime = Date.now()
         retireHttpRequest()
+        clearHttpFreshness()
         processState(data as InverterState)
         mqttConnected.value = connectionStatus(data) ?? true
       } catch (err) {
@@ -326,6 +357,7 @@ export function useConnection() {
       clearTimeout(publicExpiryTimer)
       publicExpiryTimer = null
     }
+    clearHttpFreshness()
     markDisconnected()
     closeSocket()
     stopHeartbeat()
@@ -358,6 +390,7 @@ export function useConnection() {
     if (reconnectTimer) clearTimeout(reconnectTimer)
     closeSocket()
     commandConnected.value = false
+    clearHttpFreshness()
     markDisconnected()
     stopHeartbeat()
     reconnectTimer = setTimeout(connectMqtt, 500)
