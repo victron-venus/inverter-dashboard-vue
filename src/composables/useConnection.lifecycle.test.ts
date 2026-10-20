@@ -278,6 +278,45 @@ describe('private connection lifetime', () => {
     expect(connection.commandConnected.value).toBe(true)
   })
 
+  it('replaces a silent command socket even while HTTP fallback keeps telemetry live', async () => {
+    connection.connectMqtt()
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    await vi.advanceTimersByTimeAsync(12000)
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1)
+    expect(mqttConnected.value).toBe(true)
+    expect(state.value.gt).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(10002)
+    expect(socket.closeCalls).toBe(1)
+    expect(FakeWebSocket.instances).toHaveLength(2)
+    expect(connection.commandConnected.value).toBe(false)
+    const replacement = FakeWebSocket.instances[1]
+    replacement.open()
+    replacement.onmessage?.({ data: JSON.stringify({ gt: 42, mqtt_connected: true }) })
+    expect(connection.commandConnected.value).toBe(true)
+    expect(connection.send('set_settings', { show_ev: false })).toBe(true)
+    expect(replacement.sent).toEqual([JSON.stringify({ action: 'set_settings', show_ev: false })])
+    expect(socket.sent).toEqual([])
+    expect(state.value.gt).toBe(42)
+  })
+
+  it('keeps a socket with regular telemetry and does not start fallback polling', async () => {
+    connection.connectMqtt()
+    const socket = FakeWebSocket.instances[0]
+    socket.open()
+    await vi.advanceTimersByTimeAsync(0)
+    const initialRequests = fetchMock.mock.calls.length
+    for (let n = 0; n < 6; n++) {
+      await vi.advanceTimersByTimeAsync(5000)
+      socket.onmessage?.({ data: JSON.stringify({ gt: n, mqtt_connected: true }) })
+    }
+    expect(socket.closeCalls).toBe(0)
+    expect(FakeWebSocket.instances).toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(initialRequests)
+    expect(connection.commandConnected.value).toBe(true)
+  })
+
   it('replaces the handshake deadline when online recovery replaces its socket', async () => {
     const timeouts = vi.spyOn(globalThis, 'setTimeout')
     connection.connectMqtt()

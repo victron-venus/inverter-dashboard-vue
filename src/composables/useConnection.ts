@@ -46,7 +46,7 @@ export function useConnection() {
   let connectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let pollTimer: ReturnType<typeof setInterval> | null = null
-  let lastMessageTime = Date.now()
+  let lastSocketMessageTime = Date.now()
   const publicMode = isPublicMode()
   let publicActive = false
   let publicRequest: AbortController | null = null
@@ -127,7 +127,7 @@ export function useConnection() {
   async function pollHttpState() {
     if (disposed || privateRequest) return
     // Fallback when WS is down or silent: /api/state carries live tiles (1.8.17+).
-    if (ws?.readyState === WebSocket.OPEN && Date.now() - lastMessageTime < 8000) {
+    if (ws?.readyState === WebSocket.OPEN && Date.now() - lastSocketMessageTime < 8000) {
       return
     }
     const request = new AbortController()
@@ -146,11 +146,11 @@ export function useConnection() {
       const connected = connectionStatus(data)
       if (connected !== undefined) {
         mqttConnected.value = connected
-        if (connected) lastMessageTime = Date.now()
       } else if (typeof normalized.gt === 'number' || typeof normalized.battery_soc === 'number') {
         mqttConnected.value = true
-        lastMessageTime = Date.now()
       }
+      // HTTP can keep telemetry live while the command socket is silent.
+      // Only WebSocket activity may postpone that socket's reconnect deadline.
     } catch {
       // ignore — WS reconnect path owns hard failures
     } finally {
@@ -220,7 +220,7 @@ export function useConnection() {
       commandConnected.value = true
       commandError.value = null
       logger.log('WebSocket connected')
-      lastMessageTime = Date.now()
+      lastSocketMessageTime = Date.now()
       startHeartbeat()
       startHttpPoll()
     }
@@ -262,7 +262,7 @@ export function useConnection() {
           return
         }
         if (!data || typeof data !== 'object' || Array.isArray(data)) return
-        lastMessageTime = Date.now()
+        lastSocketMessageTime = Date.now()
         retireHttpRequest()
         processState(data as InverterState)
         mqttConnected.value = connectionStatus(data) ?? true
@@ -280,7 +280,7 @@ export function useConnection() {
   function startHeartbeat() {
     stopHeartbeat()
     heartbeatTimer = setInterval(() => {
-      if (Date.now() - lastMessageTime > 15000) {
+      if (Date.now() - lastSocketMessageTime > 15000) {
         logger.log('No data received, reconnecting...')
         ws?.close()
       }
