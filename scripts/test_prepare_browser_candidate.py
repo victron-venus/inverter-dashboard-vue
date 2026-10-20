@@ -93,10 +93,15 @@ class CandidateTests(unittest.TestCase):
             self.run_candidate()
 
     def test_rejects_traversal_links_and_case_collisions_before_writing(self):
-        for name, link in [("../outside", False), ("assets/link", True), ("INDEX.html", False), ("C:/outside", False)]:
+        for name, link, reason in [
+            ("../outside", False, "Unsafe archive path"),
+            ("assets/link", True, "Candidate contains a link or special file"),
+            ("INDEX.html", False, "Candidate contains duplicate paths"),
+            ("C:/outside", False, "Unsafe archive path"),
+        ]:
             with self.subTest(name=name):
                 self.candidate(unsafe=name, link=link)
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(ValueError, reason):
                     self.run_candidate()
                 self.assertFalse((self.root / "dist").exists())
 
