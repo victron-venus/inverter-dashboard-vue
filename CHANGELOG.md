@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.2.11] - 2026-10-20
+
+### Fixed
+
+- Recover a silent WebSocket even when HTTP fallback continues to deliver live dashboard data. HTTP responses no longer reset the socket heartbeat, so the existing reconnect path can restore the command channel after a network interruption.
+- Add regressions for silent-socket recovery and uninterrupted WebSocket telemetry, retaining the current deadlines and connection-lifetime guards.
+
+### Changed
+
+- Update Lucide Vue to 1.58.0, Vitest to 5.0.5 and fake-indexeddb to 6.2.6 with their reviewed lockfile entries.
+- Refresh pinned CI actions and reject incomplete Scorecard check results instead of accepting incomplete reports.
+- Clarify the separate telemetry and command connections, and document the current six-option ESS selection contract.
+
+### Upgrade
+
+Use the existing update procedure and retain local configuration and data. Python and Go packages must import the official SPA and its release evidence before rebuilding their backend image. No API, configuration or stored-data migration is required. Reload an existing browser tab to load the new frontend.
+
+### Security
+
+Connection recovery keeps the existing command availability checks and does not replay commands automatically. This maintenance release makes no claim of verified delivery to physical equipment or of operating-system notification delivery; those require separate acceptance on the intended deployment.
+
 ## [2.2.10] - 2026-10-18
 
 ### Fixed

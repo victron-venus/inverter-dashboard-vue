@@ -8,6 +8,8 @@ Check DNS, VPN routes, TLS and ingress before changing the application. A privat
 
 The browser-to-backend WebSocket, backend-to-IGW HTTP connection and IGW-to-Cerbo MQTT connection are separate. Inspect the selected source and freshness indicator, then the failing hop. `Host is unreachable` or HTTP 503 upstream response is not evidence that rebuilding browser assets will help. Missing measurements correctly produce unavailable values and chart gaps.
 
+The dashboard can receive live HTTP fallback data while its WebSocket command connection is unavailable. It reconnects a silent WebSocket using that socket's own activity clock; successful HTTP polls do not postpone recovery. Command controls remain unavailable while the command connection is down. Recovery does not replay a previous command.
+
 ## Disabled controls
 
 Check source identity, current state, capability, direct HA availability for Home, and public mode. Pending commands need matching authoritative results. A reconnect may retire an operation; do not manufacture an acknowledgement or remove a safety check.
