@@ -46,17 +46,45 @@ export function useConnection() {
   let connectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let pollTimer: ReturnType<typeof setInterval> | null = null
-  let lastMessageTime = Date.now()
+  let lastSocketMessageTime = Date.now()
   const publicMode = isPublicMode()
   let publicActive = false
   let publicRequest: AbortController | null = null
   let privateRequest: AbortController | null = null
   let privateRequestTimer: ReturnType<typeof setTimeout> | null = null
   let publicExpiryTimer: ReturnType<typeof setTimeout> | null = null
+  let privateExpiryTimer: ReturnType<typeof setTimeout> | null = null
+  let lastHttpTelemetryTime: number | null = null
 
   function markDisconnected() {
     if (mqttConnected.value) addHistoryPoint({})
     mqttConnected.value = false
+  }
+
+  function clearHttpFreshness() {
+    if (privateExpiryTimer) clearTimeout(privateExpiryTimer)
+    privateExpiryTimer = null
+    lastHttpTelemetryTime = null
+  }
+
+  function recordHttpFreshness(live: boolean) {
+    clearHttpFreshness()
+    if (!live) {
+      markDisconnected()
+      return
+    }
+    lastHttpTelemetryTime = Date.now()
+    const expiry = setTimeout(() => {
+      if (privateExpiryTimer !== expiry) return
+      clearHttpFreshness()
+      markDisconnected()
+    }, 15000)
+    privateExpiryTimer = expiry
+  }
+
+  function disconnectWithoutFreshHttp() {
+    const age = lastHttpTelemetryTime === null ? Infinity : Date.now() - lastHttpTelemetryTime
+    if (age < 0 || age >= 15000) markDisconnected()
   }
 
   function processState(newState: InverterState) {
@@ -127,7 +155,7 @@ export function useConnection() {
   async function pollHttpState() {
     if (disposed || privateRequest) return
     // Fallback when WS is down or silent: /api/state carries live tiles (1.8.17+).
-    if (ws?.readyState === WebSocket.OPEN && Date.now() - lastMessageTime < 8000) {
+    if (ws?.readyState === WebSocket.OPEN && Date.now() - lastSocketMessageTime < 8000) {
       return
     }
     const request = new AbortController()
@@ -146,11 +174,13 @@ export function useConnection() {
       const connected = connectionStatus(data)
       if (connected !== undefined) {
         mqttConnected.value = connected
-        if (connected) lastMessageTime = Date.now()
       } else if (typeof normalized.gt === 'number' || typeof normalized.battery_soc === 'number') {
         mqttConnected.value = true
-        lastMessageTime = Date.now()
       }
+      // HTTP telemetry has its own expiry and cannot postpone socket recovery.
+      recordHttpFreshness(mqttConnected.value
+        && (connected === true || typeof normalized.gt === 'number' || typeof normalized.battery_soc === 'number')
+        && (!normalized.telemetry?.quality || normalized.telemetry.quality === 'live'))
     } catch {
       // ignore — WS reconnect path owns hard failures
     } finally {
@@ -209,7 +239,7 @@ export function useConnection() {
       ws = socket
     } catch (e) {
       logger.error('WebSocket connection failed:', e)
-      markDisconnected()
+      disconnectWithoutFreshHttp()
       reconnectTimer = setTimeout(connectMqtt, 2000)
       return
     }
@@ -220,7 +250,7 @@ export function useConnection() {
       commandConnected.value = true
       commandError.value = null
       logger.log('WebSocket connected')
-      lastMessageTime = Date.now()
+      lastSocketMessageTime = Date.now()
       startHeartbeat()
       startHttpPoll()
     }
@@ -231,7 +261,7 @@ export function useConnection() {
       ws = null
       retireHttpRequest()
       commandConnected.value = false
-      markDisconnected()
+      disconnectWithoutFreshHttp()
       stopHeartbeat()
       reconnectTimer = setTimeout(connectMqtt, 2000)
     }
@@ -241,7 +271,7 @@ export function useConnection() {
       commandConnected.value = false
       retireHttpRequest()
       logger.error('WebSocket error')
-      markDisconnected()
+      disconnectWithoutFreshHttp()
       socket.close()
     }
 
@@ -262,8 +292,9 @@ export function useConnection() {
           return
         }
         if (!data || typeof data !== 'object' || Array.isArray(data)) return
-        lastMessageTime = Date.now()
+        lastSocketMessageTime = Date.now()
         retireHttpRequest()
+        clearHttpFreshness()
         processState(data as InverterState)
         mqttConnected.value = connectionStatus(data) ?? true
       } catch (err) {
@@ -280,7 +311,7 @@ export function useConnection() {
   function startHeartbeat() {
     stopHeartbeat()
     heartbeatTimer = setInterval(() => {
-      if (Date.now() - lastMessageTime > 15000) {
+      if (Date.now() - lastSocketMessageTime > 15000) {
         logger.log('No data received, reconnecting...')
         ws?.close()
       }
@@ -326,6 +357,7 @@ export function useConnection() {
       clearTimeout(publicExpiryTimer)
       publicExpiryTimer = null
     }
+    clearHttpFreshness()
     markDisconnected()
     closeSocket()
     stopHeartbeat()
@@ -358,6 +390,7 @@ export function useConnection() {
     if (reconnectTimer) clearTimeout(reconnectTimer)
     closeSocket()
     commandConnected.value = false
+    clearHttpFreshness()
     markDisconnected()
     stopHeartbeat()
     reconnectTimer = setTimeout(connectMqtt, 500)

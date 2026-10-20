@@ -13,15 +13,26 @@ takes precedence over saved button IDs and aliases; missing, null or invalid
 values display as unavailable rather than off.
 
 The UI sends `toggle` with a canonical `entity` and explicit `state: "on"` or
-`"off"`, `dry_run` with an explicit boolean `value`, and `ess_mode` to the backend.
+`"off"`, and `dry_run` with an explicit boolean `value` to the backend.
 These actions require a live WebSocket command channel, a connected telemetry
 source, and `controller_controls_available` not explicitly false. Unknown flag
 and DRY states are disabled. Commands wait for state reported by the controller;
 the UI does not apply optimistic changes or call Home Assistant for these flags.
 
-ESS uses `ess_mode` (`hub4_mode`, `battery_life_state`, `mode_name`,
-`is_external`). Hub4 mode 3 means External control. Missing or unknown ESS data
-shows `ESS —`; it must not be inferred from the inverter hardware Mode.
+The ESS menu sends `set_ess_mode` with `mode` and a fresh `request_id`. Its six
+choices are `off`, `on`, `optimized_with_battery_life`,
+`optimized_without_battery_life`, `keep_batteries_charged` and `external_control`.
+The current selection comes from `ess_mode.selected` when
+`ess_mode.selection_supported` is true; legacy `mode_name` and `is_external`
+remain display fallbacks. Unknown selection is not inferred from an unrelated
+inverter hardware Mode.
+
+Selection requires the live command channel, current native connection,
+controller controls not explicitly unavailable, `ess_mode_controls_available: true`,
+supported selection, explicitly disabled
+DRY mode and a non-future `ess_mode_observed_at` no older than 30 seconds.
+A matching request ID in fresh controller state or a correlated command error
+completes the pending request. No response is not a successful mode change.
 
 EV discovery belongs to the backend. The UI accepts `ev_present`,
 `evcharger_present`, and `discovered_water_ev` entries with `kind`, `instance`,
@@ -64,6 +75,11 @@ controller versions. Timestamp provenance (`timestamp_source`) distinguishes
 local receipt from a gateway observation in the tooltip. Missing quality
 is unknown even on an open WebSocket; a lost connection marks previously live
 data stale.
+
+HTTP fallback can keep telemetry live while the WebSocket command channel is
+unavailable. Successful HTTP polls do not reset the WebSocket heartbeat: a
+silent socket is retired and reconnected independently. Writes are unavailable
+while that command connection is down; recovery does not replay old commands.
 
 Build `npm run build:all` after installing the locked dependencies. The `dist/`
 SPA is the shared artifact copied into each backend's static asset directory.
