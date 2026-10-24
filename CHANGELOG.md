@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Complete the browser test fixture's WebSocket close handshake, preserving valid
+  client close metadata, and exercise close/reconnect across a real browser reload.
+  Allow up to 30 seconds for hosted browser navigation while retaining the separate
+  10-second application readiness checks and the full compatibility matrix.
+
 ## [2.2.11] - 2026-10-20
 
 ### Fixed
