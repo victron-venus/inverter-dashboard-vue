@@ -1,8 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [2.2.12] - 2026-10-27
 
 ### Changed
+
+- Update the coordinated Univer spreadsheet packages to 1.2.0 and Lucide Vue icons to 1.61.0.
+- Refresh the Vite build tool to 8.3.5 and retain the full browser compatibility checks.
+
 
 - Complete the browser test fixture's WebSocket close handshake, preserving valid
   client close metadata, and exercise close/reconnect across a real browser reload.
