@@ -13,6 +13,14 @@
   Allow up to 30 seconds for hosted browser navigation while retaining the separate
   10-second application readiness checks and the full compatibility matrix.
 
+### Upgrade
+
+Use the official frontend package and retain local configuration and data. Python and Go packages must import the official SPA with its release evidence before rebuilding their backend image. Reload existing browser tabs to load the new frontend; no API or stored-data migration is required.
+
+### Security
+
+Keep the existing command availability checks and trusted backend configuration. The UI dependency refresh and browser fixtures do not authorize automatic command replay or establish successful delivery to physical equipment.
+
 ## [2.2.11] - 2026-10-20
 
 ### Fixed
