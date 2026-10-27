@@ -6,6 +6,7 @@
 
 - Update the coordinated Univer spreadsheet packages to 1.2.0 and Lucide Vue icons to 1.61.0.
 - Refresh the Vite build tool to 8.3.5 and retain the full browser compatibility checks.
+- Use the shared, guarded Ubuntu mirror fallback for hosted browser setup in CI and packaged-release qualification.
 
 
 - Complete the browser test fixture's WebSocket close handshake, preserving valid

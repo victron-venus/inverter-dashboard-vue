@@ -71,7 +71,7 @@ jobs:
   browser-release:
     name: Qualify packaged SPA
     needs: web
-    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/typescript-ci.yml@bad9ff35f3961ac7d1473aaec937133d6d212899 # main
+    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/typescript-ci.yml@94b1116449af128810b86f4c0c723602be17b372 # main
     permissions:
       contents: read
     with:
