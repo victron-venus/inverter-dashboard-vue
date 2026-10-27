@@ -1,13 +1,26 @@
 # Changelog
 
-## [Unreleased]
+## [2.2.12] - 2026-10-27
 
 ### Changed
+
+- Update the coordinated Univer spreadsheet packages to 1.2.0 and Lucide Vue icons to 1.61.0.
+- Refresh the Vite build tool to 8.3.5 and retain the full browser compatibility checks.
+- Use the shared, guarded Ubuntu mirror fallback for hosted browser setup in CI and packaged-release qualification.
+
 
 - Complete the browser test fixture's WebSocket close handshake, preserving valid
   client close metadata, and exercise close/reconnect across a real browser reload.
   Allow up to 30 seconds for hosted browser navigation while retaining the separate
   10-second application readiness checks and the full compatibility matrix.
+
+### Upgrade
+
+Use the official frontend package and retain local configuration and data. Python and Go packages must import the official SPA with its release evidence before rebuilding their backend image. Reload existing browser tabs to load the new frontend; no API or stored-data migration is required.
+
+### Security
+
+Keep the existing command availability checks and trusted backend configuration. The UI dependency refresh and browser fixtures do not authorize automatic command replay or establish successful delivery to physical equipment.
 
 ## [2.2.11] - 2026-10-20
 
