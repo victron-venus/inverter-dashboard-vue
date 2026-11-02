@@ -18,7 +18,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@lucide/vue": "^1.61.0",
+    "@lucide/vue": "^1.64.0",
     "@tailwindcss/vite": "^4.3.0",
     "@univerjs/preset-sheets-core": "1.2.0",
     "@univerjs/presets": "1.2.0",
