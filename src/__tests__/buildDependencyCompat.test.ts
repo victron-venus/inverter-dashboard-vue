@@ -30,7 +30,7 @@ test('fixed glob dependencies retain formatting and EditorConfig matching', asyn
     await writeFile(join(root, 'view.vue'), '<div><span>ok</span></div>')
     await writeFile(join(root, 'nested', 'logic.ts'), 'const ok = true')
     await writeFile(join(root, 'config.json'), '{}')
-    expect(glob.globSync('**/*.{ts,vue}', { cwd: root, nodir: true }).sort())
+    expect(glob.globSync('**/*.{ts,vue}', { cwd: root, nodir: true, posix: true }).sort())
       .toEqual(['nested/logic.ts', 'view.vue'])
     expect((await editorconfig.parse(join(root, 'nested', 'logic.ts'))).indent_size).toBe(2)
     expect((await editorconfig.parse(join(root, 'view.vue'))).indent_size).toBe(2)
