@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Update Lucide to 1.64.0, the Vue type checker to 3.3.14, Biome to 2.6.4, and the IndexedDB test implementation to 6.2.7. Refresh the shared CI workflow revision.
+
 - Upgrade build-time glob matching to Glob 14 and Minimatch 11, retaining EditorConfig matching and Vue test formatting; exclude generated library bundles from source linting.
 - Update the coordinated Univer spreadsheet packages to 1.2.0 and Lucide Vue icons to 1.61.0.
 - Refresh the Vite build tool to 8.3.5 and retain the full browser compatibility checks.
