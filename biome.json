@@ -4,6 +4,7 @@
     "includes": [
       "**",
       "!**/dist",
+      "!**/dist-lib",
       "!**/node_modules",
       "!**/src-tauri/target",
       "!**/src-tauri/gen",
