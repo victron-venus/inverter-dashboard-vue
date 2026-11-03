@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.13] - 2026-11-03
+
+### Changed
+
+- Update the coordinated Univer spreadsheet packages from 1.3.0 to 1.3.1 and Lucide Vue icons from 1.64.0 to 1.65.0.
+- Refresh shared CI workflow revisions and pinned actions while retaining the existing quality, security and packaged-browser release gates.
+
+### Upgrade
+
+Use the official frontend package and retain local configuration and data. Python and Go packages must import the official SPA with its release evidence before rebuilding their backend image. Reload existing browser tabs to load the new frontend; no API or stored-data migration is required.
+
+### Security
+
+This dependency maintenance release preserves command availability checks and trusted backend configuration. It does not change command delivery or replay behavior. Browser qualification does not establish successful delivery to physical equipment.
+
 ## [2.2.12] - 2026-10-27
 
 ### Changed
