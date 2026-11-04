@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.14] - 2026-11-04
+
+### Changed
+
+- Update Lucide Vue icons from 1.65.0 to 1.66.0 while preserving the existing Vue dependency and application interfaces.
+
+### Upgrade
+
+Use the official frontend package and retain local configuration and data. Python and Go packages must import the official SPA with its release evidence before rebuilding their backend image. Reload existing browser tabs to load the new frontend; no API or stored-data migration is required.
+
+### Security
+
+This icon dependency update preserves command availability checks and trusted backend configuration. It does not change command delivery or replay behavior. Browser qualification does not establish successful delivery to physical equipment.
+
 ## [2.2.13] - 2026-11-03
 
 ### Changed
