@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.15] - 2026-11-05
+
+### Fixed
+
+- Update the coordinated Vue I18n packages from 11.4.16 to 11.4.17, including synchronous plugin installation error reporting and corrected legacy warning filters.
+
+### Upgrade
+
+Install the official frontend package and reload existing browser tabs. Retain local configuration and data; no API or stored-data migration is required. Python and Go integrations must import the official SPA with its release evidence before rebuilding their backend image.
+
+### Security
+
+Vue I18n 11.4.17 strengthens escaped translation sanitization for `xlink:href`, `<base>`, and SVG animation elements ([GHSA-473g-cvf6-mfxj](https://github.com/intlify/vue-i18n/security/advisories/GHSA-473g-cvf6-mfxj)). Existing command availability and trusted backend checks remain in force. Browser validation does not establish successful command delivery to physical equipment.
+
 ## [2.2.14] - 2026-11-04
 
 ### Changed
