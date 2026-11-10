@@ -42,7 +42,7 @@
   "overrides": {
     "glob": "14.0.4",
     "editorconfig": {
-      "minimatch": "11.0.5"
+      "minimatch": "11.0.6"
     }
   }
 }
