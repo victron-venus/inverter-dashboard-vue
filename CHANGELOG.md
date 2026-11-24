@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.2.16] - Unreleased
+
+### Changed
+
+- keep local instruction files out of git.
+- add a navigation index for docs/.
+- add line-ending and language attributes.
+- isolate auto-merge base retarget events (#323).
+- validate the toolkit before scope regeneration (#317).
+- skip build jobs for documentation-only pull requests (#316).
+- migrate dependency updates to Renovate (#315).
+
+### Upgrade
+
+Install the official frontend package and reload existing browser tabs. Retain local configuration and data; no API or stored-data migration is required. Python and Go integrations must import the official SPA with its release evidence before rebuilding their backend image.
+
+### Security
+
+Vue I18n 11.4.17 strengthens escaped translation sanitization for `xlink:href`, `<base>`, and SVG animation elements ([GHSA-473g-cvf6-mfxj](https://github.com/intlify/vue-i18n/security/advisories/GHSA-473g-cvf6-mfxj)). Existing command availability and trusted backend checks remain in force. Browser validation does not establish successful command delivery to physical equipment.
+
 ## [2.2.15] - 2026-11-05
 
 ### Fixed
