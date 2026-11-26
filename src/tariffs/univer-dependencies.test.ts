@@ -16,7 +16,7 @@ it('keeps the spreadsheet facade and every Univer plugin on one core version', (
   )
   const installed = Object.entries(lock.packages).filter(([path]) =>
     // Icons are released separately and do not register core/facade plugins.
-    /(?:^|\/)node_modules\/@univerjs\/(?!icons$)/.test(path)
+    /(?:^|\/)node_modules\/@univerjs\/(?!icons(?:-svg)?$)/.test(path)
   )
 
   expect(direct.length).toBeGreaterThan(1)
