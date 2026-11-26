@@ -1,7 +1,7 @@
 {
   "name": "inverter-dashboard-vue",
   "private": true,
-  "version": "2.2.15",
+  "version": "2.2.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,7 +28,7 @@
     "vue-i18n": "^11"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.8",
+    "@biomejs/biome": "2.6.9",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/test-utils": "^2.5.1",
     "fake-indexeddb": "6.2.8",
